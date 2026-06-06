@@ -3,3 +3,5 @@ packages:
   - "server"
   - "tests-e2e"
   - "packages/*"
+allowBuilds:
+  esbuild: true
