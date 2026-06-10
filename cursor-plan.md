@@ -2,7 +2,7 @@
 
 ## Current Status (June 2026)
 
-**Phases 1–6 are complete.** The app is a client-only PWA with in-browser SQLite (OPFS), Drizzle ORM, full-text search, a responsive 3-pane UI, and export/import.
+**Phases 1–10 are complete.** The app is a client-only PWA with in-browser SQLite (OPFS), Drizzle ORM, full-text search, a responsive 3-pane UI, export/import, advanced markdown editing, cloud-sync preparation, advanced discovery filters, and a calendar memory view.
 
 | Phase | Status |
 | ----- | ------ |
@@ -12,6 +12,10 @@
 | 4. UI (mobile-first) | Done |
 | 5. Export & import | Done |
 | 6. Cloud-sync prep (ULIDs, timestamps, soft deletes) | Done |
+| 7. Stability & Core UX Fixes | Done |
+| 8. Advanced Search & Polish | Done |
+| 9. Cloud Sync Preparation | Done |
+| 10. Advanced Discovery & Calendar Memory | Done |
 
 ### What shipped
 
@@ -21,8 +25,9 @@
 - **Schema** — `notes`, `tags`, `note_tags` with ULID primary keys, timestamps, and soft deletes (`is_deleted`).
 - **FTS5** — `notes_fts` virtual table with insert/update/delete triggers (`client/src/db/migrate.ts`).
 - **Data layer** — `useNotes`, `useTags`, `useGlobalSearch` backed by TanStack Query.
-- **UI** — 3-pane desktop layout (tags / list / editor), single-pane mobile with bottom nav, omnibox search, Markdown textarea editor, `#` tag picker.
+- **UI** — 3-pane desktop layout (tags / list / editor), single-pane mobile with bottom nav, omnibox search, Markdown WYSIWYG editor via Tiptap.
 - **Settings** — SQLite export, Markdown zip export (YAML frontmatter), SQLite import with page reload.
+- **Sync Architecture** — ULID-based Last-Write-Wins deterministic merging strategy for eventual cloud/peer synchronization.
 
 ---
 
@@ -36,6 +41,7 @@ Build a local-first note-taking app that users access via a URL, but where all d
 - **Mobile:** Responsive PWA (installable to home screen, works offline).
 
 ---
+
 ## Phase 1: Boilerplate Pruning & PWA Setup
 
 *Objective: Strip the server infrastructure and convert the client into a local-first PWA.*
@@ -147,6 +153,8 @@ Build a local-first note-taking app that users access via a URL, but where all d
   - Replace the plain `textarea` with a visual WYSIWYG editor (e.g., Tiptap, Lexical, or Milkdown) compatible with React 19.
   - Allow users to click and format text without knowing Markdown, while the underlying storage remains standard Markdown for exportability and full-text search.
 
+---
+
 ## Phase 8: Advanced Search & Polish
 
 *Objective: Augment how users categorize, retrieve, and perceive their memory.*
@@ -162,9 +170,33 @@ Build a local-first note-taking app that users access via a URL, but where all d
 - [x] **8.3 Tag Management UI**
   - Add ability to rename tags, change tag colors with a picker, and delete tags with a confirmation dialog.
 
-## Phase 9: Cloud Sync Preparation (Current)
+---
+
+## Phase 9: Cloud Sync Preparation
 
 *Objective: Architect data to optionally sync to a personal cloud (e.g., WebDAV, iCloud, or a lightweight custom sync server).*
 
 - [x] **9.1 Conflict Resolution Strategy**
   - Leverage ULIDs, `updated_at`, and `is_deleted` to build a simple "last-write-wins" sync logic.
+
+---
+
+## Phase 10: Advanced Discovery & Calendar Memory
+
+*Objective: Expand the tools for retrieving and visualizing memory (multi-term searches, date filters, calendar visualization) and fix lingering UX inconsistencies.*
+
+- [x] **10.1 Multiple Words Search & Advanced FTS**
+  - Refactor FTS queries in `useSearch.ts` to support multiple independent words (e.g., matching `hello` AND `world` anywhere in the note, rather than as an exact phrase).
+  - Maintain the tag-aware searching functionality alongside the multi-word logic.
+- [x] **10.2 Advanced Search UI & Date Integration**
+  - Build a rich UI for the Omnibox that allows visually adding/removing keywords, tags, and date filters.
+  - Implement robust date-based search directly tied into the main search engine (e.g., "created last week", "updated in May 2026").
+- [x] **10.3 Fix Editor Save State Indicators**
+  - Debug and resolve the issue in `useNotes.ts` / `NoteEditor.tsx` where the `saveStatus` gets stuck on "Saving..." (likely due to orphaned timeouts or race conditions in the `useUpdateNote` hook). Ensure "Saved locally" consistently appears and vanishes cleanly.
+- [x] **10.4 Tag Tab Search/Filtering**
+  - Add a dedicated, slick search input within `TagSidebar.tsx` to instantly filter the list of tags, helping users with large numbers of tags find what they need.
+- [x] **10.5 Calendar View Memory Organization**
+  - Implement a new, integrated Calendar view (accessible via a tab or integrated nicely into the layout).
+  - Provide Daily, Weekly, Monthly, and Yearly scopes.
+  - Visualize note activity (creation/updates) on the calendar.
+  - Surface top keywords, tags, or topics relevant to the selected timeframe to help users organize and recall their memory contextually.

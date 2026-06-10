@@ -110,7 +110,7 @@ export function useCreateNote() {
 export function useUpdateNote() {
   const queryClient = useQueryClient()
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
-  const pendingCount = useRef(0)
+  const saveGeneration = useRef(0)
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle")
 
@@ -119,25 +119,30 @@ export function useUpdateNote() {
       const existing = timers.current.get(id)
       if (existing) clearTimeout(existing)
 
-      pendingCount.current += 1
+      const generation = ++saveGeneration.current
       setSaveStatus("saving")
       if (savedTimer.current) clearTimeout(savedTimer.current)
 
       const timer = setTimeout(async () => {
         timers.current.delete(id)
-        await initDb()
-        await db
-          .update(notesTable)
-          .set({ ...patch, updatedAt: new Date() })
-          .where(eq(notesTable.id, id))
+        try {
+          await initDb()
+          await db
+            .update(notesTable)
+            .set({ ...patch, updatedAt: new Date() })
+            .where(eq(notesTable.id, id))
 
-        queryClient.invalidateQueries({ queryKey: notesKey })
-        queryClient.invalidateQueries({ queryKey: noteKey(id) })
+          queryClient.invalidateQueries({ queryKey: notesKey })
+          queryClient.invalidateQueries({ queryKey: noteKey(id) })
 
-        pendingCount.current = Math.max(0, pendingCount.current - 1)
-        if (pendingCount.current === 0) {
-          setSaveStatus("saved")
-          savedTimer.current = setTimeout(() => setSaveStatus("idle"), 2000)
+          if (generation === saveGeneration.current) {
+            setSaveStatus("saved")
+            savedTimer.current = setTimeout(() => {
+              if (generation === saveGeneration.current) setSaveStatus("idle")
+            }, 2000)
+          }
+        } catch {
+          if (generation === saveGeneration.current) setSaveStatus("idle")
         }
       }, 300)
 

@@ -1,7 +1,7 @@
 import { NotePencilIcon, PlusIcon } from "@phosphor-icons/react"
 import { useMemo } from "react"
 import { useCreateNote, useNotes } from "../../hooks/useNotes"
-import { useGlobalSearch } from "../../hooks/useSearch"
+import { isSearchActive, useGlobalSearch } from "../../hooks/useSearch"
 import { formatRelativeTime } from "../../lib/formatRelativeTime"
 import { stripMarkdown } from "../../lib/stripMarkdown"
 import { useAppStore } from "../../store/useAppStore"
@@ -10,14 +10,14 @@ const highlightClass =
   "[&_mark]:rounded-sm [&_mark]:bg-yellow-200 [&_mark]:px-0.5 [&_mark]:text-gray-900 dark:[&_mark]:bg-yellow-500/30 dark:[&_mark]:text-yellow-100"
 
 const NoteList = () => {
-  const { selectedTagId, selectedNoteId, searchQuery, noteSort, setSelectedNoteId, setNoteSort } =
+  const { selectedTagId, selectedNoteId, searchFilters, noteSort, setSelectedNoteId, setNoteSort } =
     useAppStore()
   const { data: notes = [], isLoading } = useNotes(selectedTagId ?? undefined)
-  const { data: searchResults = [] } = useGlobalSearch(searchQuery)
+  const { data: searchResults = [] } = useGlobalSearch(searchFilters)
   const createNote = useCreateNote()
   const createError = createNote.error instanceof Error ? createNote.error.message : null
 
-  const isSearching = searchQuery.trim().length > 0
+  const isSearching = isSearchActive(searchFilters)
   const filteredNotes = isSearching
     ? notes.filter((note) => searchResults.some((result) => result.note_id === note.id))
     : notes

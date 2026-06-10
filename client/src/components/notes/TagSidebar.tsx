@@ -1,4 +1,4 @@
-import { PencilSimpleIcon, PlusIcon, TagIcon } from "@phosphor-icons/react"
+import { MagnifyingGlassIcon, PencilSimpleIcon, PlusIcon, TagIcon, XIcon } from "@phosphor-icons/react"
 import { useState } from "react"
 import type { Tag } from "../../db/schema"
 import { useCreateTag, useTags } from "../../hooks/useTags"
@@ -13,7 +13,13 @@ const TagSidebar = () => {
   const { selectedTagId, setSelectedTagId } = useAppStore()
   const [isAdding, setIsAdding] = useState(false)
   const [name, setName] = useState("")
+  const [filter, setFilter] = useState("")
   const [editingTag, setEditingTag] = useState<Tag | null>(null)
+
+  const filterLower = filter.trim().toLowerCase()
+  const visibleTags = filterLower
+    ? tags.filter((tag) => tag.name.toLowerCase().includes(filterLower))
+    : tags
 
   const handleCreate = async () => {
     const trimmed = name.trim()
@@ -36,6 +42,33 @@ const TagSidebar = () => {
         >
           <PlusIcon size={18} />
         </button>
+      </div>
+
+      <div className="border-b border-gray-200 p-3 dark:border-gray-700">
+        <div className="relative">
+          <MagnifyingGlassIcon
+            className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
+            size={14}
+          />
+          <input
+            type="text"
+            value={filter}
+            onChange={(event) => setFilter(event.target.value)}
+            placeholder="Filter tags…"
+            className="w-full rounded-md border border-gray-200 bg-gray-50 py-1.5 pl-7 pr-7 text-sm dark:border-gray-600 dark:bg-gray-800"
+            aria-label="Filter tags"
+          />
+          {filter && (
+            <button
+              type="button"
+              onClick={() => setFilter("")}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-gray-400 hover:text-gray-600"
+              aria-label="Clear tag filter"
+            >
+              <XIcon size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       {isAdding && (
@@ -69,7 +102,11 @@ const TagSidebar = () => {
           All notes
         </button>
 
-        {tags.map((tag) => (
+        {visibleTags.length === 0 && filterLower && (
+          <p className="px-3 py-2 text-xs text-gray-500">No tags match &ldquo;{filter}&rdquo;</p>
+        )}
+
+        {visibleTags.map((tag) => (
           <div
             key={tag.id}
             className={`group mb-1 flex items-center rounded-lg ${

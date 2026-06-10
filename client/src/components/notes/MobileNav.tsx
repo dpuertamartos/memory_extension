@@ -1,10 +1,11 @@
-import { GearIcon, ListIcon, NotePencilIcon, TagIcon } from "@phosphor-icons/react"
+import { CalendarBlankIcon, GearIcon, ListIcon, NotePencilIcon, TagIcon } from "@phosphor-icons/react"
 import type { MobilePane } from "../../store/useAppStore"
 import { useAppStore } from "../../store/useAppStore"
 
 const items: { pane: MobilePane; label: string; icon: typeof ListIcon }[] = [
   { pane: "tags", label: "Tags", icon: TagIcon },
   { pane: "list", label: "Notes", icon: ListIcon },
+  { pane: "calendar", label: "Calendar", icon: CalendarBlankIcon },
   { pane: "editor", label: "Editor", icon: NotePencilIcon },
   { pane: "settings", label: "Settings", icon: GearIcon },
 ]
