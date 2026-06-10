@@ -1,7 +1,9 @@
-import { PlusIcon, TagIcon } from "@phosphor-icons/react"
+import { PencilSimpleIcon, PlusIcon, TagIcon } from "@phosphor-icons/react"
 import { useState } from "react"
+import type { Tag } from "../../db/schema"
 import { useCreateTag, useTags } from "../../hooks/useTags"
 import { useAppStore } from "../../store/useAppStore"
+import TagEditDialog from "./TagEditDialog"
 
 const TAG_COLORS = ["#6366f1", "#ec4899", "#14b8a6", "#f59e0b", "#ef4444", "#8b5cf6"]
 
@@ -11,6 +13,7 @@ const TagSidebar = () => {
   const { selectedTagId, setSelectedTagId } = useAppStore()
   const [isAdding, setIsAdding] = useState(false)
   const [name, setName] = useState("")
+  const [editingTag, setEditingTag] = useState<Tag | null>(null)
 
   const handleCreate = async () => {
     const trimmed = name.trim()
@@ -56,7 +59,7 @@ const TagSidebar = () => {
         <button
           type="button"
           onClick={() => setSelectedTagId(null)}
-          className={`mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm ${
+          className={`mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors duration-150 ${
             selectedTagId === null
               ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
               : "hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -67,21 +70,47 @@ const TagSidebar = () => {
         </button>
 
         {tags.map((tag) => (
-          <button
+          <div
             key={tag.id}
-            type="button"
-            onClick={() => setSelectedTagId(tag.id)}
-            className={`mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm ${
+            className={`group mb-1 flex items-center rounded-lg ${
               selectedTagId === tag.id
-                ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                ? "bg-blue-50 dark:bg-blue-900/30"
                 : "hover:bg-gray-100 dark:hover:bg-gray-700"
             }`}
           >
-            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: tag.color }} />
-            {tag.name}
-          </button>
+            <button
+              type="button"
+              onClick={() => setSelectedTagId(tag.id)}
+              className={`flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left text-sm transition-colors duration-150 ${
+                selectedTagId === tag.id
+                  ? "text-blue-700 dark:text-blue-300"
+                  : ""
+              }`}
+            >
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: tag.color }} />
+              <span className="truncate">{tag.name}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditingTag(tag)}
+              className="mr-1 rounded p-1 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-600 dark:hover:text-gray-200"
+              aria-label={`Edit tag ${tag.name}`}
+            >
+              <PencilSimpleIcon size={14} />
+            </button>
+          </div>
         ))}
       </div>
+
+      {editingTag && (
+        <TagEditDialog
+          tag={editingTag}
+          onClose={() => setEditingTag(null)}
+          onDeleted={() => {
+            if (selectedTagId === editingTag.id) setSelectedTagId(null)
+          }}
+        />
+      )}
     </div>
   )
 }

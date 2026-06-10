@@ -15,24 +15,24 @@ const BrainPage = () => {
 
       <div className="flex min-h-0 flex-1">
         <aside
-          className={`w-full shrink-0 border-r border-gray-200 dark:border-gray-700 md:block md:w-52 lg:w-60 ${
-            mobilePane === "tags" ? "block" : "hidden"
+          className={`w-full shrink-0 border-r border-gray-200 transition-opacity duration-200 dark:border-gray-700 md:block md:w-52 lg:w-60 ${
+            mobilePane === "tags" ? "block opacity-100" : "hidden opacity-0 md:opacity-100"
           }`}
         >
           <TagSidebar />
         </aside>
 
         <section
-          className={`w-full shrink-0 border-r border-gray-200 dark:border-gray-700 md:block md:w-72 lg:w-80 ${
-            mobilePane === "list" ? "block" : "hidden md:block"
+          className={`w-full shrink-0 border-r border-gray-200 transition-opacity duration-200 dark:border-gray-700 md:block md:w-72 lg:w-80 ${
+            mobilePane === "list" ? "block opacity-100" : "hidden opacity-0 md:block md:opacity-100"
           }`}
         >
           <NoteList />
         </section>
 
         <section
-          className={`min-w-0 flex-1 ${
-            mobilePane === "editor" ? "block" : "hidden md:block"
+          className={`min-w-0 flex-1 transition-opacity duration-200 ${
+            mobilePane === "editor" ? "block opacity-100" : "hidden opacity-0 md:block md:opacity-100"
           }`}
         >
           <NoteEditor />

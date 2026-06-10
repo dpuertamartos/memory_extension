@@ -1,5 +1,6 @@
 import { TrashIcon } from "@phosphor-icons/react"
 import { useEffect, useRef, useState } from "react"
+import MarkdownEditor from "./MarkdownEditor"
 import TagSelector from "./TagSelector"
 import { useDeleteNote, useNote, useUpdateNote } from "../../hooks/useNotes"
 import { useAppStore } from "../../store/useAppStore"
@@ -17,14 +18,13 @@ const stripTagTrigger = (text: string, query: string) => {
 const NoteEditor = () => {
   const { selectedNoteId, setSelectedNoteId } = useAppStore()
   const { data: note } = useNote(selectedNoteId)
-  const { updateNote } = useUpdateNote()
+  const { updateNote, saveStatus } = useUpdateNote()
   const deleteNote = useDeleteNote()
 
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const [tagQuery, setTagQuery] = useState("")
   const [tagAnchor, setTagAnchor] = useState<{ top: number; left: number } | null>(null)
-  const contentRef = useRef<HTMLTextAreaElement>(null)
   const hydratedNoteIdRef = useRef<string | null>(null)
 
   // Hydrate local editor state only when the user switches notes — not on every
@@ -49,13 +49,6 @@ const NoteEditor = () => {
     setTagAnchor(null)
   }, [note, selectedNoteId])
 
-  useEffect(() => {
-    const textarea = contentRef.current
-    if (!textarea) return
-    textarea.style.height = "auto"
-    textarea.style.height = `${textarea.scrollHeight}px`
-  }, [content, selectedNoteId])
-
   if (!selectedNoteId) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-gray-500">
@@ -75,26 +68,6 @@ const NoteEditor = () => {
   const handleContentChange = (value: string) => {
     setContent(value)
     updateNote(note.id, { content: value })
-
-    const hashIndex = value.lastIndexOf("#")
-    if (hashIndex === -1) {
-      setTagAnchor(null)
-      setTagQuery("")
-      return
-    }
-
-    const afterHash = value.slice(hashIndex + 1)
-    if (afterHash.includes(" ") || afterHash.includes("\n")) {
-      setTagAnchor(null)
-      setTagQuery("")
-      return
-    }
-
-    const textarea = contentRef.current
-    if (!textarea) return
-
-    setTagQuery(afterHash)
-    setTagAnchor({ top: textarea.offsetTop + 28, left: textarea.offsetLeft + 16 })
   }
 
   const handleDelete = async () => {
@@ -125,14 +98,32 @@ const NoteEditor = () => {
           placeholder="Note title"
           className="w-full border-0 bg-transparent text-lg font-semibold shadow-none focus:ring-0"
         />
-        <button
-          type="button"
-          onClick={() => void handleDelete()}
-          className="ml-2 rounded p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-          aria-label="Delete note"
-        >
-          <TrashIcon size={18} />
-        </button>
+        <div className="ml-2 flex shrink-0 items-center gap-2">
+          <span
+            className={`text-xs text-gray-400 transition-opacity duration-300 ${
+              saveStatus === "saving" ? "opacity-100" : "opacity-0"
+            }`}
+            aria-live="polite"
+          >
+            Saving…
+          </span>
+          <span
+            className={`text-xs text-green-600 transition-opacity duration-300 dark:text-green-400 ${
+              saveStatus === "saved" ? "opacity-100" : "opacity-0"
+            }`}
+            aria-live="polite"
+          >
+            Saved locally
+          </span>
+          <button
+            type="button"
+            onClick={() => void handleDelete()}
+            className="rounded p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+            aria-label="Delete note"
+          >
+            <TrashIcon size={18} />
+          </button>
+        </div>
       </div>
 
       {note.tags.length > 0 && (
@@ -150,12 +141,18 @@ const NoteEditor = () => {
       )}
 
       <div className="relative flex-1 overflow-y-auto p-4">
-        <textarea
-          ref={contentRef}
-          value={content}
-          onChange={(event) => handleContentChange(event.target.value)}
-          placeholder="Write in Markdown… Type # to add tags"
-          className="min-h-[60vh] w-full resize-none border-0 bg-transparent font-mono text-sm leading-relaxed shadow-none focus:ring-0"
+        <MarkdownEditor
+          noteId={note.id}
+          content={content}
+          onChange={handleContentChange}
+          onTagTrigger={(query, anchor) => {
+            setTagQuery(query)
+            setTagAnchor(anchor)
+          }}
+          onTagDismiss={() => {
+            setTagAnchor(null)
+            setTagQuery("")
+          }}
         />
 
         {tagAnchor && (

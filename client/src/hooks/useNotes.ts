@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { and, desc, eq, inArray } from "drizzle-orm"
-import { useCallback, useRef } from "react"
+import { useCallback, useRef, useState } from "react"
 import { ulid } from "ulid"
 import { noteTagsTable, notesTable, tagsTable, type Note, type Tag } from "../db/schema"
 import { db, initDb } from "../lib/db"
@@ -110,11 +110,18 @@ export function useCreateNote() {
 export function useUpdateNote() {
   const queryClient = useQueryClient()
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
+  const pendingCount = useRef(0)
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle")
 
   const mutate = useCallback(
     (id: string, patch: Partial<Pick<Note, "title" | "content">>) => {
       const existing = timers.current.get(id)
       if (existing) clearTimeout(existing)
+
+      pendingCount.current += 1
+      setSaveStatus("saving")
+      if (savedTimer.current) clearTimeout(savedTimer.current)
 
       const timer = setTimeout(async () => {
         timers.current.delete(id)
@@ -126,6 +133,12 @@ export function useUpdateNote() {
 
         queryClient.invalidateQueries({ queryKey: notesKey })
         queryClient.invalidateQueries({ queryKey: noteKey(id) })
+
+        pendingCount.current = Math.max(0, pendingCount.current - 1)
+        if (pendingCount.current === 0) {
+          setSaveStatus("saved")
+          savedTimer.current = setTimeout(() => setSaveStatus("idle"), 2000)
+        }
       }, 300)
 
       timers.current.set(id, timer)
@@ -133,7 +146,7 @@ export function useUpdateNote() {
     [queryClient],
   )
 
-  return { updateNote: mutate }
+  return { updateNote: mutate, saveStatus }
 }
 
 export function useDeleteNote() {

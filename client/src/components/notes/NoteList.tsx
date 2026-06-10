@@ -1,25 +1,46 @@
 import { NotePencilIcon, PlusIcon } from "@phosphor-icons/react"
+import { useMemo } from "react"
 import { useCreateNote, useNotes } from "../../hooks/useNotes"
 import { useGlobalSearch } from "../../hooks/useSearch"
+import { formatRelativeTime } from "../../lib/formatRelativeTime"
+import { stripMarkdown } from "../../lib/stripMarkdown"
 import { useAppStore } from "../../store/useAppStore"
 
-const formatDate = (date: Date | number | string | null | undefined) => {
-  const value = date instanceof Date ? date : new Date(date ?? 0)
-  if (Number.isNaN(value.getTime())) return ""
-  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(value)
-}
+const highlightClass =
+  "[&_mark]:rounded-sm [&_mark]:bg-yellow-200 [&_mark]:px-0.5 [&_mark]:text-gray-900 dark:[&_mark]:bg-yellow-500/30 dark:[&_mark]:text-yellow-100"
 
 const NoteList = () => {
-  const { selectedTagId, selectedNoteId, searchQuery, setSelectedNoteId } = useAppStore()
+  const { selectedTagId, selectedNoteId, searchQuery, noteSort, setSelectedNoteId, setNoteSort } =
+    useAppStore()
   const { data: notes = [], isLoading } = useNotes(selectedTagId ?? undefined)
   const { data: searchResults = [] } = useGlobalSearch(searchQuery)
   const createNote = useCreateNote()
   const createError = createNote.error instanceof Error ? createNote.error.message : null
 
   const isSearching = searchQuery.trim().length > 0
-  const visibleNotes = isSearching
+  const filteredNotes = isSearching
     ? notes.filter((note) => searchResults.some((result) => result.note_id === note.id))
     : notes
+
+  const visibleNotes = useMemo(() => {
+    const sorted = [...filteredNotes]
+    switch (noteSort) {
+      case "created":
+        return sorted.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        )
+      case "alpha":
+        return sorted.sort((a, b) =>
+          (a.title || "Untitled").localeCompare(b.title || "Untitled", undefined, {
+            sensitivity: "base",
+          }),
+        )
+      default:
+        return sorted.sort(
+          (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+        )
+    }
+  }, [filteredNotes, noteSort])
 
   const handleCreate = async () => {
     try {
@@ -39,13 +60,28 @@ const NoteList = () => {
         <button
           type="button"
           onClick={() => void handleCreate()}
-          className="btn-blue flex items-center gap-1 !py-1 !px-2"
+          className="btn-blue flex items-center gap-1 !px-2 !py-1"
           disabled={createNote.isPending}
         >
           <PlusIcon size={14} />
           New
         </button>
       </div>
+
+      {!isSearching && (
+        <div className="border-b border-gray-100 px-4 py-2 dark:border-gray-700">
+          <select
+            value={noteSort}
+            onChange={(event) => setNoteSort(event.target.value as typeof noteSort)}
+            className="w-full rounded border-0 bg-transparent py-1 text-xs text-gray-500 shadow-none focus:ring-0"
+            aria-label="Sort notes"
+          >
+            <option value="updated">Recently updated</option>
+            <option value="created">Recently created</option>
+            <option value="alpha">Alphabetical</option>
+          </select>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto">
         {createError && (
@@ -66,35 +102,48 @@ const NoteList = () => {
         {visibleNotes.map((note) => {
           const searchHit = searchResults.find((result) => result.note_id === note.id)
           const isActive = note.id === selectedNoteId
+          const titleHasHighlight = Boolean(searchHit?.title_snippet?.includes("<mark>"))
 
           return (
             <button
               key={note.id}
               type="button"
               onClick={() => setSelectedNoteId(note.id)}
-              className={`w-full border-b border-gray-100 px-4 py-3 text-left transition-colors dark:border-gray-700 ${
+              className={`w-full border-b border-gray-100 px-4 py-3 text-left transition-colors duration-150 dark:border-gray-700 ${
                 isActive
                   ? "bg-blue-50 dark:bg-blue-900/20"
                   : "hover:bg-gray-50 dark:hover:bg-gray-800"
               }`}
             >
               <div className="flex items-start justify-between gap-2">
-                <p className="truncate font-medium">{note.title || "Untitled"}</p>
-                <span className="shrink-0 text-xs text-gray-400">
-                  {formatDate(note.updatedAt)}
+                {searchHit && titleHasHighlight ? (
+                  <p
+                    className={`truncate font-medium ${highlightClass}`}
+                    dangerouslySetInnerHTML={{
+                      __html: searchHit.title_snippet,
+                    }}
+                  />
+                ) : (
+                  <p className="truncate font-medium">{note.title || "Untitled"}</p>
+                )}
+                <span
+                  className="shrink-0 text-xs text-gray-400"
+                  title={new Date(note.updatedAt).toLocaleString()}
+                >
+                  {formatRelativeTime(note.updatedAt)}
                 </span>
               </div>
 
               {searchHit ? (
                 <p
-                  className="mt-1 line-clamp-2 text-xs text-gray-500 [&_mark]:bg-yellow-200 [&_mark]:text-gray-900"
+                  className={`mt-1 line-clamp-2 text-xs text-gray-500 ${highlightClass}`}
                   dangerouslySetInnerHTML={{
                     __html: searchHit.content_snippet || searchHit.title_snippet,
                   }}
                 />
               ) : (
                 <p className="mt-1 line-clamp-2 text-xs text-gray-500">
-                  {note.content || "Empty note"}
+                  {stripMarkdown(note.content) || "Empty note"}
                 </p>
               )}
 

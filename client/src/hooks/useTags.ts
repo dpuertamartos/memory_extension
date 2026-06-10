@@ -58,3 +58,24 @@ export function useDeleteTag() {
     },
   })
 }
+
+export function useUpdateTag() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (input: { id: string; name?: string; color?: string }) => {
+      await initDb()
+      const patch: { name?: string; color?: string; updatedAt: Date } = {
+        updatedAt: new Date(),
+      }
+      if (input.name !== undefined) patch.name = input.name.trim()
+      if (input.color !== undefined) patch.color = input.color
+
+      await db.update(tagsTable).set(patch).where(eq(tagsTable.id, input.id))
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tagsKey })
+      queryClient.invalidateQueries({ queryKey: ["notes"] })
+    },
+  })
+}
