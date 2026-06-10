@@ -9,9 +9,10 @@ type TagSelectorProps = {
   anchor: { top: number; left: number }
   query: string
   onClose: () => void
+  onTagApplied?: () => void
 }
 
-const TagSelector = ({ noteId, selectedTags, anchor, query, onClose }: TagSelectorProps) => {
+const TagSelector = ({ noteId, selectedTags, anchor, query, onClose, onTagApplied }: TagSelectorProps) => {
   const { data: tags = [] } = useTags()
   const createTag = useCreateTag()
   const setNoteTags = useSetNoteTags()
@@ -38,6 +39,7 @@ const TagSelector = ({ noteId, selectedTags, anchor, query, onClose }: TagSelect
       : [...selectedTags.map((item) => item.id), tag.id]
 
     await setNoteTags.mutateAsync({ noteId, tagIds: nextIds })
+    onTagApplied?.()
     onClose()
   }
 
@@ -48,6 +50,7 @@ const TagSelector = ({ noteId, selectedTags, anchor, query, onClose }: TagSelect
         noteId,
         tagIds: [...selectedTags.map((item) => item.id), tag.id],
       })
+      onTagApplied?.()
       onClose()
       return
     }

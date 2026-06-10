@@ -24,19 +24,6 @@
 - **UI** — 3-pane desktop layout (tags / list / editor), single-pane mobile with bottom nav, omnibox search, Markdown textarea editor, `#` tag picker.
 - **Settings** — SQLite export, Markdown zip export (YAML frontmatter), SQLite import with page reload.
 
-### Implementation notes (deviations from original plan)
-
-- FTS uses a standalone `notes_fts` table with an unindexed `note_id` column instead of FTS5 external-content sync against `notes`.
-- SQLite runs in a Web Worker rather than on the main thread, keeping the UI responsive.
-- Soft deletes set `is_deleted = true` instead of hard `DELETE`; FTS triggers skip deleted notes on update.
-
-### Possible next steps
-
-- Expand E2E coverage (create note, search, export/import flows).
-- Tag management UI (rename, color picker, delete confirmation).
-- PWA install prompt and offline UX polish.
-- Future cloud sync layer (conflict resolution, tombstone propagation).
-
 ---
 
 ## Architectural Strategy
@@ -49,7 +36,6 @@ Build a local-first note-taking app that users access via a URL, but where all d
 - **Mobile:** Responsive PWA (installable to home screen, works offline).
 
 ---
-
 ## Phase 1: Boilerplate Pruning & PWA Setup
 
 *Objective: Strip the server infrastructure and convert the client into a local-first PWA.*
@@ -143,3 +129,44 @@ Build a local-first note-taking app that users access via a URL, but where all d
 - [x] **6.1 Use ULIDs** — all primary keys are ULIDs (`ulid` package).
 - [x] **6.2 Timestamping** — `created_at` and `updated_at` on every table.
 - [x] **6.3 Soft Deletes** — `is_deleted` flag on notes instead of hard deletes.
+
+---
+
+## Phase 7: Stability & Core UX Fixes (Current)
+
+*Objective: Ensure the core typing and reading experience is absolutely flawless.*
+
+- [x] **7.1 Fix Editor Race Conditions**
+  - Fix the "text rollback" bug in `NoteEditor.tsx` where debounced saves trigger an invalidation that overwrites the user's active typing state.
+  - Implement a stable local state that only hydrates on initial note load.
+- [x] **7.2 Inline Tag Extraction**
+  - When a user types `#tag` and selects it, automatically strip the `#tag` text from the document content and add it to the structured tags list to keep the UI clean.
+- [x] **7.3 Tag-Aware Full-Text Search**
+  - Modify the search query so searching for a term like "DOG" returns all notes tagged with `#DOG`, even if "DOG" isn't in the note body.
+- [ ] **7.4 Rich Text Markdown Editor**
+  - Replace the plain `textarea` with a visual WYSIWYG editor (e.g., Tiptap, Lexical, or Milkdown) compatible with React 19.
+  - Allow users to click and format text without knowing Markdown, while the underlying storage remains standard Markdown for exportability and full-text search.
+
+## Phase 8: Advanced Search & Polish
+
+*Objective: Augment how users categorize, retrieve, and perceive their memory.*
+
+- [ ] **8.1 Advanced Searchability & Memory Aids**
+  - Add contextual timestamps to notes (e.g., "Updated 2 hours ago").
+  - Introduce sorting options (by created, updated, alphabetical).
+  - Provide rich highlighting for search terms in the note list to easily spot the context.
+- [ ] **8.2 UI/UX Polish**
+  - Improve typography, spacing, and contrast (dark mode optimizations).
+  - Make pane transitions smoother and more native-like.
+  - Add visual feedback for saves (e.g., "All changes saved locally").
+- [ ] **8.3 Tag Management UI**
+  - Add ability to rename tags, change tag colors with a picker, and delete tags with a confirmation dialog.
+
+## Phase 9: Cloud Sync Preparation
+
+*Objective: Architect data to optionally sync to a personal cloud (e.g., WebDAV, iCloud, or a lightweight custom sync server).*
+
+- [ ] **9.1 Conflict Resolution Strategy**
+  - Leverage ULIDs, `updated_at`, and `is_deleted` to build a simple "last-write-wins" sync logic.
+- [ ] **9.2 Export/Import Automations**
+  - Allow automatic periodic background syncs of the SQLite database to a user-provided bucket.

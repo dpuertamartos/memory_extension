@@ -4,6 +4,16 @@ import TagSelector from "./TagSelector"
 import { useDeleteNote, useNote, useUpdateNote } from "../../hooks/useNotes"
 import { useAppStore } from "../../store/useAppStore"
 
+const stripTagTrigger = (text: string, query: string) => {
+  const hashIndex = text.lastIndexOf("#")
+  if (hashIndex === -1) return text
+
+  const typed = text.slice(hashIndex + 1)
+  if (!typed.startsWith(query)) return text
+
+  return text.slice(0, hashIndex) + text.slice(hashIndex + 1 + query.length)
+}
+
 const NoteEditor = () => {
   const { selectedNoteId, setSelectedNoteId } = useAppStore()
   const { data: note } = useNote(selectedNoteId)
@@ -15,12 +25,29 @@ const NoteEditor = () => {
   const [tagQuery, setTagQuery] = useState("")
   const [tagAnchor, setTagAnchor] = useState<{ top: number; left: number } | null>(null)
   const contentRef = useRef<HTMLTextAreaElement>(null)
+  const hydratedNoteIdRef = useRef<string | null>(null)
 
+  // Hydrate local editor state only when the user switches notes — not on every
+  // query refetch after a debounced save (which caused text rollback while typing).
   useEffect(() => {
-    if (!note) return
+    if (!selectedNoteId) {
+      hydratedNoteIdRef.current = null
+      setTitle("")
+      setContent("")
+      setTagQuery("")
+      setTagAnchor(null)
+      return
+    }
+
+    if (!note || note.id !== selectedNoteId) return
+    if (hydratedNoteIdRef.current === selectedNoteId) return
+
+    hydratedNoteIdRef.current = selectedNoteId
     setTitle(note.title)
     setContent(note.content)
-  }, [note])
+    setTagQuery("")
+    setTagAnchor(null)
+  }, [note, selectedNoteId])
 
   useEffect(() => {
     const textarea = contentRef.current
@@ -75,6 +102,16 @@ const NoteEditor = () => {
     setSelectedNoteId(null)
   }
 
+  const handleTagApplied = () => {
+    if (!tagQuery) return
+
+    const stripped = stripTagTrigger(content, tagQuery)
+    if (stripped !== content) {
+      setContent(stripped)
+      updateNote(note.id, { content: stripped })
+    }
+  }
+
   return (
     <div className="relative flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
@@ -127,6 +164,7 @@ const NoteEditor = () => {
             selectedTags={note.tags}
             anchor={tagAnchor}
             query={tagQuery}
+            onTagApplied={handleTagApplied}
             onClose={() => {
               setTagAnchor(null)
               setTagQuery("")
