@@ -1,21 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-// import { useState } from "react"
 import { BrowserRouter } from "react-router"
 import LayoutApp from "./layout/LayoutApp"
-import LogoApp from "./layout/LogoApp"
-import { createTRPCClient, httpBatchLink, httpSubscriptionLink, splitLink } from "@trpc/client"
-import type { AppRouter } from "../../server/src/router"
-import { TRPCProvider } from "./lib/trpc"
+import DbProvider from "./providers/DbProvider"
 import { useThemeStore } from "./store/useThemeStore"
 
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        // With SSR, we usually want to set some default staleTime
-        // above 0 to avoid refetching immediately on the client
         staleTime: 60 * 1000,
-
         refetchOnWindowFocus: false,
         retry: false,
         gcTime: 1000 * 60 * 60 * 24 * 7,
@@ -23,95 +16,26 @@ function makeQueryClient() {
     },
   })
 }
-let browserQueryClient: QueryClient | undefined = undefined
+
+let browserQueryClient: QueryClient | undefined
+
 function getQueryClient() {
-  if (typeof window === "undefined") {
-    // Server: always make a new query client
-    return makeQueryClient()
-  } else {
-    // Browser: make a new query client if we don't already have one
-    // This is very important, so we don't re-make a new client if React
-    // suspends during the initial render. This may not be needed if we
-    // have a suspense boundary BELOW the creation of the query client
-    if (!browserQueryClient) browserQueryClient = makeQueryClient()
-    return browserQueryClient
-  }
+  if (!browserQueryClient) browserQueryClient = makeQueryClient()
+  return browserQueryClient
 }
 
 const App = () => {
   const { isDarkMode } = useThemeStore()
-  const url = import.meta.env.VITE_URL_BACKEND
-  if (!url)
-    return (
-      <div className="p-6">
-        <LogoApp />
-        <div className="flex flex-col items-center mt-12">
-          <h1>Error</h1>
-          <p>URL_BACKEND not set in env file</p>
-        </div>
-      </div>
-    )
-
   const queryClient = getQueryClient()
-  const trpcClient = createTRPCClient<AppRouter>({
-    links: [
-      splitLink({
-        // uses the httpSubscriptionLink for subscriptions
-        condition: (op) => op.type === "subscription",
-        true: httpSubscriptionLink({
-          url,
-        }),
-        false: httpBatchLink({
-          url,
-          fetch(url, options) {
-            return fetch(url, {
-              ...options,
-              credentials: "include",
-            })
-          },
-        }),
-      }),
-    ],
-  })
 
-  // const [queryClient] = useState(
-  //   () =>
-  //     new QueryClient({
-  //       defaultOptions: {
-  //         queries: {
-  //           refetchOnWindowFocus: false,
-  //           retry: false,
-  //           gcTime: 1000 * 60 * 60 * 24 * 7,
-  //         },
-  //       },
-  //     })
-  // )
-
-  // const [trpcClient] = useState(() =>
-  //   trpc.createClient({
-  //     links: [
-  //       httpBatchLink({
-  //         url,
-  //         fetch(url, options) {
-  //           return fetch(url, {
-  //             ...options,
-  //             credentials: "include",
-  //           })
-  //         },
-  //       }),
-  //     ],
-  //   })
-  // )
   return (
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
-          <div className={isDarkMode ? "dark" : "light"}>
-            <QueryClientProvider client={queryClient}>
-              <LayoutApp />
-            </QueryClientProvider>
-          </div>
-        </TRPCProvider>
+        <div className={isDarkMode ? "dark" : "light"}>
+          <DbProvider>
+            <LayoutApp />
+          </DbProvider>
+        </div>
       </QueryClientProvider>
     </BrowserRouter>
   )

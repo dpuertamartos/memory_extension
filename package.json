@@ -1,28 +1,13 @@
 {
-  "name": "fullstack-saas-boilerplate",
+  "name": "local-brain-pwa",
   "private": true,
   "scripts": {
-    "build:drizzle": "pnpm --filter @fsb/drizzle run build",
-    "build:zod": "pnpm --filter @fsb/shared run build",
-    "build:server": "pnpm --filter @fsb/server run build",
-    "build:backend": "run-s build:drizzle build:zod build:server",
     "build:client": "pnpm --filter @fsb/client run build",
-    "build:frontend": "run-s build:backend build:client",
-    "build": "run-s build:frontend",
-    "dev:client": "pnpm --filter @fsb/client run dev",
-    "dev:server": "pnpm --filter @fsb/server run dev",
-    "dev": "run-p dev:*",
-    "push": "pnpm --filter @fsb/drizzle run push",
-    "seed": "pnpm --filter @fsb/drizzle run seed",
-    "start:client": "pnpm --filter @fsb/client run start",
-    "start:server": "pnpm --filter @fsb/server run start",
-    "start": "run-p start:*",
+    "build": "pnpm run build:client",
+    "dev": "pnpm --filter @fsb/client run dev",
+    "start": "pnpm --filter @fsb/client run start",
     "test": "pnpm --filter @fsb/tests-e2e run test",
     "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' + && find . -name 'package-lock.json' -type f -delete && find . -name 'yarn.lock' -type f -delete && find . -name 'pnpm-lock.yaml' -type f -delete && find . -name 'dist' -type d -prune -exec rm -rf '{}' +"
-  },
-  "dependencies": {
-    "npm-run-all": "^4.1.5",
-    "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
     "wait-port": "^1.1.0"

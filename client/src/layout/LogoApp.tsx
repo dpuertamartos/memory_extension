@@ -1,15 +1,29 @@
 import logoApp from "../assets/images/logo-saas-transparent.png"
 
-const LogoApp = () => {
+type LogoAppProps = {
+  compact?: boolean
+}
+
+const LogoApp = ({ compact = false }: LogoAppProps) => {
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2">
+        <img src={logoApp} alt="Local Brain logo" className="h-8 w-8" />
+        <span className="text-sm font-semibold">Local Brain</span>
+      </div>
+    )
+  }
+
   return (
     <div>
-      <div className="flex justify-center mt-4">
-        <img src={logoApp} alt="logo" className="w-24" />
+      <div className="mt-4 flex justify-center">
+        <img src={logoApp} alt="Local Brain logo" className="w-24" />
       </div>
-      <div className="flex  justify-center mt-2">
-        <b className="text-sm">Fullstack SaaS Boilerplate</b>
+      <div className="mt-2 flex justify-center">
+        <b className="text-sm">Local Brain</b>
       </div>
     </div>
   )
 }
+
 export default LogoApp

@@ -1,67 +1,44 @@
-import React, { useEffect, useRef } from "react"
-import AppRouter from "../AppRouter"
-import AvatarMenu from "../auth/AvatarMenu"
-import NavLinks from "./NavLinks"
-import BurgerLogic from "./BurgerLogic"
-import LogoApp from "./LogoApp"
-import ImpersonationBanner from "./ImpersonationBanner"
+import { MoonIcon, SunIcon } from "@phosphor-icons/react"
 import { Link } from "react-router"
+import AppRouter from "../AppRouter"
+import MobileNav from "../components/notes/MobileNav"
+import LogoApp from "./LogoApp"
 import { useThemeStore } from "../store/useThemeStore"
 
 const LayoutApp = () => {
-  const [sidebarOpen, setSidebarOpen] = React.useState(false)
-  const { isDarkMode } = useThemeStore()
-  const sidebarRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      // Check if click is outside the sidebar
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
-        setSidebarOpen(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [sidebarRef])
+  const { isDarkMode, toggleDarkMode } = useThemeStore()
 
   return (
-    <div className={`${isDarkMode ? "dark" : ""}`}>
-      <div className="flex h-screen text-gray-600 bg-white dark:bg-gray-700 dark:text-white">
-        <div
-          ref={sidebarRef} // Reference to the sidebar
-          className={`fixed z-30 inset-y-0 left-0 w-64  transform bg-gray-50 dark:bg-gray-800 ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } transition-transform duration-200 ease-in-out md:relative md:translate-x-0`}
-        >
-          <Link to="/">
-            <LogoApp />
+    <div className={`${isDarkMode ? "dark" : ""} flex h-screen flex-col`}>
+      <div className="flex min-h-0 flex-1 flex-col bg-white text-gray-600 dark:bg-gray-900 dark:text-white">
+        <header className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+          <Link to="/" className="flex items-center gap-3">
+            <LogoApp compact />
           </Link>
-          <NavLinks onClick={() => setSidebarOpen(false)} />
-        </div>
 
-        <div className="flex-1 flex flex-col overflow-hidden ">
-          <ImpersonationBanner />
-          <header className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 p-4">
-            <div className="flex items-center">
-              <button
-                className="text-gray-500 dark:text-gray-400 focus:outline-hidden md:hidden"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-              >
-                <BurgerLogic sidebarOpen={sidebarOpen} />
-              </button>
-            </div>
-            <div className="flex items-center">
-              <AvatarMenu />
-            </div>
-          </header>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/settings"
+              className="hidden rounded px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 md:inline"
+            >
+              Settings
+            </Link>
+            <button
+              type="button"
+              onClick={toggleDarkMode}
+              className="rounded p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+              aria-label="Toggle theme"
+            >
+              {isDarkMode ? <SunIcon size={20} /> : <MoonIcon size={20} />}
+            </button>
+          </div>
+        </header>
 
-          <main className="flex-1 overflow-y-auto">
-            <AppRouter />
-          </main>
-        </div>
+        <main className="min-h-0 flex-1 overflow-hidden">
+          <AppRouter />
+        </main>
+
+        <MobileNav />
       </div>
     </div>
   )
