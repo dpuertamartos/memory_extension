@@ -1,4 +1,4 @@
-import logoApp from "../assets/images/logo-saas-transparent.png"
+import MemoryMark from "../components/brand/MemoryMark"
 
 type LogoAppProps = {
   compact?: boolean
@@ -7,9 +7,11 @@ type LogoAppProps = {
 const LogoApp = ({ compact = false }: LogoAppProps) => {
   if (compact) {
     return (
-      <div className="flex items-center gap-2">
-        <img src={logoApp} alt="Local Brain logo" className="h-8 w-8" />
-        <span className="text-sm font-semibold">Local Brain</span>
+      <div className="flex items-center gap-2.5">
+        <MemoryMark className="h-8 w-8 shrink-0 text-accent dark:text-accent-muted" />
+        <span className="font-display text-sm font-semibold tracking-tight text-ink dark:text-stone-100">
+          Local Brain
+        </span>
       </div>
     )
   }
@@ -17,10 +19,12 @@ const LogoApp = ({ compact = false }: LogoAppProps) => {
   return (
     <div>
       <div className="mt-4 flex justify-center">
-        <img src={logoApp} alt="Local Brain logo" className="w-24" />
+        <MemoryMark className="h-16 w-16 text-accent dark:text-accent-muted" />
       </div>
       <div className="mt-2 flex justify-center">
-        <b className="text-sm">Local Brain</b>
+        <span className="font-display text-sm font-semibold text-ink dark:text-stone-100">
+          Local Brain
+        </span>
       </div>
     </div>
   )

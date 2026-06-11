@@ -13,27 +13,19 @@ const BrainPage = () => {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-gray-200 px-3 py-2.5 dark:border-gray-700 md:px-4 md:py-3">
-        <div className="mb-2.5 flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-800 md:mb-3">
+      <div className="surface-header px-3 py-2.5 md:px-4 md:py-3">
+        <div className="segmented-control mb-2.5 md:mb-3">
           <button
             type="button"
             onClick={() => setMainView("notes")}
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-              !showCalendar
-                ? "bg-white text-blue-700 shadow-sm dark:bg-gray-900 dark:text-blue-300"
-                : "text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
-            }`}
+            className={`segmented-item ${!showCalendar ? "segmented-item-active" : ""}`}
           >
             {t("nav.notes")}
           </button>
           <button
             type="button"
             onClick={() => setMainView("calendar")}
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-              showCalendar
-                ? "bg-white text-blue-700 shadow-sm dark:bg-gray-900 dark:text-blue-300"
-                : "text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
-            }`}
+            className={`segmented-item ${showCalendar ? "segmented-item-active" : ""}`}
           >
             {t("nav.calendar")}
           </button>
@@ -46,7 +38,7 @@ const BrainPage = () => {
       ) : (
         <div className="flex min-h-0 flex-1">
           <aside
-            className={`w-full shrink-0 border-r border-gray-200 transition-opacity duration-200 dark:border-gray-700 md:block md:w-52 lg:w-60 ${
+            className={`surface-panel w-full shrink-0 border-r border-border transition-opacity duration-200 dark:border-charcoal-border md:block md:w-52 lg:w-60 ${
               mobilePane === "tags" ? "block opacity-100" : "hidden opacity-0 md:opacity-100"
             }`}
           >
@@ -54,7 +46,7 @@ const BrainPage = () => {
           </aside>
 
           <section
-            className={`w-full shrink-0 border-r border-gray-200 transition-opacity duration-200 dark:border-gray-700 md:block md:w-72 lg:w-80 ${
+            className={`surface-panel w-full shrink-0 border-r border-border transition-opacity duration-200 dark:border-charcoal-border md:block md:w-72 lg:w-80 ${
               mobilePane === "list" ? "block opacity-100" : "hidden opacity-0 md:block md:opacity-100"
             }`}
           >
@@ -62,7 +54,7 @@ const BrainPage = () => {
           </section>
 
           <section
-            className={`min-w-0 flex-1 transition-opacity duration-200 ${
+            className={`surface-app min-w-0 flex-1 transition-opacity duration-200 ${
               mobilePane === "editor" ? "block opacity-100" : "hidden opacity-0 md:block md:opacity-100"
             }`}
           >

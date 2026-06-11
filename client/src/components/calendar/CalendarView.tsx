@@ -66,10 +66,16 @@ const CalendarView = () => {
     return (
       <div className="mt-0.5 flex justify-center gap-0.5">
         {activity.created > 0 && (
-          <span className="h-1.5 w-1.5 rounded-full bg-green-500" title={t("calendar.activityCreated")} />
+          <span
+            className="h-1.5 w-1.5 rounded-full bg-pulse-create"
+            title={t("calendar.activityCreated")}
+          />
         )}
         {activity.updated > 0 && (
-          <span className="h-1.5 w-1.5 rounded-full bg-blue-500" title={t("calendar.activityUpdated")} />
+          <span
+            className="h-1.5 w-1.5 rounded-full bg-pulse-update"
+            title={t("calendar.activityUpdated")}
+          />
         )}
       </div>
     )
@@ -82,7 +88,7 @@ const CalendarView = () => {
     return (
       <div className="grid grid-cols-7 gap-1">
         {weekdayLabels.map((label) => (
-          <div key={label} className="py-1 text-center text-xs font-medium text-gray-500">
+          <div key={label} className="section-label py-1 text-center">
             {label}
           </div>
         ))}
@@ -98,11 +104,11 @@ const CalendarView = () => {
               onClick={() => setSelectedDay(day)}
               className={`flex min-h-[3.25rem] flex-col items-center rounded-lg p-1 text-sm transition-colors ${
                 selected
-                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200"
+                  ? "bg-accent-soft text-accent dark:bg-accent/20 dark:text-accent-muted"
                   : inMonth
-                    ? "hover:bg-gray-100 dark:hover:bg-gray-800"
-                    : "text-gray-400 dark:text-gray-600"
-              } ${isToday ? "ring-1 ring-blue-400" : ""}`}
+                    ? "hover:bg-accent-soft/50 dark:hover:bg-charcoal"
+                    : "text-ink-subtle dark:text-charcoal-subtle"
+              } ${isToday ? "ring-1 ring-accent-muted dark:ring-accent/50" : ""}`}
             >
               <span>{day.getDate()}</span>
               {renderActivityDots(day)}
@@ -129,14 +135,14 @@ const CalendarView = () => {
               onClick={() => setSelectedDay(day)}
               className={`rounded-lg border p-3 text-left transition-colors ${
                 selected
-                  ? "border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/30"
-                  : "border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
-              } ${isToday ? "ring-1 ring-blue-400" : ""}`}
+                  ? "border-accent-muted bg-accent-soft dark:border-accent/50 dark:bg-accent/15"
+                  : "border-border hover:bg-accent-soft/40 dark:border-charcoal-border dark:hover:bg-charcoal"
+              } ${isToday ? "ring-1 ring-accent-muted dark:ring-accent/50" : ""}`}
             >
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-ink-subtle">
                 {day.toLocaleDateString(i18n.language, { weekday: "short" })}
               </p>
-              <p className="text-lg font-semibold">{day.getDate()}</p>
+              <p className="font-display text-lg font-semibold">{day.getDate()}</p>
               {renderActivityDots(day)}
             </button>
           )
@@ -164,10 +170,10 @@ const CalendarView = () => {
               setAnchor(monthDate)
               setSelectedDay(monthDate)
             }}
-            className="rounded-lg border border-gray-200 p-3 text-left hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+            className="surface-inset p-3 text-left transition-colors hover:bg-accent-soft/40 dark:hover:bg-charcoal"
           >
             <p className="font-medium">{label}</p>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-ink-subtle">
               {noteCount === 0
                 ? t("calendar.noActivity")
                 : t("calendar.noteActivity", { count: noteCount })}
@@ -181,18 +187,18 @@ const CalendarView = () => {
   const renderDayList = () => (
     <div className="space-y-2">
       {selectedDayNotes.length === 0 && (
-        <p className="text-sm text-gray-500">{t("calendar.noNoteActivity")}</p>
+        <p className="text-sm text-ink-subtle">{t("calendar.noNoteActivity")}</p>
       )}
       {selectedDayNotes.map((note) => (
         <button
           key={note.id}
           type="button"
           onClick={() => openNote(note.id)}
-          className="w-full rounded-lg border border-gray-200 p-3 text-left hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+          className="surface-inset w-full p-3 text-left transition-colors hover:bg-accent-soft/40 dark:hover:bg-charcoal"
         >
           <div className="flex items-start justify-between gap-2">
             <p className="font-medium">{note.title || untitled}</p>
-            <span className="shrink-0 text-xs text-gray-400">
+            <span className="shrink-0 text-xs text-ink-subtle">
               {formatRelativeTime(note.updatedAt, i18n.language)}
             </span>
           </div>
@@ -216,17 +222,17 @@ const CalendarView = () => {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+      <div className="surface-header flex flex-wrap items-center justify-between gap-3 px-4 py-3">
         <div className="flex items-center gap-1">
           {scopes.map(({ id, label }) => (
             <button
               key={id}
               type="button"
               onClick={() => setScope(id)}
-              className={`rounded-lg px-3 py-1.5 text-sm ${
+              className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
                 scope === id
-                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-                  : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                  ? "bg-accent-soft text-accent dark:bg-accent/20 dark:text-accent-muted"
+                  : "text-ink-muted hover:bg-paper dark:text-charcoal-muted dark:hover:bg-charcoal"
               }`}
             >
               {label}
@@ -238,7 +244,7 @@ const CalendarView = () => {
           <button
             type="button"
             onClick={handlePrev}
-            className="rounded p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="icon-btn !p-1.5"
             aria-label={t("calendar.previousPeriod")}
           >
             <CaretLeftIcon size={18} />
@@ -246,14 +252,14 @@ const CalendarView = () => {
           <button
             type="button"
             onClick={handleToday}
-            className="min-w-[10rem] text-sm font-medium"
+            className="min-w-[10rem] font-display text-sm font-medium"
           >
             {formatScopeLabel(scope, anchor, i18n.language)}
           </button>
           <button
             type="button"
             onClick={handleNext}
-            className="rounded p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="icon-btn !p-1.5"
             aria-label={t("calendar.nextPeriod")}
           >
             <CaretRightIcon size={18} />
@@ -263,7 +269,7 @@ const CalendarView = () => {
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 lg:flex-row">
         <div className="min-w-0 flex-1">
-          {isLoading && <p className="text-sm text-gray-500">{t("calendar.loading")}</p>}
+          {isLoading && <p className="text-sm text-ink-subtle">{t("calendar.loading")}</p>}
           {!isLoading && scope === "month" && renderMonthGrid()}
           {!isLoading && scope === "week" && renderWeekGrid()}
           {!isLoading && scope === "year" && renderYearGrid()}
@@ -273,7 +279,7 @@ const CalendarView = () => {
         {scope !== "day" && (
           <aside className="w-full shrink-0 space-y-4 lg:w-72">
             <div>
-              <h3 className="mb-2 text-sm font-semibold text-gray-500">
+              <h3 className="section-label mb-2">
                 {selectedDay
                   ? selectedDay.toLocaleDateString(i18n.language, {
                       weekday: "long",
@@ -287,7 +293,7 @@ const CalendarView = () => {
 
             {topTags.length > 0 && (
               <div>
-                <h3 className="mb-2 text-sm font-semibold text-gray-500">{t("calendar.topTags")}</h3>
+                <h3 className="section-label mb-2">{t("calendar.topTags")}</h3>
                 <div className="flex flex-wrap gap-1.5">
                   {topTags.map((tag) => (
                     <span
@@ -304,13 +310,10 @@ const CalendarView = () => {
 
             {topKeywords.length > 0 && (
               <div>
-                <h3 className="mb-2 text-sm font-semibold text-gray-500">{t("calendar.topKeywords")}</h3>
+                <h3 className="section-label mb-2">{t("calendar.topKeywords")}</h3>
                 <div className="flex flex-wrap gap-1.5">
                   {topKeywords.map(({ word, count }) => (
-                    <span
-                      key={word}
-                      className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                    >
+                    <span key={word} className="chip-muted">
                       {word} ({count})
                     </span>
                   ))}

@@ -2,6 +2,7 @@ import { MoonIcon, SunIcon } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 import AppRouter from "../AppRouter"
+import LocalTrustBadge from "../components/brand/LocalTrustBadge"
 import MobileNav from "../components/notes/MobileNav"
 import LogoApp from "./LogoApp"
 import { useThemeStore } from "../store/useThemeStore"
@@ -12,23 +13,24 @@ const LayoutApp = () => {
 
   return (
     <div className={`${isDarkMode ? "dark" : ""} flex h-screen flex-col`}>
-      <div className="flex min-h-0 flex-1 flex-col bg-white text-gray-600 dark:bg-gray-900 dark:text-white">
-        <header className="safe-area-top flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-          <Link to="/" className="flex items-center gap-3">
+      <div className="surface-app flex min-h-0 flex-1 flex-col">
+        <header className="safe-area-top surface-header flex items-center justify-between px-4 py-3">
+          <Link to="/" className="flex min-w-0 items-center gap-3">
             <LogoApp compact />
           </Link>
 
           <div className="flex items-center gap-2">
+            <LocalTrustBadge />
             <Link
               to="/settings"
-              className="hidden rounded px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 md:inline"
+              className="hidden rounded-md px-3 py-1.5 text-sm text-ink-muted transition-colors hover:bg-paper hover:text-ink md:inline dark:text-charcoal-muted dark:hover:bg-charcoal-elevated dark:hover:text-stone-200"
             >
               {t("common.settings")}
             </Link>
             <button
               type="button"
               onClick={toggleDarkMode}
-              className="rounded p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="icon-btn"
               aria-label={t("nav.toggleTheme")}
             >
               {isDarkMode ? <SunIcon size={20} /> : <MoonIcon size={20} />}

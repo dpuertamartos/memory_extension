@@ -42,20 +42,21 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["logo-saas-transparent-square.png"],
+      includeAssets: ["memory-mark.svg"],
       manifest: {
         name: "Local Brain",
         short_name: "Brain",
-        description: "Local-first note-taking PWA",
-        theme_color: "#034DA2",
-        background_color: "#ffffff",
+        description: "Your memory, on this device. Local-first note-taking PWA.",
+        theme_color: "#8B4D3B",
+        background_color: "#FAF7F2",
         display: "standalone",
         start_url: "/",
         icons: [
           {
-            src: "logo-saas-transparent-square.png",
-            sizes: "512x512",
-            type: "image/png",
+            src: "memory-mark.svg",
+            sizes: "any",
+            type: "image/svg+xml",
+            purpose: "any maskable",
           },
         ],
       },

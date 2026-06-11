@@ -8,9 +8,6 @@ import { formatRelativeTime } from "../../lib/formatRelativeTime"
 import { stripMarkdown } from "../../lib/stripMarkdown"
 import { useAppStore } from "../../store/useAppStore"
 
-const highlightClass =
-  "[&_mark]:rounded-sm [&_mark]:bg-yellow-200 [&_mark]:px-0.5 [&_mark]:text-gray-900 dark:[&_mark]:bg-yellow-500/30 dark:[&_mark]:text-yellow-100"
-
 const NoteList = () => {
   const { t, i18n } = useTranslation()
   const {
@@ -66,14 +63,14 @@ const NoteList = () => {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+      <div className="surface-header flex items-center justify-between px-4 py-3">
+        <h2 className="section-label">
           {isSearching ? t("notes.results") : selectedTagId ? t("notes.filtered") : t("notes.title")}
         </h2>
         <button
           type="button"
           onClick={() => void handleCreate()}
-          className="btn-blue flex items-center gap-1.5 !px-3 !py-2"
+          className="btn-primary flex items-center gap-1.5 !px-3 !py-2"
           disabled={createNote.isPending}
         >
           <PlusIcon size={16} />
@@ -84,11 +81,11 @@ const NoteList = () => {
       <FilterBanner noteCount={visibleNotes.length} />
 
       {!isSearching && (
-        <div className="border-b border-gray-100 px-4 py-2 dark:border-gray-700">
+        <div className="border-b border-border px-4 py-2 dark:border-charcoal-border">
           <select
             value={noteSort}
             onChange={(event) => setNoteSort(event.target.value as typeof noteSort)}
-            className="w-full rounded border-0 bg-transparent py-1 text-xs text-gray-500 shadow-none focus:ring-0"
+            className="w-full rounded-md border-0 bg-transparent py-1 text-xs text-ink-subtle shadow-none focus:ring-0"
             aria-label={t("notes.sortNotes")}
           >
             <option value="updated">{t("notes.sortUpdated")}</option>
@@ -105,14 +102,21 @@ const NoteList = () => {
           </p>
         )}
 
-        {isLoading && <p className="p-4 text-sm text-gray-500">{t("notes.loadingNotes")}</p>}
+        {isLoading && <p className="p-4 text-sm text-ink-subtle">{t("notes.loadingNotes")}</p>}
 
         {!isLoading && visibleNotes.length === 0 && (
-          <div className="flex flex-col items-center justify-center gap-2 p-8 text-center text-gray-500">
-            <NotePencilIcon size={32} />
-            <p className="text-sm">
-              {isSearching ? t("notes.noMatchingNotes") : t("notes.noNotesYet")}
-            </p>
+          <div className="flex flex-col items-center justify-center gap-3 p-8 text-center text-ink-muted">
+            <div className="rounded-full bg-accent-soft p-4 dark:bg-accent/15">
+              <NotePencilIcon size={28} className="text-accent dark:text-accent-muted" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-ink dark:text-stone-200">
+                {isSearching ? t("notes.noMatchingNotes") : t("notes.noNotesYet")}
+              </p>
+              {!isSearching && (
+                <p className="mt-1 text-xs text-ink-subtle">{t("notes.noNotesYetHint")}</p>
+              )}
+            </div>
           </div>
         )}
 
@@ -127,18 +131,14 @@ const NoteList = () => {
               key={note.id}
               type="button"
               onClick={() => setSelectedNoteId(note.id)}
-              className={`w-full border-b border-gray-100 px-4 py-3.5 text-left transition-colors duration-150 dark:border-gray-700 ${
-                isActive
-                  ? "bg-blue-50 dark:bg-blue-900/20"
-                  : isNew
-                    ? "bg-emerald-50/60 dark:bg-emerald-950/20"
-                    : "hover:bg-gray-50 dark:hover:bg-gray-800"
+              className={`w-full border-b border-border px-4 py-3.5 text-left transition-colors duration-150 dark:border-charcoal-border ${
+                isActive ? "row-active" : isNew ? "row-new" : "hover:bg-accent-soft/40 dark:hover:bg-charcoal"
               }`}
             >
               <div className="flex items-start justify-between gap-2">
                 {searchHit && titleHasHighlight ? (
                   <p
-                    className={`truncate font-medium ${highlightClass}`}
+                    className={`truncate font-medium highlight-mark`}
                     dangerouslySetInnerHTML={{
                       __html: searchHit.title_snippet,
                     }}
@@ -147,14 +147,14 @@ const NoteList = () => {
                   <p className="truncate font-medium">
                     {note.title || untitled}
                     {isNew && (
-                      <span className="ml-2 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                      <span className="ml-2 rounded-full bg-synapse-soft px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-synapse uppercase dark:bg-synapse/20 dark:text-synapse-soft">
                         {t("common.new")}
                       </span>
                     )}
                   </p>
                 )}
                 <span
-                  className="shrink-0 text-xs text-gray-400"
+                  className="shrink-0 text-xs text-ink-subtle"
                   title={new Date(note.updatedAt).toLocaleString(i18n.language)}
                 >
                   {formatRelativeTime(note.updatedAt, i18n.language)}
@@ -163,13 +163,13 @@ const NoteList = () => {
 
               {searchHit ? (
                 <p
-                  className={`mt-1 line-clamp-2 text-xs text-gray-500 ${highlightClass}`}
+                  className={`mt-1 line-clamp-2 text-xs text-ink-muted highlight-mark`}
                   dangerouslySetInnerHTML={{
                     __html: searchHit.content_snippet || searchHit.title_snippet,
                   }}
                 />
               ) : (
-                <p className="mt-1 line-clamp-2 text-xs text-gray-500">
+                <p className="mt-1 line-clamp-2 text-xs text-ink-muted">
                   {stripMarkdown(note.content) || t("notes.emptyNote")}
                 </p>
               )}

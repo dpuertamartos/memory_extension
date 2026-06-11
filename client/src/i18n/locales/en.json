@@ -25,7 +25,9 @@
     "calendar": "Calendar",
     "editor": "Editor",
     "settings": "Settings",
-    "toggleTheme": "Toggle theme"
+    "toggleTheme": "Toggle theme",
+    "localOnly": "On this device",
+    "localTrustHint": "Your notes are stored only in this browser — never sent to a server"
   },
   "notes": {
     "title": "Notes",
@@ -33,17 +35,19 @@
     "filtered": "Filtered",
     "newNote": "New",
     "selectOrCreate": "Select a note or create a new one",
+    "selectOrCreateHint": "Your memories stay on this device. Pick one from the list or start writing.",
     "browseNotes": "Browse notes",
     "loadingNote": "Loading note…",
     "loadingNotes": "Loading notes…",
     "noNotesYet": "No notes yet",
+    "noNotesYetHint": "Capture your first memory — it saves locally as you write.",
     "noMatchingNotes": "No matching notes",
     "emptyNote": "Empty note",
     "noteTitle": "Note title",
-    "newNoteCreated": "New note created",
+    "newNoteCreated": "New note",
     "addTitleBelow": "— add a title below",
     "saving": "Saving…",
-    "saved": "Saved",
+    "saved": "Saved locally",
     "backToNotes": "Back to notes",
     "deleteNote": "Delete note",
     "sortNotes": "Sort notes",
@@ -119,6 +123,8 @@
   "settings": {
     "title": "Settings",
     "description": "Your data lives entirely in this browser. Export regularly to keep backups.",
+    "privacyTitle": "Local-first privacy",
+    "privacyBody": "Notes, tags, and search indexes are stored on this device using browser storage. Nothing is uploaded unless you export it yourself.",
     "language": "Language",
     "languageDescription": "Choose your preferred display language.",
     "installed": "App is installed on this device.",
@@ -132,6 +138,7 @@
   },
   "db": {
     "error": "Database error",
-    "initFailed": "Failed to initialize database"
+    "initFailed": "Failed to initialize database",
+    "opening": "Opening your local memory…"
   }
 }

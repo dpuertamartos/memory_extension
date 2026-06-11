@@ -25,7 +25,9 @@
     "calendar": "Calendario",
     "editor": "Editor",
     "settings": "Ajustes",
-    "toggleTheme": "Cambiar tema"
+    "toggleTheme": "Cambiar tema",
+    "localOnly": "En este dispositivo",
+    "localTrustHint": "Tus notas se guardan solo en este navegador — nunca se envían a un servidor"
   },
   "notes": {
     "title": "Notas",
@@ -33,17 +35,19 @@
     "filtered": "Filtradas",
     "newNote": "Nueva",
     "selectOrCreate": "Selecciona una nota o crea una nueva",
+    "selectOrCreateHint": "Tus recuerdos permanecen en este dispositivo. Elige una de la lista o empieza a escribir.",
     "browseNotes": "Ver notas",
     "loadingNote": "Cargando nota…",
     "loadingNotes": "Cargando notas…",
     "noNotesYet": "Aún no hay notas",
+    "noNotesYetHint": "Captura tu primer recuerdo — se guarda localmente mientras escribes.",
     "noMatchingNotes": "No hay notas coincidentes",
     "emptyNote": "Nota vacía",
     "noteTitle": "Título de la nota",
-    "newNoteCreated": "Nota nueva creada",
+    "newNoteCreated": "Nota nueva",
     "addTitleBelow": "— añade un título abajo",
     "saving": "Guardando…",
-    "saved": "Guardada",
+    "saved": "Guardada localmente",
     "backToNotes": "Volver a notas",
     "deleteNote": "Eliminar nota",
     "sortNotes": "Ordenar notas",
@@ -119,6 +123,8 @@
   "settings": {
     "title": "Ajustes",
     "description": "Tus datos viven completamente en este navegador. Exporta con regularidad para mantener copias de seguridad.",
+    "privacyTitle": "Privacidad local",
+    "privacyBody": "Las notas, etiquetas e índices de búsqueda se almacenan en este dispositivo mediante el almacenamiento del navegador. Nada se sube a menos que lo exportes tú mismo.",
     "language": "Idioma",
     "languageDescription": "Elige tu idioma de visualización preferido.",
     "installed": "La app está instalada en este dispositivo.",
@@ -132,6 +138,7 @@
   },
   "db": {
     "error": "Error de base de datos",
-    "initFailed": "No se pudo inicializar la base de datos"
+    "initFailed": "No se pudo inicializar la base de datos",
+    "opening": "Abriendo tu memoria local…"
   }
 }

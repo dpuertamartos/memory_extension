@@ -3,8 +3,7 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import type { Tag } from "../../db/schema"
 import { useDeleteTag, useUpdateTag } from "../../hooks/useTags"
-
-const TAG_COLORS = ["#6366f1", "#ec4899", "#14b8a6", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#84cc16"]
+import { TAG_COLORS } from "../../lib/tagColors"
 
 type TagEditDialogProps = {
   tag: Tag
@@ -45,20 +44,20 @@ const TagEditDialog = ({ tag, onClose, onDeleted }: TagEditDialogProps) => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4">
       <div
-        className="w-full max-w-sm rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-600 dark:bg-gray-800"
+        className="w-full max-w-sm rounded-lg border border-border bg-paper-elevated shadow-panel dark:border-charcoal-border dark:bg-charcoal-elevated"
         role="dialog"
         aria-labelledby="tag-edit-title"
       >
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+        <div className="surface-header flex items-center justify-between px-4 py-3">
           <h3 id="tag-edit-title" className="text-sm font-semibold">
             {t("tags.editTag")}
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="icon-btn !p-1"
             aria-label={t("common.close")}
           >
             <XIcon size={16} />
@@ -67,7 +66,7 @@ const TagEditDialog = ({ tag, onClose, onDeleted }: TagEditDialogProps) => {
 
         <div className="space-y-4 p-4">
           <div>
-            <label htmlFor="tag-name" className="mb-1 block text-xs font-medium text-gray-500">
+            <label htmlFor="tag-name" className="mb-1 block text-xs font-medium text-ink-subtle">
               {t("common.name")}
             </label>
             <input
@@ -81,7 +80,7 @@ const TagEditDialog = ({ tag, onClose, onDeleted }: TagEditDialogProps) => {
           </div>
 
           <div>
-            <p className="mb-2 text-xs font-medium text-gray-500">{t("common.color")}</p>
+            <p className="mb-2 text-xs font-medium text-ink-subtle">{t("common.color")}</p>
             <div className="flex flex-wrap gap-2">
               {TAG_COLORS.map((option) => (
                 <button
@@ -90,7 +89,7 @@ const TagEditDialog = ({ tag, onClose, onDeleted }: TagEditDialogProps) => {
                   aria-label={t("tags.colorOption", { color: option })}
                   onClick={() => setColor(option)}
                   className={`h-7 w-7 rounded-full border-2 ${
-                    color === option ? "border-gray-900 dark:border-white" : "border-transparent"
+                    color === option ? "border-accent dark:border-accent-muted" : "border-transparent"
                   }`}
                   style={{ backgroundColor: option }}
                 />
@@ -115,7 +114,7 @@ const TagEditDialog = ({ tag, onClose, onDeleted }: TagEditDialogProps) => {
                 <button
                   type="button"
                   onClick={() => setConfirmDelete(false)}
-                  className="rounded border border-gray-300 px-3 py-1 text-xs dark:border-gray-600"
+                  className="btn-secondary !px-3 !py-1"
                 >
                   {t("common.cancel")}
                 </button>
@@ -133,15 +132,15 @@ const TagEditDialog = ({ tag, onClose, onDeleted }: TagEditDialogProps) => {
           )}
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-gray-200 px-4 py-3 dark:border-gray-700">
-          <button type="button" onClick={onClose} className="btn-white !py-1 !px-3">
+        <div className="flex justify-end gap-2 border-t border-border px-4 py-3 dark:border-charcoal-border">
+          <button type="button" onClick={onClose} className="btn-secondary !px-3 !py-1">
             {t("common.cancel")}
           </button>
           <button
             type="button"
             onClick={() => void handleSave()}
             disabled={updateTag.isPending || !name.trim()}
-            className="btn-blue !py-1 !px-3"
+            className="btn-primary !px-3 !py-1"
           >
             {t("common.save")}
           </button>

@@ -16,7 +16,7 @@ const MobileNav = () => {
   ]
 
   return (
-    <nav className="safe-area-bottom flex border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 md:hidden">
+    <nav className="safe-area-bottom flex border-t border-border bg-paper-elevated dark:border-charcoal-border dark:bg-charcoal md:hidden">
       {items.map(({ pane, label, icon: Icon }) => {
         const isActive = mobilePane === pane
         const showFilterDot = pane === "list" && selectedTagId !== null
@@ -27,18 +27,16 @@ const MobileNav = () => {
             key={pane}
             type="button"
             onClick={() => setMobilePane(pane)}
-            className={`relative flex flex-1 flex-col items-center gap-0.5 py-2 pt-2.5 text-[11px] font-medium transition-colors ${
-              isActive
-                ? "text-blue-600 dark:text-blue-400"
-                : "text-gray-500 dark:text-gray-400"
+            className={`relative flex flex-1 flex-col items-center gap-0.5 py-2.5 pt-3 text-xs font-medium transition-colors ${
+              isActive ? "text-accent dark:text-accent-muted" : "text-ink-subtle dark:text-charcoal-subtle"
             }`}
           >
             <span className="relative">
               <Icon size={22} weight={isActive ? "fill" : "regular"} />
               {(showFilterDot || showEditorDot) && (
                 <span
-                  className={`absolute -right-1 -top-0.5 h-2 w-2 rounded-full ${
-                    showFilterDot ? "bg-blue-500" : "bg-emerald-500"
+                  className={`absolute -top-0.5 -right-1 h-2 w-2 rounded-full ${
+                    showFilterDot ? "bg-accent" : "bg-synapse"
                   }`}
                   aria-hidden
                 />
@@ -46,7 +44,7 @@ const MobileNav = () => {
             </span>
             {label}
             {isActive && (
-              <span className="absolute bottom-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-blue-600 dark:bg-blue-400" />
+              <span className="absolute bottom-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-accent dark:bg-accent-muted" />
             )}
           </button>
         )

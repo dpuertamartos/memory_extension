@@ -2,6 +2,38 @@
 
 @theme {
   --text-xxs: 0.625rem;
+
+  --font-display: 'Literata', Georgia, 'Times New Roman', serif;
+  --font-body: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+
+  --color-paper: #faf7f2;
+  --color-paper-elevated: #fffdf9;
+  --color-ink: #2a2622;
+  --color-ink-muted: #6b6560;
+  --color-ink-subtle: #9a928a;
+  --color-border: #e8e2d9;
+  --color-border-strong: #d4cdc3;
+
+  --color-accent: #8b4d3b;
+  --color-accent-hover: #6f3d2f;
+  --color-accent-soft: #f5ebe6;
+  --color-accent-muted: #c9a99a;
+
+  --color-synapse: #5c7a6e;
+  --color-synapse-soft: #e8f0ec;
+  --color-pulse-create: #6b8f71;
+  --color-pulse-update: #b8936a;
+
+  --color-charcoal: #1c1917;
+  --color-charcoal-elevated: #292524;
+  --color-charcoal-border: #3f3a36;
+  --color-charcoal-muted: #a8a29e;
+  --color-charcoal-subtle: #78716c;
+
+  --radius-card: 0.625rem;
+  --radius-pill: 9999px;
+  --shadow-soft: 0 1px 3px rgb(42 38 34 / 0.06);
+  --shadow-panel: 0 4px 16px rgb(42 38 34 / 0.08);
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -12,72 +44,103 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
+    border-color: var(--color-border);
+  }
+
+  html {
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply bg-paper text-ink;
   }
 }
 
 button {
-  @apply font-bold py-2 px-4 rounded-sm cursor-pointer;
+  @apply cursor-pointer rounded-md px-4 py-2 font-medium;
 }
+
+.btn-primary {
+  @apply bg-accent text-paper-elevated text-sm shadow-sm;
+}
+.btn-primary:hover {
+  @apply bg-accent-hover;
+}
+
+.btn-secondary {
+  @apply border border-border-strong bg-paper-elevated text-ink-muted text-sm;
+}
+.btn-secondary:hover {
+  @apply bg-paper;
+}
+
+.btn-muted {
+  @apply bg-ink-subtle/80 text-paper-elevated text-sm;
+}
+.btn-muted:hover {
+  @apply bg-ink-muted;
+}
+
+/* Legacy aliases */
 .btn-blue {
-  @apply bg-[#034DA2] text-white text-xs;
+  @apply bg-accent text-paper-elevated text-sm shadow-sm;
 }
 .btn-blue:hover {
-  @apply bg-blue-700;
-}
-.btn-gray {
-  @apply bg-gray-500 text-white text-xs;
-}
-.btn-gray:hover {
-  @apply bg-gray-700;
+  @apply bg-accent-hover;
 }
 .btn-white {
-  @apply bg-white text-gray-500 border border-gray-500 text-xs;
+  @apply border border-border-strong bg-paper-elevated text-ink-muted text-sm;
 }
 .btn-white:hover {
-  @apply bg-gray-100;
+  @apply bg-paper;
+}
+.btn-gray {
+  @apply bg-ink-subtle/80 text-paper-elevated text-sm;
+}
+.btn-gray:hover {
+  @apply bg-ink-muted;
 }
 
 button:disabled,
 button[disabled],
 button:disabled:hover {
-  border: 1px solid #999999;
-  background-color: #cccccc;
-  color: #666666;
+  @apply cursor-not-allowed border border-border bg-paper text-ink-subtle opacity-60;
 }
+
 main {
-  @apply text-gray-700 dark:text-gray-200;
+  @apply text-ink dark:text-stone-200;
 }
 
 h1 {
-  @apply text-2xl font-bold text-gray-700 dark:text-gray-200 mt-2 mb-2;
+  @apply mt-2 mb-2 font-display text-2xl font-semibold text-ink dark:text-stone-100;
 }
 h2 {
-  @apply text-2xl font-semibold text-gray-700 dark:text-gray-200;
+  @apply font-display text-2xl font-semibold text-ink dark:text-stone-100;
+}
+h3 {
+  @apply font-display text-xl font-semibold text-ink dark:text-stone-100;
 }
 
-h3 {
-  @apply text-xl font-semibold text-gray-700 dark:text-gray-200;
-}
 th {
-  @apply px-2 py-2 dark:text-gray-200;
+  @apply px-2 py-2 dark:text-stone-200;
 }
 td {
-  @apply whitespace-nowrap px-2 py-2 overflow-hidden text-ellipsis dark:text-gray-200;
+  @apply overflow-hidden px-2 py-2 text-ellipsis whitespace-nowrap dark:text-stone-200;
 }
 
 table {
-  @apply min-w-full table-fixed w-full;
+  @apply w-full min-w-full table-fixed;
 }
 
 thead {
-  @apply border-b border-neutral-200 dark:border-gray-700 text-left;
+  @apply border-b border-border text-left dark:border-charcoal-border;
 }
 tr {
-  @apply border-b border-neutral-200 dark:border-gray-700;
+  @apply border-b border-border dark:border-charcoal-border;
 }
 tbody tr {
-  @apply hover:bg-gray-50 dark:hover:bg-gray-800 h-20;
+  @apply h-20 hover:bg-accent-soft/40 dark:hover:bg-charcoal-elevated;
 }
 
 .move-right {
@@ -87,20 +150,20 @@ tbody tr {
   @apply pl-1;
 }
 
-input[type="text"],
-input[type="password"],
-input[type="number"] {
-  @apply shadow-sm appearance-none border rounded-sm py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-700 leading-tight focus:outline-hidden;
+input[type='text'],
+input[type='password'],
+input[type='number'] {
+  @apply appearance-none rounded-md border border-border bg-paper-elevated px-3 py-2 leading-tight text-ink shadow-sm focus:outline-hidden dark:border-charcoal-border dark:bg-charcoal-elevated dark:text-stone-200;
 }
-input[type="checkbox"] {
-  @apply w-4 h-4 rounded-sm mt-2;
+input[type='checkbox'] {
+  @apply mt-2 h-4 w-4 rounded-sm;
 }
 
 .input-error {
-  @apply border-red-500 focus:border-red-500 focus:ring-red-200 focus:ring-2;
+  @apply border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200;
 }
 .input-default {
-  @apply border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-200 focus:ring-2;
+  @apply border-border-strong focus:border-accent focus:ring-2 focus:ring-accent-soft dark:border-charcoal-border dark:focus:border-accent-muted;
 }
 
 input::-webkit-outer-spin-button,
@@ -109,13 +172,12 @@ input::-webkit-inner-spin-button {
   margin: 0;
 }
 
-/* Firefox */
-input[type="number"] {
+input[type='number'] {
   -moz-appearance: textfield;
 }
 
 .link {
-  @apply text-blue-500 underline hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300;
+  @apply text-accent underline hover:text-accent-hover dark:text-accent-muted dark:hover:text-accent-soft;
 }
 
 .safe-area-top {
@@ -126,12 +188,73 @@ input[type="number"] {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Reusable surfaces */
+.surface-app {
+  @apply bg-paper-elevated text-ink dark:bg-charcoal dark:text-stone-200;
+}
+
+.surface-panel {
+  @apply bg-paper dark:bg-charcoal-elevated;
+}
+
+.surface-inset {
+  @apply rounded-lg border border-border bg-paper dark:border-charcoal-border dark:bg-charcoal-elevated;
+}
+
+.surface-header {
+  @apply border-b border-border dark:border-charcoal-border;
+}
+
+.section-label {
+  @apply text-xs font-semibold tracking-wide text-ink-subtle uppercase dark:text-charcoal-subtle;
+}
+
+.segmented-control {
+  @apply flex gap-1 rounded-lg border border-border bg-paper p-1 dark:border-charcoal-border dark:bg-charcoal-elevated;
+}
+
+.segmented-item {
+  @apply flex-1 rounded-md px-3 py-2 text-sm font-medium text-ink-muted transition-colors dark:text-charcoal-muted;
+}
+
+.segmented-item-active {
+  @apply bg-paper-elevated text-accent shadow-sm dark:bg-charcoal dark:text-accent-muted;
+}
+
+.row-active {
+  @apply bg-accent-soft dark:bg-accent/15;
+}
+
+.row-new {
+  @apply bg-synapse-soft/60 dark:bg-synapse/10;
+}
+
+.chip-keyword {
+  @apply inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-xs text-accent dark:bg-accent/20 dark:text-accent-muted;
+}
+
+.chip-muted {
+  @apply inline-flex items-center gap-1 rounded-full bg-paper px-2 py-0.5 text-xs text-ink-muted dark:bg-charcoal-elevated dark:text-charcoal-muted;
+}
+
+.highlight-mark {
+  @apply [&_mark]:rounded-sm [&_mark]:bg-pulse-update/30 [&_mark]:px-0.5 [&_mark]:text-ink dark:[&_mark]:bg-pulse-update/25 dark:[&_mark]:text-stone-100;
+}
+
+.trust-badge {
+  @apply inline-flex items-center gap-1.5 rounded-full border border-synapse/30 bg-synapse-soft px-2.5 py-0.5 text-xs font-medium text-synapse dark:border-synapse/40 dark:bg-synapse/15 dark:text-synapse-soft;
+}
+
+.icon-btn {
+  @apply rounded-lg p-2 text-ink-muted transition-colors hover:bg-paper dark:text-charcoal-muted dark:hover:bg-charcoal-elevated;
+}
+
 .tiptap-editor {
-  @apply min-h-[40vh] w-full text-base leading-relaxed outline-none md:min-h-[50vh] md:text-sm;
+  @apply min-h-[40vh] w-full text-base leading-relaxed text-ink outline-none md:min-h-[50vh] md:text-[0.9375rem] dark:text-stone-200;
 }
 
 .tiptap-editor p.is-editor-empty:first-child::before {
-  @apply pointer-events-none float-left h-0 text-gray-400;
+  @apply pointer-events-none float-left h-0 text-ink-subtle dark:text-charcoal-subtle;
   content: attr(data-placeholder);
 }
 
@@ -140,15 +263,15 @@ input[type="number"] {
 }
 
 .tiptap-editor h1 {
-  @apply mt-4 mb-2 text-2xl font-bold;
+  @apply mt-4 mb-2 font-display text-2xl font-semibold;
 }
 
 .tiptap-editor h2 {
-  @apply mt-3 mb-2 text-xl font-semibold;
+  @apply mt-3 mb-2 font-display text-xl font-semibold;
 }
 
 .tiptap-editor h3 {
-  @apply mt-2 mb-1 text-lg font-semibold;
+  @apply mt-2 mb-1 font-display text-lg font-semibold;
 }
 
 .tiptap-editor ul {
@@ -160,15 +283,15 @@ input[type="number"] {
 }
 
 .tiptap-editor blockquote {
-  @apply my-2 border-l-4 border-gray-300 pl-4 text-gray-600 italic dark:border-gray-600 dark:text-gray-400;
+  @apply my-2 border-l-4 border-accent-muted pl-4 text-ink-muted italic dark:border-accent/40 dark:text-charcoal-muted;
 }
 
 .tiptap-editor pre {
-  @apply my-2 overflow-x-auto rounded bg-gray-100 p-3 font-mono text-xs dark:bg-gray-800;
+  @apply my-2 overflow-x-auto rounded-md bg-paper p-3 font-mono text-xs dark:bg-charcoal-elevated;
 }
 
 .tiptap-editor code {
-  @apply rounded bg-gray-100 px-1 py-0.5 font-mono text-xs dark:bg-gray-800;
+  @apply rounded bg-paper px-1 py-0.5 font-mono text-xs dark:bg-charcoal-elevated;
 }
 
 .tiptap-editor pre code {

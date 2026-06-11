@@ -79,15 +79,12 @@ const Omnibox = () => {
       {hasFilters && (
         <div className="flex flex-wrap gap-1.5">
           {searchFilters.keywords.map((keyword) => (
-            <span
-              key={keyword}
-              className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-800 dark:bg-blue-900/40 dark:text-blue-200"
-            >
+            <span key={keyword} className="chip-keyword">
               {keyword}
               <button
                 type="button"
                 onClick={() => removeKeyword(keyword)}
-                className="rounded hover:text-blue-600"
+                className="rounded hover:text-accent-hover"
                 aria-label={t("search.removeKeyword", { keyword })}
               >
                 <XIcon size={12} />
@@ -114,13 +111,13 @@ const Omnibox = () => {
           ))}
 
           {searchFilters.datePreset && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+            <span className="chip-muted">
               <CalendarBlankIcon size={12} />
               {datePresetLabel(searchFilters.datePreset, searchFilters.dateField)}
               <button
                 type="button"
                 onClick={() => setDatePreset(null)}
-                className="rounded hover:text-gray-900 dark:hover:text-white"
+                className="rounded hover:text-ink dark:hover:text-stone-200"
                 aria-label={t("search.removeDateFilter")}
               >
                 <XIcon size={12} />
@@ -131,8 +128,8 @@ const Omnibox = () => {
       )}
 
       <div className="flex gap-2">
-        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 dark:border-gray-600 dark:bg-gray-800">
-          <MagnifyingGlassIcon className="shrink-0 text-gray-400" size={18} aria-hidden />
+        <div className="surface-inset flex min-w-0 flex-1 items-center gap-2 px-3">
+          <MagnifyingGlassIcon className="shrink-0 text-ink-subtle" size={18} aria-hidden />
           <input
             ref={inputRef}
             type="text"
@@ -145,7 +142,7 @@ const Omnibox = () => {
               }
             }}
             placeholder={t("search.placeholder")}
-            className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none"
+            className="min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm shadow-none outline-none focus:ring-0"
             aria-label={t("search.searchNotes")}
           />
           {hasFilters && (
@@ -155,7 +152,7 @@ const Omnibox = () => {
                 clearSearchFilters()
                 setInputValue("")
               }}
-              className="shrink-0 rounded p-1 text-gray-400 hover:text-gray-600"
+              className="shrink-0 rounded p-1 text-ink-subtle hover:text-ink-muted"
               aria-label={t("search.clearAllFilters")}
             >
               <XIcon size={16} />
@@ -167,7 +164,7 @@ const Omnibox = () => {
           type="button"
           onClick={handleSubmitInput}
           disabled={!inputValue.trim()}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+          className="btn-primary flex shrink-0 items-center gap-1.5 !px-3 !py-2 disabled:cursor-not-allowed disabled:opacity-50"
           aria-label={t("search.addSearchTerm")}
         >
           <MagnifyingGlassIcon size={16} className="sm:hidden" />
@@ -178,10 +175,10 @@ const Omnibox = () => {
           <button
             type="button"
             onClick={() => setShowDateMenu((value) => !value)}
-            className={`flex h-full items-center gap-1 rounded-lg border px-3 text-sm ${
+            className={`flex h-full items-center gap-1 rounded-lg border px-3 text-sm transition-colors ${
               searchFilters.datePreset
-                ? "border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                : "border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                ? "border-accent-muted bg-accent-soft text-accent dark:border-accent/50 dark:bg-accent/15 dark:text-accent-muted"
+                : "surface-inset text-ink-muted"
             }`}
             aria-label={t("search.dateFilter")}
             aria-expanded={showDateMenu}
@@ -191,19 +188,19 @@ const Omnibox = () => {
           </button>
 
           {showDateMenu && (
-            <div className="absolute right-0 z-20 mt-1 w-52 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-600 dark:bg-gray-800">
-              <div className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
-                <p className="mb-1 text-xs font-medium text-gray-500">{t("search.filterBy")}</p>
+            <div className="absolute right-0 z-20 mt-1 w-52 rounded-lg border border-border bg-paper-elevated py-1 shadow-panel dark:border-charcoal-border dark:bg-charcoal-elevated">
+              <div className="border-b border-border px-3 py-2 dark:border-charcoal-border">
+                <p className="mb-1 text-xs font-medium text-ink-subtle">{t("search.filterBy")}</p>
                 <div className="flex gap-1">
                   {(["updated", "created"] as DateField[]).map((field) => (
                     <button
                       key={field}
                       type="button"
                       onClick={() => setDateField(field)}
-                      className={`flex-1 rounded px-2 py-1 text-xs ${
+                      className={`flex-1 rounded-md px-2 py-1 text-xs ${
                         searchFilters.dateField === field
-                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-                          : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                          ? "bg-accent-soft text-accent dark:bg-accent/20 dark:text-accent-muted"
+                          : "text-ink-muted hover:bg-paper dark:text-charcoal-muted dark:hover:bg-charcoal"
                       }`}
                     >
                       {t(field === "created" ? "common.created" : "common.updated")}
@@ -217,8 +214,8 @@ const Omnibox = () => {
                   key={preset}
                   type="button"
                   onClick={() => setDatePreset(preset)}
-                  className={`block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                    searchFilters.datePreset === preset ? "text-blue-600 dark:text-blue-400" : ""
+                  className={`block w-full px-3 py-2 text-left text-sm hover:bg-paper dark:hover:bg-charcoal ${
+                    searchFilters.datePreset === preset ? "text-accent dark:text-accent-muted" : ""
                   }`}
                 >
                   {datePresetLabel(preset, searchFilters.dateField)}
@@ -229,7 +226,7 @@ const Omnibox = () => {
                 <button
                   type="button"
                   onClick={() => setDatePreset(null)}
-                  className="block w-full border-t border-gray-100 px-3 py-2 text-left text-sm text-red-600 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
+                  className="block w-full border-t border-border px-3 py-2 text-left text-sm text-red-600 hover:bg-paper dark:border-charcoal-border dark:hover:bg-charcoal"
                 >
                   {t("search.clearDateFilter")}
                 </button>

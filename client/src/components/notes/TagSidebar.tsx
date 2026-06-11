@@ -3,10 +3,9 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import type { Tag } from "../../db/schema"
 import { useCreateTag, useTags } from "../../hooks/useTags"
+import { TAG_COLORS } from "../../lib/tagColors"
 import { useAppStore } from "../../store/useAppStore"
 import TagEditDialog from "./TagEditDialog"
-
-const TAG_COLORS = ["#6366f1", "#ec4899", "#14b8a6", "#f59e0b", "#ef4444", "#8b5cf6"]
 
 const TagSidebar = () => {
   const { t } = useTranslation()
@@ -34,36 +33,34 @@ const TagSidebar = () => {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-          {t("tags.title")}
-        </h2>
+      <div className="surface-header flex items-center justify-between px-4 py-3">
+        <h2 className="section-label">{t("tags.title")}</h2>
         <button
           type="button"
           onClick={() => setIsAdding((value) => !value)}
-          className="rounded p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="icon-btn !p-1.5"
           aria-label={t("tags.addTag")}
         >
           <PlusIcon size={18} />
         </button>
       </div>
 
-      <div className="border-b border-gray-200 p-3 dark:border-gray-700">
-        <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-2.5 dark:border-gray-600 dark:bg-gray-800">
-          <MagnifyingGlassIcon className="shrink-0 text-gray-400" size={14} aria-hidden />
+      <div className="border-b border-border p-3 dark:border-charcoal-border">
+        <div className="surface-inset flex items-center gap-2 px-2.5">
+          <MagnifyingGlassIcon className="shrink-0 text-ink-subtle" size={14} aria-hidden />
           <input
             type="text"
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
             placeholder={t("tags.filterTagsPlaceholder")}
-            className="min-w-0 flex-1 bg-transparent py-1.5 text-sm outline-none"
+            className="min-w-0 flex-1 border-0 bg-transparent py-2 text-sm shadow-none outline-none focus:ring-0"
             aria-label={t("tags.filterTags")}
           />
           {filter && (
             <button
               type="button"
               onClick={() => setFilter("")}
-              className="shrink-0 rounded p-0.5 text-gray-400 hover:text-gray-600"
+              className="shrink-0 rounded p-0.5 text-ink-subtle hover:text-ink-muted"
               aria-label={t("tags.clearTagFilter")}
             >
               <XIcon size={14} />
@@ -73,7 +70,7 @@ const TagSidebar = () => {
       </div>
 
       {isAdding && (
-        <div className="border-b border-gray-200 p-3 dark:border-gray-700">
+        <div className="border-b border-border p-3 dark:border-charcoal-border">
           <input
             type="text"
             value={name}
@@ -95,8 +92,8 @@ const TagSidebar = () => {
           onClick={() => setSelectedTagId(null)}
           className={`mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm transition-colors duration-150 md:py-2 ${
             selectedTagId === null
-              ? "bg-blue-50 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-              : "hover:bg-gray-100 dark:hover:bg-gray-700"
+              ? "row-active font-medium text-accent dark:text-accent-muted"
+              : "text-ink-muted hover:bg-accent-soft/50 dark:text-charcoal-muted dark:hover:bg-charcoal"
           }`}
         >
           <TagIcon size={16} />
@@ -104,36 +101,33 @@ const TagSidebar = () => {
         </button>
 
         {visibleTags.length === 0 && filterLower && (
-          <p className="px-3 py-2 text-xs text-gray-500">
-            {t("tags.noTagsMatch", { filter })}
-          </p>
+          <p className="px-3 py-2 text-xs text-ink-subtle">{t("tags.noTagsMatch", { filter })}</p>
         )}
 
         {visibleTags.map((tag) => (
           <div
             key={tag.id}
             className={`group mb-1 flex items-center rounded-lg ${
-              selectedTagId === tag.id
-                ? "bg-blue-50 dark:bg-blue-900/30"
-                : "hover:bg-gray-100 dark:hover:bg-gray-700"
+              selectedTagId === tag.id ? "row-active" : "hover:bg-accent-soft/50 dark:hover:bg-charcoal"
             }`}
           >
             <button
               type="button"
               onClick={() => setSelectedTagId(tag.id)}
               className={`flex min-w-0 flex-1 items-center gap-2 px-3 py-3 text-left text-sm transition-colors duration-150 md:py-2 ${
-                selectedTagId === tag.id
-                  ? "font-medium text-blue-700 dark:text-blue-300"
-                  : ""
+                selectedTagId === tag.id ? "font-medium text-accent dark:text-accent-muted" : ""
               }`}
             >
-              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: tag.color }} />
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: tag.color }}
+              />
               <span className="truncate">{tag.name}</span>
             </button>
             <button
               type="button"
               onClick={() => setEditingTag(tag)}
-              className="mr-1 rounded p-1.5 text-gray-400 opacity-100 hover:bg-gray-200 hover:text-gray-600 md:opacity-0 md:transition-opacity md:group-hover:opacity-100 dark:hover:bg-gray-600 dark:hover:text-gray-200"
+              className="mr-1 rounded p-1.5 text-ink-subtle opacity-100 hover:bg-paper hover:text-ink-muted md:opacity-0 md:transition-opacity md:group-hover:opacity-100 dark:hover:bg-charcoal-elevated dark:hover:text-stone-200"
               aria-label={t("tags.editTagNamed", { name: tag.name })}
             >
               <PencilSimpleIcon size={14} />

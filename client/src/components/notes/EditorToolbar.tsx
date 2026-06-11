@@ -32,8 +32,8 @@ const ToolbarButton = ({
     aria-label={label}
     title={label}
     onClick={onClick}
-    className={`rounded p-1.5 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 ${
-      active ? "bg-gray-200 dark:bg-gray-600" : ""
+    className={`rounded-md p-1.5 text-ink-muted transition-colors hover:bg-paper dark:text-charcoal-muted dark:hover:bg-charcoal ${
+      active ? "bg-accent-soft text-accent dark:bg-accent/20 dark:text-accent-muted" : ""
     }`}
   >
     {children}
@@ -46,7 +46,7 @@ const EditorToolbar = ({ editor }: EditorToolbarProps) => {
   if (!editor) return null
 
   return (
-    <div className="flex flex-wrap items-center gap-0.5 border-b border-gray-100 px-2 py-1.5 dark:border-gray-700">
+    <div className="flex flex-wrap items-center gap-0.5 border-b border-border px-2 py-1.5 dark:border-charcoal-border">
       <ToolbarButton
         label={t("editor.bold")}
         active={editor.isActive("bold")}

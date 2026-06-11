@@ -1,4 +1,4 @@
-import { ArrowLeftIcon, SparkleIcon, TrashIcon } from "@phosphor-icons/react"
+import { ArrowLeftIcon, NotePencilIcon, TrashIcon } from "@phosphor-icons/react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import MarkdownEditor, { type MarkdownEditorHandle } from "./MarkdownEditor"
@@ -61,12 +61,18 @@ const NoteEditor = () => {
 
   if (!selectedNoteId) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
-        <p className="text-sm text-gray-500">{t("notes.selectOrCreate")}</p>
+      <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+        <div className="rounded-full bg-accent-soft p-5 dark:bg-accent/15">
+          <NotePencilIcon size={32} className="text-accent dark:text-accent-muted" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-ink dark:text-stone-200">{t("notes.selectOrCreate")}</p>
+          <p className="mt-1 text-xs text-ink-subtle">{t("notes.selectOrCreateHint")}</p>
+        </div>
         <button
           type="button"
           onClick={() => setMobilePane("list")}
-          className="btn-blue !px-4 !py-2 md:hidden"
+          className="btn-primary !px-4 !py-2 md:hidden"
         >
           {t("notes.browseNotes")}
         </button>
@@ -76,7 +82,7 @@ const NoteEditor = () => {
 
   if (!note) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-gray-500">
+      <div className="flex h-full items-center justify-center text-sm text-ink-subtle">
         {t("notes.loadingNote")}
       </div>
     )
@@ -105,18 +111,18 @@ const NoteEditor = () => {
   return (
     <div className="relative flex h-full flex-col">
       {isNewNote && (
-        <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
-          <SparkleIcon size={16} weight="fill" className="shrink-0" aria-hidden />
+        <div className="flex items-center gap-2 border-b border-synapse/30 bg-synapse-soft px-4 py-2 text-sm text-synapse dark:border-synapse/40 dark:bg-synapse/10 dark:text-synapse-soft">
+          <NotePencilIcon size={16} weight="duotone" className="shrink-0" aria-hidden />
           <span className="font-medium">{t("notes.newNoteCreated")}</span>
-          <span className="text-emerald-700/80 dark:text-emerald-400/80">{t("notes.addTitleBelow")}</span>
+          <span className="opacity-80">{t("notes.addTitleBelow")}</span>
         </div>
       )}
 
-      <div className="flex items-center gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-700 md:px-4 md:py-3">
+      <div className="surface-header flex items-center gap-2 px-3 py-2 md:px-4 md:py-3">
         <button
           type="button"
           onClick={handleBack}
-          className="shrink-0 rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden"
+          className="icon-btn shrink-0 md:hidden"
           aria-label={t("notes.backToNotes")}
         >
           <ArrowLeftIcon size={20} />
@@ -134,12 +140,12 @@ const NoteEditor = () => {
             }
           }}
           placeholder={t("notes.noteTitle")}
-          className="min-w-0 flex-1 border-0 bg-transparent text-base font-semibold shadow-none focus:ring-0 md:text-lg"
+          className="min-w-0 flex-1 border-0 bg-transparent font-display text-base font-semibold shadow-none focus:ring-0 md:text-lg"
         />
 
         <div className="flex shrink-0 items-center gap-1.5">
           <span
-            className={`whitespace-nowrap text-xs text-gray-400 transition-opacity duration-300 ${
+            className={`whitespace-nowrap text-xs text-ink-subtle transition-opacity duration-300 ${
               saveStatus === "saving" ? "opacity-100" : "opacity-0"
             }`}
             aria-live="polite"
@@ -147,7 +153,7 @@ const NoteEditor = () => {
             {t("notes.saving")}
           </span>
           <span
-            className={`whitespace-nowrap text-xs text-green-600 transition-opacity duration-300 dark:text-green-400 ${
+            className={`whitespace-nowrap text-xs text-synapse transition-opacity duration-300 dark:text-synapse-soft ${
               saveStatus === "saved" ? "opacity-100" : "opacity-0"
             }`}
             aria-live="polite"
@@ -166,7 +172,7 @@ const NoteEditor = () => {
       </div>
 
       {note.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 border-b border-gray-100 px-4 py-2 dark:border-gray-700">
+        <div className="flex flex-wrap gap-1 border-b border-border px-4 py-2 dark:border-charcoal-border">
           {note.tags.map((tag) => (
             <span
               key={tag.id}
