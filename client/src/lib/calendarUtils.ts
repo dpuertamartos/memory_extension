@@ -78,10 +78,10 @@ export function shiftAnchor(scope: CalendarScope, anchor: Date, delta: number): 
   }
 }
 
-export function formatScopeLabel(scope: CalendarScope, anchor: Date): string {
+export function formatScopeLabel(scope: CalendarScope, anchor: Date, locale?: string): string {
   switch (scope) {
     case "day":
-      return anchor.toLocaleDateString(undefined, {
+      return anchor.toLocaleDateString(locale, {
         weekday: "long",
         month: "long",
         day: "numeric",
@@ -90,8 +90,8 @@ export function formatScopeLabel(scope: CalendarScope, anchor: Date): string {
     case "week": {
       const { from, to } = getScopeRange("week", anchor)
       const sameMonth = from.getMonth() === to.getMonth()
-      const fromLabel = from.toLocaleDateString(undefined, { month: "short", day: "numeric" })
-      const toLabel = to.toLocaleDateString(undefined, {
+      const fromLabel = from.toLocaleDateString(locale, { month: "short", day: "numeric" })
+      const toLabel = to.toLocaleDateString(locale, {
         month: sameMonth ? undefined : "short",
         day: "numeric",
         year: "numeric",
@@ -99,10 +99,26 @@ export function formatScopeLabel(scope: CalendarScope, anchor: Date): string {
       return `${fromLabel} – ${toLabel}`
     }
     case "month":
-      return anchor.toLocaleDateString(undefined, { month: "long", year: "numeric" })
+      return anchor.toLocaleDateString(locale, { month: "long", year: "numeric" })
     case "year":
       return String(anchor.getFullYear())
   }
+}
+
+export function getWeekdayLabels(locale?: string): string[] {
+  const sunday = new Date(2024, 0, 7)
+  return Array.from({ length: 7 }, (_, index) =>
+    new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + index).toLocaleDateString(
+      locale,
+      { weekday: "short" },
+    ),
+  )
+}
+
+export function getMonthLabels(locale?: string): string[] {
+  return Array.from({ length: 12 }, (_, index) =>
+    new Date(2024, index, 1).toLocaleDateString(locale, { month: "short" }),
+  )
 }
 
 export function getMonthGridDays(anchor: Date): Date[] {

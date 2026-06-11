@@ -16,6 +16,7 @@
 | 8. Advanced Search & Polish | Done |
 | 9. Cloud Sync Preparation | Done |
 | 10. Advanced Discovery & Calendar Memory | Done |
+| 13. Internationalization (i18n) | Partial (en + es) |
 
 ### What shipped
 
@@ -28,6 +29,7 @@
 - **UI** — 3-pane desktop layout (tags / list / editor), single-pane mobile with bottom nav, omnibox search, Markdown WYSIWYG editor via Tiptap.
 - **Settings** — SQLite export, Markdown zip export (YAML frontmatter), SQLite import with page reload.
 - **Sync Architecture** — ULID-based Last-Write-Wins deterministic merging strategy for eventual cloud/peer synchronization.
+- **i18n** — `i18next` + `react-i18next` with English and Spanish locale files; language picker in Settings; browser-language detection on first visit.
 
 ---
 
@@ -214,6 +216,22 @@ Build a local-first note-taking app that users access via a URL, but where all d
   - Create an explicit "Install App" (Add to Home Screen) button to make the PWA easily accessible as a native-like app on mobile devices.
 - [ ] **11.4 Codebase Refactoring**
   - Conduct a comprehensive refactor to address technical debt, improving overall maintainability and extensibility of the codebase.
+
+## Phase 13: Internationalization (i18n)
+
+*Objective: Make the app accessible in multiple languages, starting with Spanish, with an architecture that scales to additional locales.*
+
+- [x] **13.1 i18n Infrastructure**
+  - Add `i18next` and `react-i18next` to the client package.
+  - Create `client/src/i18n/` with locale JSON files (`en`, `es`) and a central init module.
+  - Detect browser language on first visit; persist user choice in `localStorage`.
+- [x] **13.2 UI String Extraction**
+  - Replace hardcoded UI strings across pages and components with `useTranslation()` keys.
+  - Localize relative timestamps (`formatRelativeTime`), calendar labels, and date-filter presets via `Intl` + locale-aware helpers.
+- [x] **13.3 Language Selector**
+  - Add a language picker in Settings so users can switch between English and Spanish at runtime.
+- [ ] **13.4 Additional Locales**
+  - Add new locale files under `client/src/i18n/locales/` and register them in `SUPPORTED_LOCALES` to support more languages.
 
 ## Phase 12: SEO Landing Page (Astro)
 

@@ -1,21 +1,24 @@
 import { CalendarBlankIcon, MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react"
 import { useRef, useState } from "react"
-import {
-  datePresetLabel,
-  type DateField,
-  type DatePreset,
-} from "../../lib/searchQuery"
+import { useTranslation } from "react-i18next"
+import { type DateField, type DatePreset } from "../../lib/searchQuery"
 import { useTags } from "../../hooks/useTags"
 import { useAppStore } from "../../store/useAppStore"
 
 const DATE_PRESETS: DatePreset[] = ["last_week", "last_month", "this_month", "this_year"]
 
 const Omnibox = () => {
+  const { t } = useTranslation()
   const { searchFilters, updateSearchFilters, clearSearchFilters } = useAppStore()
   const { data: tags = [] } = useTags()
   const [inputValue, setInputValue] = useState("")
   const [showDateMenu, setShowDateMenu] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const datePresetLabel = (preset: DatePreset, field: DateField) =>
+    t(`search.datePreset.${preset}`, {
+      field: t(field === "created" ? "common.created" : "common.updated"),
+    })
 
   const addKeyword = (raw: string) => {
     const trimmed = raw.trim()
@@ -85,7 +88,7 @@ const Omnibox = () => {
                 type="button"
                 onClick={() => removeKeyword(keyword)}
                 className="rounded hover:text-blue-600"
-                aria-label={`Remove keyword ${keyword}`}
+                aria-label={t("search.removeKeyword", { keyword })}
               >
                 <XIcon size={12} />
               </button>
@@ -103,7 +106,7 @@ const Omnibox = () => {
                 type="button"
                 onClick={() => removeTag(tag.id)}
                 className="rounded hover:opacity-80"
-                aria-label={`Remove tag filter ${tag.name}`}
+                aria-label={t("search.removeTagFilter", { name: tag.name })}
               >
                 <XIcon size={12} />
               </button>
@@ -118,7 +121,7 @@ const Omnibox = () => {
                 type="button"
                 onClick={() => setDatePreset(null)}
                 className="rounded hover:text-gray-900 dark:hover:text-white"
-                aria-label="Remove date filter"
+                aria-label={t("search.removeDateFilter")}
               >
                 <XIcon size={12} />
               </button>
@@ -141,9 +144,9 @@ const Omnibox = () => {
                 handleSubmitInput()
               }
             }}
-            placeholder="Add keywords or #tags…"
+            placeholder={t("search.placeholder")}
             className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none"
-            aria-label="Search notes"
+            aria-label={t("search.searchNotes")}
           />
           {hasFilters && (
             <button
@@ -153,7 +156,7 @@ const Omnibox = () => {
                 setInputValue("")
               }}
               className="shrink-0 rounded p-1 text-gray-400 hover:text-gray-600"
-              aria-label="Clear all filters"
+              aria-label={t("search.clearAllFilters")}
             >
               <XIcon size={16} />
             </button>
@@ -165,10 +168,10 @@ const Omnibox = () => {
           onClick={handleSubmitInput}
           disabled={!inputValue.trim()}
           className="flex shrink-0 items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
-          aria-label="Add search term"
+          aria-label={t("search.addSearchTerm")}
         >
           <MagnifyingGlassIcon size={16} className="sm:hidden" />
-          <span className="hidden sm:inline">Search</span>
+          <span className="hidden sm:inline">{t("common.search")}</span>
         </button>
 
         <div className="relative">
@@ -180,30 +183,30 @@ const Omnibox = () => {
                 ? "border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                 : "border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
             }`}
-            aria-label="Date filter"
+            aria-label={t("search.dateFilter")}
             aria-expanded={showDateMenu}
           >
             <CalendarBlankIcon size={16} />
-            <span className="hidden sm:inline">Date</span>
+            <span className="hidden sm:inline">{t("common.date")}</span>
           </button>
 
           {showDateMenu && (
             <div className="absolute right-0 z-20 mt-1 w-52 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-600 dark:bg-gray-800">
               <div className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
-                <p className="mb-1 text-xs font-medium text-gray-500">Filter by</p>
+                <p className="mb-1 text-xs font-medium text-gray-500">{t("search.filterBy")}</p>
                 <div className="flex gap-1">
                   {(["updated", "created"] as DateField[]).map((field) => (
                     <button
                       key={field}
                       type="button"
                       onClick={() => setDateField(field)}
-                      className={`flex-1 rounded px-2 py-1 text-xs capitalize ${
+                      className={`flex-1 rounded px-2 py-1 text-xs ${
                         searchFilters.dateField === field
                           ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
                           : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                       }`}
                     >
-                      {field}
+                      {t(field === "created" ? "common.created" : "common.updated")}
                     </button>
                   ))}
                 </div>
@@ -228,7 +231,7 @@ const Omnibox = () => {
                   onClick={() => setDatePreset(null)}
                   className="block w-full border-t border-gray-100 px-3 py-2 text-left text-sm text-red-600 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
                 >
-                  Clear date filter
+                  {t("search.clearDateFilter")}
                 </button>
               )}
             </div>

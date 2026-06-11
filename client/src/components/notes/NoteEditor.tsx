@@ -1,11 +1,13 @@
 import { ArrowLeftIcon, SparkleIcon, TrashIcon } from "@phosphor-icons/react"
 import { useEffect, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import MarkdownEditor, { type MarkdownEditorHandle } from "./MarkdownEditor"
 import TagSelector from "./TagSelector"
 import { useDeleteNote, useNote, useUpdateNote } from "../../hooks/useNotes"
 import { useAppStore } from "../../store/useAppStore"
 
 const NoteEditor = () => {
+  const { t } = useTranslation()
   const {
     selectedNoteId,
     setSelectedNoteId,
@@ -26,9 +28,8 @@ const NoteEditor = () => {
   const titleRef = useRef<HTMLInputElement>(null)
 
   const isNewNote = selectedNoteId !== null && selectedNoteId === newlyCreatedNoteId
+  const untitled = t("common.untitled")
 
-  // Hydrate local editor state only when the user switches notes — not on every
-  // query refetch after a debounced save (which caused text rollback while typing).
   useEffect(() => {
     if (!selectedNoteId) {
       hydratedNoteIdRef.current = null
@@ -49,7 +50,6 @@ const NoteEditor = () => {
     setTagAnchor(null)
   }, [note, selectedNoteId])
 
-  // Auto-focus title for newly created notes
   useEffect(() => {
     if (!isNewNote || !note) return
     const timer = setTimeout(() => {
@@ -62,13 +62,13 @@ const NoteEditor = () => {
   if (!selectedNoteId) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
-        <p className="text-sm text-gray-500">Select a note or create a new one</p>
+        <p className="text-sm text-gray-500">{t("notes.selectOrCreate")}</p>
         <button
           type="button"
           onClick={() => setMobilePane("list")}
           className="btn-blue !px-4 !py-2 md:hidden"
         >
-          Browse notes
+          {t("notes.browseNotes")}
         </button>
       </div>
     )
@@ -77,7 +77,7 @@ const NoteEditor = () => {
   if (!note) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-gray-500">
-        Loading note…
+        {t("notes.loadingNote")}
       </div>
     )
   }
@@ -107,8 +107,8 @@ const NoteEditor = () => {
       {isNewNote && (
         <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
           <SparkleIcon size={16} weight="fill" className="shrink-0" aria-hidden />
-          <span className="font-medium">New note created</span>
-          <span className="text-emerald-700/80 dark:text-emerald-400/80">— add a title below</span>
+          <span className="font-medium">{t("notes.newNoteCreated")}</span>
+          <span className="text-emerald-700/80 dark:text-emerald-400/80">{t("notes.addTitleBelow")}</span>
         </div>
       )}
 
@@ -117,7 +117,7 @@ const NoteEditor = () => {
           type="button"
           onClick={handleBack}
           className="shrink-0 rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden"
-          aria-label="Back to notes"
+          aria-label={t("notes.backToNotes")}
         >
           <ArrowLeftIcon size={20} />
         </button>
@@ -129,11 +129,11 @@ const NoteEditor = () => {
           onChange={(event) => {
             setTitle(event.target.value)
             updateNote(note.id, { title: event.target.value })
-            if (isNewNote && event.target.value.trim() && event.target.value !== "Untitled") {
+            if (isNewNote && event.target.value.trim() && event.target.value !== untitled) {
               setNewlyCreatedNoteId(null)
             }
           }}
-          placeholder="Note title"
+          placeholder={t("notes.noteTitle")}
           className="min-w-0 flex-1 border-0 bg-transparent text-base font-semibold shadow-none focus:ring-0 md:text-lg"
         />
 
@@ -144,7 +144,7 @@ const NoteEditor = () => {
             }`}
             aria-live="polite"
           >
-            Saving…
+            {t("notes.saving")}
           </span>
           <span
             className={`whitespace-nowrap text-xs text-green-600 transition-opacity duration-300 dark:text-green-400 ${
@@ -152,13 +152,13 @@ const NoteEditor = () => {
             }`}
             aria-live="polite"
           >
-            Saved
+            {t("notes.saved")}
           </span>
           <button
             type="button"
             onClick={() => void handleDelete()}
             className="rounded-lg p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-            aria-label="Delete note"
+            aria-label={t("notes.deleteNote")}
           >
             <TrashIcon size={18} />
           </button>

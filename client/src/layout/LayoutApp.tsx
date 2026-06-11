@@ -1,4 +1,5 @@
 import { MoonIcon, SunIcon } from "@phosphor-icons/react"
+import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 import AppRouter from "../AppRouter"
 import MobileNav from "../components/notes/MobileNav"
@@ -6,6 +7,7 @@ import LogoApp from "./LogoApp"
 import { useThemeStore } from "../store/useThemeStore"
 
 const LayoutApp = () => {
+  const { t } = useTranslation()
   const { isDarkMode, toggleDarkMode } = useThemeStore()
 
   return (
@@ -21,13 +23,13 @@ const LayoutApp = () => {
               to="/settings"
               className="hidden rounded px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 md:inline"
             >
-              Settings
+              {t("common.settings")}
             </Link>
             <button
               type="button"
               onClick={toggleDarkMode}
               className="rounded p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-              aria-label="Toggle theme"
+              aria-label={t("nav.toggleTheme")}
             >
               {isDarkMode ? <SunIcon size={20} /> : <MoonIcon size={20} />}
             </button>

@@ -1,5 +1,6 @@
 import { NotePencilIcon, PlusIcon } from "@phosphor-icons/react"
 import { useMemo } from "react"
+import { useTranslation } from "react-i18next"
 import FilterBanner from "./FilterBanner"
 import { useCreateNote, useNotes } from "../../hooks/useNotes"
 import { isSearchActive, useGlobalSearch } from "../../hooks/useSearch"
@@ -11,6 +12,7 @@ const highlightClass =
   "[&_mark]:rounded-sm [&_mark]:bg-yellow-200 [&_mark]:px-0.5 [&_mark]:text-gray-900 dark:[&_mark]:bg-yellow-500/30 dark:[&_mark]:text-yellow-100"
 
 const NoteList = () => {
+  const { t, i18n } = useTranslation()
   const {
     selectedTagId,
     selectedNoteId,
@@ -25,6 +27,7 @@ const NoteList = () => {
   const { data: searchResults = [] } = useGlobalSearch(searchFilters)
   const createNote = useCreateNote()
   const createError = createNote.error instanceof Error ? createNote.error.message : null
+  const untitled = t("common.untitled")
 
   const isSearching = isSearchActive(searchFilters)
   const filteredNotes = isSearching
@@ -40,7 +43,7 @@ const NoteList = () => {
         )
       case "alpha":
         return sorted.sort((a, b) =>
-          (a.title || "Untitled").localeCompare(b.title || "Untitled", undefined, {
+          (a.title || untitled).localeCompare(b.title || untitled, i18n.language, {
             sensitivity: "base",
           }),
         )
@@ -49,7 +52,7 @@ const NoteList = () => {
           (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
         )
     }
-  }, [filteredNotes, noteSort])
+  }, [filteredNotes, noteSort, untitled, i18n.language])
 
   const handleCreate = async () => {
     try {
@@ -65,7 +68,7 @@ const NoteList = () => {
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-          {isSearching ? "Results" : selectedTagId ? "Filtered" : "Notes"}
+          {isSearching ? t("notes.results") : selectedTagId ? t("notes.filtered") : t("notes.title")}
         </h2>
         <button
           type="button"
@@ -74,7 +77,7 @@ const NoteList = () => {
           disabled={createNote.isPending}
         >
           <PlusIcon size={16} />
-          New
+          {t("notes.newNote")}
         </button>
       </div>
 
@@ -86,11 +89,11 @@ const NoteList = () => {
             value={noteSort}
             onChange={(event) => setNoteSort(event.target.value as typeof noteSort)}
             className="w-full rounded border-0 bg-transparent py-1 text-xs text-gray-500 shadow-none focus:ring-0"
-            aria-label="Sort notes"
+            aria-label={t("notes.sortNotes")}
           >
-            <option value="updated">Recently updated</option>
-            <option value="created">Recently created</option>
-            <option value="alpha">Alphabetical</option>
+            <option value="updated">{t("notes.sortUpdated")}</option>
+            <option value="created">{t("notes.sortCreated")}</option>
+            <option value="alpha">{t("notes.sortAlpha")}</option>
           </select>
         </div>
       )}
@@ -102,12 +105,14 @@ const NoteList = () => {
           </p>
         )}
 
-        {isLoading && <p className="p-4 text-sm text-gray-500">Loading notes…</p>}
+        {isLoading && <p className="p-4 text-sm text-gray-500">{t("notes.loadingNotes")}</p>}
 
         {!isLoading && visibleNotes.length === 0 && (
           <div className="flex flex-col items-center justify-center gap-2 p-8 text-center text-gray-500">
             <NotePencilIcon size={32} />
-            <p className="text-sm">{isSearching ? "No matching notes" : "No notes yet"}</p>
+            <p className="text-sm">
+              {isSearching ? t("notes.noMatchingNotes") : t("notes.noNotesYet")}
+            </p>
           </div>
         )}
 
@@ -140,19 +145,19 @@ const NoteList = () => {
                   />
                 ) : (
                   <p className="truncate font-medium">
-                    {note.title || "Untitled"}
+                    {note.title || untitled}
                     {isNew && (
                       <span className="ml-2 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                        New
+                        {t("common.new")}
                       </span>
                     )}
                   </p>
                 )}
                 <span
                   className="shrink-0 text-xs text-gray-400"
-                  title={new Date(note.updatedAt).toLocaleString()}
+                  title={new Date(note.updatedAt).toLocaleString(i18n.language)}
                 >
-                  {formatRelativeTime(note.updatedAt)}
+                  {formatRelativeTime(note.updatedAt, i18n.language)}
                 </span>
               </div>
 
@@ -165,7 +170,7 @@ const NoteList = () => {
                 />
               ) : (
                 <p className="mt-1 line-clamp-2 text-xs text-gray-500">
-                  {stripMarkdown(note.content) || "Empty note"}
+                  {stripMarkdown(note.content) || t("notes.emptyNote")}
                 </p>
               )}
 

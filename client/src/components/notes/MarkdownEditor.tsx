@@ -3,6 +3,7 @@ import { Markdown } from "@tiptap/markdown"
 import { EditorContent, useEditor, type Editor } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react"
+import { useTranslation } from "react-i18next"
 import { matchTagTrigger } from "../../lib/tagTrigger"
 import EditorToolbar from "./EditorToolbar"
 
@@ -36,6 +37,7 @@ function detectTagTriggerAtCursor(editor: Editor): TriggerRange | null {
 
 const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
   ({ noteId, content, onChange, onTagTrigger, onTagDismiss }, ref) => {
+    const { t, i18n } = useTranslation()
     const containerRef = useRef<HTMLDivElement>(null)
     const skipNextSync = useRef(false)
     const triggerRangeRef = useRef<TriggerRange | null>(null)
@@ -53,7 +55,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
           StarterKit,
           Markdown,
           Placeholder.configure({
-            placeholder: "Write… Type # to add tags",
+            placeholder: t("editor.placeholder"),
           }),
         ],
         content,
@@ -85,7 +87,7 @@ const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
           })
         },
       },
-      [noteId],
+      [noteId, i18n.language, t],
     )
 
     useImperativeHandle(

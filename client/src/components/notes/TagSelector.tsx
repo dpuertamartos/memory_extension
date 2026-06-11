@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import type { Tag } from "../../db/schema"
 import { useCreateTag, useTags } from "../../hooks/useTags"
 import { useSetNoteTags } from "../../hooks/useNotes"
@@ -13,6 +14,7 @@ type TagSelectorProps = {
 }
 
 const TagSelector = ({ noteId, selectedTags, anchor, query, onClose, onTagApplied }: TagSelectorProps) => {
+  const { t } = useTranslation()
   const { data: tags = [] } = useTags()
   const createTag = useCreateTag()
   const setNoteTags = useSetNoteTags()
@@ -23,7 +25,10 @@ const TagSelector = ({ noteId, selectedTags, anchor, query, onClose, onTagApplie
   const filtered = tags.filter((tag) => tag.name.toLowerCase().includes(normalized))
   const selectedIds = new Set(selectedTags.map((tag) => tag.id))
   const canCreate = normalized.length > 0 && !tags.some((tag) => tag.name.toLowerCase() === normalized)
-  const options = canCreate ? [...filtered, { id: "__create__", name: `Create "${query}"` } as Tag] : filtered
+  const createLabel = t("tags.createTag", { name: query })
+  const options = canCreate
+    ? [...filtered, { id: "__create__", name: createLabel } as Tag]
+    : filtered
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -70,7 +75,7 @@ const TagSelector = ({ noteId, selectedTags, anchor, query, onClose, onTagApplie
       style={{ top: anchor.top, left: anchor.left }}
     >
       {options.length === 0 ? (
-        <p className="px-3 py-2 text-sm text-gray-500">No tags found</p>
+        <p className="px-3 py-2 text-sm text-gray-500">{t("tags.noTagsFound")}</p>
       ) : (
         options.map((option, index) => (
           <button

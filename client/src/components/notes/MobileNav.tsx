@@ -1,17 +1,19 @@
 import { CalendarBlankIcon, GearIcon, ListIcon, NotePencilIcon, TagIcon } from "@phosphor-icons/react"
+import { useTranslation } from "react-i18next"
 import type { MobilePane } from "../../store/useAppStore"
 import { useAppStore } from "../../store/useAppStore"
 
-const items: { pane: MobilePane; label: string; icon: typeof ListIcon }[] = [
-  { pane: "tags", label: "Tags", icon: TagIcon },
-  { pane: "list", label: "Notes", icon: ListIcon },
-  { pane: "calendar", label: "Calendar", icon: CalendarBlankIcon },
-  { pane: "editor", label: "Editor", icon: NotePencilIcon },
-  { pane: "settings", label: "Settings", icon: GearIcon },
-]
-
 const MobileNav = () => {
+  const { t } = useTranslation()
   const { mobilePane, selectedTagId, selectedNoteId, setMobilePane } = useAppStore()
+
+  const items: { pane: MobilePane; label: string; icon: typeof ListIcon }[] = [
+    { pane: "tags", label: t("nav.tags"), icon: TagIcon },
+    { pane: "list", label: t("nav.notes"), icon: ListIcon },
+    { pane: "calendar", label: t("nav.calendar"), icon: CalendarBlankIcon },
+    { pane: "editor", label: t("nav.editor"), icon: NotePencilIcon },
+    { pane: "settings", label: t("nav.settings"), icon: GearIcon },
+  ]
 
   return (
     <nav className="safe-area-bottom flex border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 md:hidden">

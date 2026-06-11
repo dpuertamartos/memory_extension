@@ -9,6 +9,7 @@ import {
   TextItalicIcon,
 } from "@phosphor-icons/react"
 import type { ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 import type { Editor } from "@tiptap/react"
 
 type EditorToolbarProps = {
@@ -40,61 +41,63 @@ const ToolbarButton = ({
 )
 
 const EditorToolbar = ({ editor }: EditorToolbarProps) => {
+  const { t } = useTranslation()
+
   if (!editor) return null
 
   return (
     <div className="flex flex-wrap items-center gap-0.5 border-b border-gray-100 px-2 py-1.5 dark:border-gray-700">
       <ToolbarButton
-        label="Bold"
+        label={t("editor.bold")}
         active={editor.isActive("bold")}
         onClick={() => editor.chain().focus().toggleBold().run()}
       >
         <TextBIcon size={16} />
       </ToolbarButton>
       <ToolbarButton
-        label="Italic"
+        label={t("editor.italic")}
         active={editor.isActive("italic")}
         onClick={() => editor.chain().focus().toggleItalic().run()}
       >
         <TextItalicIcon size={16} />
       </ToolbarButton>
       <ToolbarButton
-        label="Heading 1"
+        label={t("editor.heading1")}
         active={editor.isActive("heading", { level: 1 })}
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
       >
         <TextHOneIcon size={16} />
       </ToolbarButton>
       <ToolbarButton
-        label="Heading 2"
+        label={t("editor.heading2")}
         active={editor.isActive("heading", { level: 2 })}
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
       >
         <TextHTwoIcon size={16} />
       </ToolbarButton>
       <ToolbarButton
-        label="Bullet list"
+        label={t("editor.bulletList")}
         active={editor.isActive("bulletList")}
         onClick={() => editor.chain().focus().toggleBulletList().run()}
       >
         <ListBulletsIcon size={16} />
       </ToolbarButton>
       <ToolbarButton
-        label="Numbered list"
+        label={t("editor.numberedList")}
         active={editor.isActive("orderedList")}
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
       >
         <ListNumbersIcon size={16} />
       </ToolbarButton>
       <ToolbarButton
-        label="Blockquote"
+        label={t("editor.blockquote")}
         active={editor.isActive("blockquote")}
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
       >
         <QuotesIcon size={16} />
       </ToolbarButton>
       <ToolbarButton
-        label="Code block"
+        label={t("editor.codeBlock")}
         active={editor.isActive("codeBlock")}
         onClick={() => editor.chain().focus().toggleCodeBlock().run()}
       >

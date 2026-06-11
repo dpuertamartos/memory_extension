@@ -1,5 +1,6 @@
 import { MagnifyingGlassIcon, PencilSimpleIcon, PlusIcon, TagIcon, XIcon } from "@phosphor-icons/react"
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import type { Tag } from "../../db/schema"
 import { useCreateTag, useTags } from "../../hooks/useTags"
 import { useAppStore } from "../../store/useAppStore"
@@ -8,6 +9,7 @@ import TagEditDialog from "./TagEditDialog"
 const TAG_COLORS = ["#6366f1", "#ec4899", "#14b8a6", "#f59e0b", "#ef4444", "#8b5cf6"]
 
 const TagSidebar = () => {
+  const { t } = useTranslation()
   const { data: tags = [] } = useTags()
   const createTag = useCreateTag()
   const { selectedTagId, setSelectedTagId } = useAppStore()
@@ -33,12 +35,14 @@ const TagSidebar = () => {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Tags</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+          {t("tags.title")}
+        </h2>
         <button
           type="button"
           onClick={() => setIsAdding((value) => !value)}
           className="rounded p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-          aria-label="Add tag"
+          aria-label={t("tags.addTag")}
         >
           <PlusIcon size={18} />
         </button>
@@ -51,16 +55,16 @@ const TagSidebar = () => {
             type="text"
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
-            placeholder="Filter tags…"
+            placeholder={t("tags.filterTagsPlaceholder")}
             className="min-w-0 flex-1 bg-transparent py-1.5 text-sm outline-none"
-            aria-label="Filter tags"
+            aria-label={t("tags.filterTags")}
           />
           {filter && (
             <button
               type="button"
               onClick={() => setFilter("")}
               className="shrink-0 rounded p-0.5 text-gray-400 hover:text-gray-600"
-              aria-label="Clear tag filter"
+              aria-label={t("tags.clearTagFilter")}
             >
               <XIcon size={14} />
             </button>
@@ -78,7 +82,7 @@ const TagSidebar = () => {
               if (event.key === "Enter") void handleCreate()
               if (event.key === "Escape") setIsAdding(false)
             }}
-            placeholder="Tag name"
+            placeholder={t("tags.tagName")}
             className="w-full text-sm"
             autoFocus
           />
@@ -96,11 +100,13 @@ const TagSidebar = () => {
           }`}
         >
           <TagIcon size={16} />
-          All notes
+          {t("tags.allNotes")}
         </button>
 
         {visibleTags.length === 0 && filterLower && (
-          <p className="px-3 py-2 text-xs text-gray-500">No tags match &ldquo;{filter}&rdquo;</p>
+          <p className="px-3 py-2 text-xs text-gray-500">
+            {t("tags.noTagsMatch", { filter })}
+          </p>
         )}
 
         {visibleTags.map((tag) => (
@@ -128,7 +134,7 @@ const TagSidebar = () => {
               type="button"
               onClick={() => setEditingTag(tag)}
               className="mr-1 rounded p-1.5 text-gray-400 opacity-100 hover:bg-gray-200 hover:text-gray-600 md:opacity-0 md:transition-opacity md:group-hover:opacity-100 dark:hover:bg-gray-600 dark:hover:text-gray-200"
-              aria-label={`Edit tag ${tag.name}`}
+              aria-label={t("tags.editTagNamed", { name: tag.name })}
             >
               <PencilSimpleIcon size={14} />
             </button>

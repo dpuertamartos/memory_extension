@@ -89,13 +89,3 @@ export function endOfDay(date: Date): Date {
   return copy
 }
 
-export function datePresetLabel(preset: DatePreset, field: DateField): string {
-  const fieldLabel = field === "created" ? "Created" : "Updated"
-  const labels: Record<DatePreset, string> = {
-    last_week: "last week",
-    last_month: "last month",
-    this_month: "this month",
-    this_year: "this year",
-  }
-  return `${fieldLabel} ${labels[preset]}`
-}

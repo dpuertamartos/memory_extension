@@ -1,9 +1,12 @@
 import { DeviceMobileIcon, DownloadSimpleIcon, UploadSimpleIcon } from "@phosphor-icons/react"
+import { useTranslation } from "react-i18next"
 import { usePwaInstall } from "../hooks/usePwaInstall"
+import { LOCALE_LABELS, SUPPORTED_LOCALES } from "../i18n"
 import JSZip from "jszip"
 import { eq } from "drizzle-orm"
 import { noteTagsTable, notesTable, tagsTable } from "../db/schema"
 import { db, exportDatabaseFile, importDatabaseFile, initDb } from "../lib/db"
+import { useLocaleStore } from "../store/useLocaleStore"
 
 const downloadBlob = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob)
@@ -15,6 +18,8 @@ const downloadBlob = (blob: Blob, filename: string) => {
 }
 
 const SettingsPage = () => {
+  const { t } = useTranslation()
+  const { locale, setLocale } = useLocaleStore()
   const { canInstall, isInstalled, showIosHint, promptInstall } = usePwaInstall()
 
   const handleSqliteExport = async () => {
@@ -27,6 +32,7 @@ const SettingsPage = () => {
 
     const notes = await db.select().from(notesTable).where(eq(notesTable.isDeleted, false))
     const zip = new JSZip()
+    const untitled = t("common.untitled")
 
     for (const note of notes) {
       const tagRows = await db
@@ -38,7 +44,7 @@ const SettingsPage = () => {
       const tagNames = tagRows.map((row) => row.name)
       const frontmatter = [
         "---",
-        `title: ${JSON.stringify(note.title || "Untitled")}`,
+        `title: ${JSON.stringify(note.title || untitled)}`,
         `id: ${note.id}`,
         `created_at: ${note.createdAt.toISOString()}`,
         `updated_at: ${note.updatedAt.toISOString()}`,
@@ -62,9 +68,7 @@ const SettingsPage = () => {
     const file = event.target.files?.[0]
     if (!file) return
 
-    const confirmed = window.confirm(
-      "Importing will overwrite your current local database. Continue?",
-    )
+    const confirmed = window.confirm(t("settings.importConfirm"))
     if (!confirmed) return
 
     await importDatabaseFile(file)
@@ -73,15 +77,32 @@ const SettingsPage = () => {
 
   return (
     <div className="mx-auto max-w-lg p-6">
-      <h1>Settings</h1>
-      <p className="mb-6 text-sm text-gray-500">
-        Your data lives entirely in this browser. Export regularly to keep backups.
-      </p>
+      <h1>{t("settings.title")}</h1>
+      <p className="mb-6 text-sm text-gray-500">{t("settings.description")}</p>
 
       <div className="space-y-4">
+        <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+          <label htmlFor="locale-select" className="mb-1 block text-sm font-medium">
+            {t("settings.language")}
+          </label>
+          <p className="mb-3 text-xs text-gray-500">{t("settings.languageDescription")}</p>
+          <select
+            id="locale-select"
+            value={locale}
+            onChange={(event) => setLocale(event.target.value as typeof locale)}
+            className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
+          >
+            {SUPPORTED_LOCALES.map((code) => (
+              <option key={code} value={code}>
+                {LOCALE_LABELS[code]}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {isInstalled ? (
           <p className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
-            App is installed on this device.
+            {t("settings.installed")}
           </p>
         ) : canInstall ? (
           <button
@@ -90,14 +111,12 @@ const SettingsPage = () => {
             className="btn-blue flex w-full items-center justify-center gap-2"
           >
             <DeviceMobileIcon size={18} />
-            Install app
+            {t("settings.installApp")}
           </button>
         ) : showIosHint ? (
           <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
-            <p className="mb-1 font-medium">Install on iPhone or iPad</p>
-            <p>
-              Tap the Share button in Safari, then choose &ldquo;Add to Home Screen&rdquo;.
-            </p>
+            <p className="mb-1 font-medium">{t("settings.iosTitle")}</p>
+            <p>{t("settings.iosHint")}</p>
           </div>
         ) : null}
 
@@ -107,7 +126,7 @@ const SettingsPage = () => {
           className="btn-blue flex w-full items-center justify-center gap-2"
         >
           <DownloadSimpleIcon size={18} />
-          Export SQLite database
+          {t("settings.exportSqlite")}
         </button>
 
         <button
@@ -116,12 +135,12 @@ const SettingsPage = () => {
           className="btn-white flex w-full items-center justify-center gap-2"
         >
           <DownloadSimpleIcon size={18} />
-          Download all notes as Markdown (.zip)
+          {t("settings.exportMarkdown")}
         </button>
 
         <label className="btn-gray flex w-full cursor-pointer items-center justify-center gap-2">
           <UploadSimpleIcon size={18} />
-          Import SQLite backup
+          {t("settings.importSqlite")}
           <input
             type="file"
             accept=".sqlite,.db,application/x-sqlite3"

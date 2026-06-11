@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import CalendarView from "../components/calendar/CalendarView"
 import NoteEditor from "../components/notes/NoteEditor"
 import NoteList from "../components/notes/NoteList"
@@ -6,6 +7,7 @@ import TagSidebar from "../components/notes/TagSidebar"
 import { useAppStore } from "../store/useAppStore"
 
 const BrainPage = () => {
+  const { t } = useTranslation()
   const { mobilePane, mainView, setMainView } = useAppStore()
   const showCalendar = mainView === "calendar" || mobilePane === "calendar"
 
@@ -22,7 +24,7 @@ const BrainPage = () => {
                 : "text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
             }`}
           >
-            Notes
+            {t("nav.notes")}
           </button>
           <button
             type="button"
@@ -33,7 +35,7 @@ const BrainPage = () => {
                 : "text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
             }`}
           >
-            Calendar
+            {t("nav.calendar")}
           </button>
         </div>
         {!showCalendar && <Omnibox />}

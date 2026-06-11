@@ -1,9 +1,12 @@
-export function formatRelativeTime(date: Date | number | string | null | undefined): string {
+export function formatRelativeTime(
+  date: Date | number | string | null | undefined,
+  locale?: string,
+): string {
   const value = date instanceof Date ? date : new Date(date ?? 0)
   if (Number.isNaN(value.getTime())) return ""
 
   const diffSec = Math.round((value.getTime() - Date.now()) / 1000)
-  const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" })
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" })
 
   const absSec = Math.abs(diffSec)
   if (absSec < 60) return rtf.format(diffSec, "second")
