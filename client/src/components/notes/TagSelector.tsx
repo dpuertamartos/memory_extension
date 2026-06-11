@@ -21,14 +21,24 @@ const TagSelector = ({ noteId, selectedTags, anchor, query, onClose, onTagApplie
   const ref = useRef<HTMLDivElement>(null)
   const [highlight, setHighlight] = useState(0)
 
-  const normalized = query.toLowerCase()
+  const trimmed = query.trim()
+  const normalized = trimmed.toLowerCase()
   const filtered = tags.filter((tag) => tag.name.toLowerCase().includes(normalized))
   const selectedIds = new Set(selectedTags.map((tag) => tag.id))
   const canCreate = normalized.length > 0 && !tags.some((tag) => tag.name.toLowerCase() === normalized)
-  const createLabel = t("tags.createTag", { name: query })
+  const createLabel = t("tags.createTag", { name: trimmed })
   const options = canCreate
     ? [...filtered, { id: "__create__", name: createLabel } as Tag]
     : filtered
+
+  const optionsRef = useRef(options)
+  const highlightRef = useRef(highlight)
+  optionsRef.current = options
+  highlightRef.current = highlight
+
+  useEffect(() => {
+    setHighlight(0)
+  }, [query])
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -55,7 +65,7 @@ const TagSelector = ({ noteId, selectedTags, anchor, query, onClose, onTagApplie
 
   const handleSelect = async (option: Tag | { id: string; name: string }) => {
     if (option.id === "__create__") {
-      const tag = await createTag.mutateAsync({ name: query })
+      const tag = await createTag.mutateAsync({ name: trimmed })
       await setNoteTags.mutateAsync({
         noteId,
         tagIds: [...selectedTags.map((item) => item.id), tag.id],
@@ -67,6 +77,27 @@ const TagSelector = ({ noteId, selectedTags, anchor, query, onClose, onTagApplie
 
     await applyTag(option as Tag)
   }
+
+  const handleSelectRef = useRef(handleSelect)
+  handleSelectRef.current = handleSelect
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose()
+        return
+      }
+      if (event.key === "Enter") {
+        const currentOptions = optionsRef.current
+        if (currentOptions.length === 0) return
+        event.preventDefault()
+        event.stopPropagation()
+        void handleSelectRef.current(currentOptions[highlightRef.current])
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown, true)
+    return () => document.removeEventListener("keydown", handleKeyDown, true)
+  }, [onClose])
 
   return (
     <div

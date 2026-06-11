@@ -22,7 +22,11 @@ describe("matchTagTrigger", () => {
     expect(matchTagTrigger("hello world")).toBeNull()
   })
 
-  it("returns null when hash is followed by a space", () => {
-    expect(matchTagTrigger("hello # work")).toBeNull()
+  it("matches a tag name with spaces", () => {
+    expect(matchTagTrigger("hello #my tag")).toEqual({ query: "my tag", length: 7 })
+  })
+
+  it("matches a partial tag name with a trailing space", () => {
+    expect(matchTagTrigger("hello #my ")).toEqual({ query: "my ", length: 4 })
   })
 })

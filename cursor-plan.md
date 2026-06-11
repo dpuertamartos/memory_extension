@@ -217,6 +217,17 @@ Build a local-first note-taking app that users access via a URL, but where all d
 - [ ] **11.4 Codebase Refactoring**
   - Conduct a comprehensive refactor to address technical debt, improving overall maintainability and extensibility of the codebase.
 
+## Phase 12: SEO Landing Page (Astro)
+
+*Objective: Build a marketing landing page optimized for search engines to drive traffic to the main application.*
+
+- [ ] **12.1 Astro Setup**
+  - Initialize a new Astro project (e.g., inside a `landing` package) optimized for Google SEO.
+- [ ] **12.2 Custom Memory/Brain Aesthetic**
+  - Design a unique, handcrafted visual identity centered around the concepts of memory, the brain, and local-first privacy (specifically avoiding generic "AI slop" aesthetics).
+- [ ] **12.3 App Routing**
+  - Provide clear calls-to-action (CTAs) linking the marketing landing page directly to the main PWA application.
+
 ## Phase 13: Internationalization (i18n)
 
 *Objective: Make the app accessible in multiple languages, starting with Spanish, with an architecture that scales to additional locales.*
@@ -232,14 +243,3 @@ Build a local-first note-taking app that users access via a URL, but where all d
   - Add a language picker in Settings so users can switch between English and Spanish at runtime.
 - [ ] **13.4 Additional Locales**
   - Add new locale files under `client/src/i18n/locales/` and register them in `SUPPORTED_LOCALES` to support more languages.
-
-## Phase 12: SEO Landing Page (Astro)
-
-*Objective: Build a marketing landing page optimized for search engines to drive traffic to the main application.*
-
-- [ ] **12.1 Astro Setup**
-  - Initialize a new Astro project (e.g., inside a `landing` package) optimized for Google SEO.
-- [ ] **12.2 Custom Memory/Brain Aesthetic**
-  - Design a unique, handcrafted visual identity centered around the concepts of memory, the brain, and local-first privacy (specifically avoiding generic "AI slop" aesthetics).
-- [ ] **12.3 App Routing**
-  - Provide clear calls-to-action (CTAs) linking the marketing landing page directly to the main PWA application.
