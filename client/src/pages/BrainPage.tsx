@@ -11,15 +11,15 @@ const BrainPage = () => {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-        <div className="mb-3 flex gap-1">
+      <div className="border-b border-gray-200 px-3 py-2.5 dark:border-gray-700 md:px-4 md:py-3">
+        <div className="mb-2.5 flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-800 md:mb-3">
           <button
             type="button"
             onClick={() => setMainView("notes")}
-            className={`rounded-lg px-3 py-1 text-sm ${
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
               !showCalendar
-                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-                : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                ? "bg-white text-blue-700 shadow-sm dark:bg-gray-900 dark:text-blue-300"
+                : "text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
             }`}
           >
             Notes
@@ -27,10 +27,10 @@ const BrainPage = () => {
           <button
             type="button"
             onClick={() => setMainView("calendar")}
-            className={`rounded-lg px-3 py-1 text-sm ${
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
               showCalendar
-                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-                : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                ? "bg-white text-blue-700 shadow-sm dark:bg-gray-900 dark:text-blue-300"
+                : "text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
             }`}
           >
             Calendar

@@ -11,7 +11,7 @@ const LayoutApp = () => {
   return (
     <div className={`${isDarkMode ? "dark" : ""} flex h-screen flex-col`}>
       <div className="flex min-h-0 flex-1 flex-col bg-white text-gray-600 dark:bg-gray-900 dark:text-white">
-        <header className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+        <header className="safe-area-top flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
           <Link to="/" className="flex items-center gap-3">
             <LogoApp compact />
           </Link>

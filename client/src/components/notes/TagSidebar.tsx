@@ -89,9 +89,9 @@ const TagSidebar = () => {
         <button
           type="button"
           onClick={() => setSelectedTagId(null)}
-          className={`mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors duration-150 ${
+          className={`mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm transition-colors duration-150 md:py-2 ${
             selectedTagId === null
-              ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+              ? "bg-blue-50 font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
               : "hover:bg-gray-100 dark:hover:bg-gray-700"
           }`}
         >
@@ -115,9 +115,9 @@ const TagSidebar = () => {
             <button
               type="button"
               onClick={() => setSelectedTagId(tag.id)}
-              className={`flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left text-sm transition-colors duration-150 ${
+              className={`flex min-w-0 flex-1 items-center gap-2 px-3 py-3 text-left text-sm transition-colors duration-150 md:py-2 ${
                 selectedTagId === tag.id
-                  ? "text-blue-700 dark:text-blue-300"
+                  ? "font-medium text-blue-700 dark:text-blue-300"
                   : ""
               }`}
             >
@@ -127,7 +127,7 @@ const TagSidebar = () => {
             <button
               type="button"
               onClick={() => setEditingTag(tag)}
-              className="mr-1 rounded p-1 text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-600 dark:hover:text-gray-200"
+              className="mr-1 rounded p-1.5 text-gray-400 opacity-100 hover:bg-gray-200 hover:text-gray-600 md:opacity-0 md:transition-opacity md:group-hover:opacity-100 dark:hover:bg-gray-600 dark:hover:text-gray-200"
               aria-label={`Edit tag ${tag.name}`}
             >
               <PencilSimpleIcon size={14} />

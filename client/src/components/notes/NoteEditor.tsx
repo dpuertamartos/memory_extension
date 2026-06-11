@@ -1,4 +1,4 @@
-import { TrashIcon } from "@phosphor-icons/react"
+import { ArrowLeftIcon, SparkleIcon, TrashIcon } from "@phosphor-icons/react"
 import { useEffect, useRef, useState } from "react"
 import MarkdownEditor, { type MarkdownEditorHandle } from "./MarkdownEditor"
 import TagSelector from "./TagSelector"
@@ -6,7 +6,13 @@ import { useDeleteNote, useNote, useUpdateNote } from "../../hooks/useNotes"
 import { useAppStore } from "../../store/useAppStore"
 
 const NoteEditor = () => {
-  const { selectedNoteId, setSelectedNoteId } = useAppStore()
+  const {
+    selectedNoteId,
+    setSelectedNoteId,
+    newlyCreatedNoteId,
+    setNewlyCreatedNoteId,
+    setMobilePane,
+  } = useAppStore()
   const { data: note } = useNote(selectedNoteId)
   const { updateNote, saveStatus } = useUpdateNote()
   const deleteNote = useDeleteNote()
@@ -17,6 +23,9 @@ const NoteEditor = () => {
   const [tagAnchor, setTagAnchor] = useState<{ top: number; left: number } | null>(null)
   const hydratedNoteIdRef = useRef<string | null>(null)
   const editorRef = useRef<MarkdownEditorHandle>(null)
+  const titleRef = useRef<HTMLInputElement>(null)
+
+  const isNewNote = selectedNoteId !== null && selectedNoteId === newlyCreatedNoteId
 
   // Hydrate local editor state only when the user switches notes — not on every
   // query refetch after a debounced save (which caused text rollback while typing).
@@ -40,10 +49,27 @@ const NoteEditor = () => {
     setTagAnchor(null)
   }, [note, selectedNoteId])
 
+  // Auto-focus title for newly created notes
+  useEffect(() => {
+    if (!isNewNote || !note) return
+    const timer = setTimeout(() => {
+      titleRef.current?.focus()
+      titleRef.current?.select()
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [isNewNote, note])
+
   if (!selectedNoteId) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-gray-500">
-        Select a note or create a new one
+      <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+        <p className="text-sm text-gray-500">Select a note or create a new one</p>
+        <button
+          type="button"
+          onClick={() => setMobilePane("list")}
+          className="btn-blue !px-4 !py-2 md:hidden"
+        >
+          Browse notes
+        </button>
       </div>
     )
   }
@@ -59,10 +85,12 @@ const NoteEditor = () => {
   const handleContentChange = (value: string) => {
     setContent(value)
     updateNote(note.id, { content: value })
+    if (isNewNote && value.trim()) setNewlyCreatedNoteId(null)
   }
 
   const handleDelete = async () => {
     await deleteNote.mutateAsync(note.id)
+    setNewlyCreatedNoteId(null)
     setSelectedNoteId(null)
   }
 
@@ -70,22 +98,48 @@ const NoteEditor = () => {
     editorRef.current?.removeTagTrigger()
   }
 
+  const handleBack = () => {
+    setMobilePane("list")
+  }
+
   return (
     <div className="relative flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+      {isNewNote && (
+        <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+          <SparkleIcon size={16} weight="fill" className="shrink-0" aria-hidden />
+          <span className="font-medium">New note created</span>
+          <span className="text-emerald-700/80 dark:text-emerald-400/80">— add a title below</span>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-700 md:px-4 md:py-3">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="shrink-0 rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden"
+          aria-label="Back to notes"
+        >
+          <ArrowLeftIcon size={20} />
+        </button>
+
         <input
+          ref={titleRef}
           type="text"
           value={title}
           onChange={(event) => {
             setTitle(event.target.value)
             updateNote(note.id, { title: event.target.value })
+            if (isNewNote && event.target.value.trim() && event.target.value !== "Untitled") {
+              setNewlyCreatedNoteId(null)
+            }
           }}
           placeholder="Note title"
-          className="w-full border-0 bg-transparent text-lg font-semibold shadow-none focus:ring-0"
+          className="min-w-0 flex-1 border-0 bg-transparent text-base font-semibold shadow-none focus:ring-0 md:text-lg"
         />
-        <div className="ml-2 flex shrink-0 items-center gap-2">
+
+        <div className="flex shrink-0 items-center gap-1.5">
           <span
-            className={`text-xs text-gray-400 transition-opacity duration-300 ${
+            className={`whitespace-nowrap text-xs text-gray-400 transition-opacity duration-300 ${
               saveStatus === "saving" ? "opacity-100" : "opacity-0"
             }`}
             aria-live="polite"
@@ -93,17 +147,17 @@ const NoteEditor = () => {
             Saving…
           </span>
           <span
-            className={`text-xs text-green-600 transition-opacity duration-300 dark:text-green-400 ${
+            className={`whitespace-nowrap text-xs text-green-600 transition-opacity duration-300 dark:text-green-400 ${
               saveStatus === "saved" ? "opacity-100" : "opacity-0"
             }`}
             aria-live="polite"
           >
-            Saved locally
+            Saved
           </span>
           <button
             type="button"
             onClick={() => void handleDelete()}
-            className="rounded p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+            className="rounded-lg p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
             aria-label="Delete note"
           >
             <TrashIcon size={18} />
@@ -125,7 +179,7 @@ const NoteEditor = () => {
         </div>
       )}
 
-      <div className="relative flex-1 overflow-y-auto p-4">
+      <div className="relative min-h-0 flex-1 overflow-y-auto p-3 md:p-4">
         <MarkdownEditor
           ref={editorRef}
           noteId={note.id}

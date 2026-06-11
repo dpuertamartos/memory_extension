@@ -8,12 +8,14 @@ export type MainView = "notes" | "calendar"
 type AppState = {
   selectedTagId: string | null
   selectedNoteId: string | null
+  newlyCreatedNoteId: string | null
   searchFilters: SearchFilters
   noteSort: NoteSort
   mobilePane: MobilePane
   mainView: MainView
   setSelectedTagId: (id: string | null) => void
   setSelectedNoteId: (id: string | null) => void
+  setNewlyCreatedNoteId: (id: string | null) => void
   setSearchFilters: (filters: SearchFilters) => void
   updateSearchFilters: (patch: Partial<SearchFilters>) => void
   clearSearchFilters: () => void
@@ -25,12 +27,14 @@ type AppState = {
 export const useAppStore = create<AppState>((set) => ({
   selectedTagId: null,
   selectedNoteId: null,
+  newlyCreatedNoteId: null,
   searchFilters: emptySearchFilters(),
   noteSort: "updated",
   mobilePane: "list",
   mainView: "notes",
-  setSelectedTagId: (id) => set({ selectedTagId: id }),
+  setSelectedTagId: (id) => set({ selectedTagId: id, mobilePane: "list" }),
   setSelectedNoteId: (id) => set({ selectedNoteId: id, mobilePane: id ? "editor" : "list" }),
+  setNewlyCreatedNoteId: (id) => set({ newlyCreatedNoteId: id }),
   setSearchFilters: (filters) => set({ searchFilters: filters }),
   updateSearchFilters: (patch) =>
     set((state) => ({ searchFilters: { ...state.searchFilters, ...patch } })),
