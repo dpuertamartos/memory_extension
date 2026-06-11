@@ -37,7 +37,12 @@ const MONTH_LABELS = [
 ]
 
 const CalendarView = () => {
-  const { setSelectedNoteId } = useAppStore()
+  const { setSelectedNoteId, setMainView } = useAppStore()
+
+  const openNote = (noteId: string) => {
+    setMainView("notes")
+    setSelectedNoteId(noteId)
+  }
   const [scope, setScope] = useState<CalendarScope>("month")
   const [anchor, setAnchor] = useState(() => new Date())
   const [selectedDay, setSelectedDay] = useState<Date | null>(() => new Date())
@@ -188,7 +193,7 @@ const CalendarView = () => {
         <button
           key={note.id}
           type="button"
-          onClick={() => setSelectedNoteId(note.id)}
+          onClick={() => openNote(note.id)}
           className="w-full rounded-lg border border-gray-200 p-3 text-left hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
         >
           <div className="flex items-start justify-between gap-2">

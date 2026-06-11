@@ -128,11 +128,8 @@ const Omnibox = () => {
       )}
 
       <div className="flex gap-2">
-        <div className="relative min-w-0 flex-1">
-          <MagnifyingGlassIcon
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            size={18}
-          />
+        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 dark:border-gray-600 dark:bg-gray-800">
+          <MagnifyingGlassIcon className="shrink-0 text-gray-400" size={18} aria-hidden />
           <input
             ref={inputRef}
             type="text"
@@ -145,7 +142,7 @@ const Omnibox = () => {
               }
             }}
             placeholder="Add keywords or #tags…"
-            className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-10 pr-10 text-sm dark:border-gray-600 dark:bg-gray-800"
+            className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none"
             aria-label="Search notes"
           />
           {hasFilters && (
@@ -155,13 +152,24 @@ const Omnibox = () => {
                 clearSearchFilters()
                 setInputValue("")
               }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:text-gray-600"
+              className="shrink-0 rounded p-1 text-gray-400 hover:text-gray-600"
               aria-label="Clear all filters"
             >
               <XIcon size={16} />
             </button>
           )}
         </div>
+
+        <button
+          type="button"
+          onClick={handleSubmitInput}
+          disabled={!inputValue.trim()}
+          className="flex shrink-0 items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+          aria-label="Add search term"
+        >
+          <MagnifyingGlassIcon size={16} className="sm:hidden" />
+          <span className="hidden sm:inline">Search</span>
+        </button>
 
         <div className="relative">
           <button

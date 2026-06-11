@@ -45,24 +45,21 @@ const TagSidebar = () => {
       </div>
 
       <div className="border-b border-gray-200 p-3 dark:border-gray-700">
-        <div className="relative">
-          <MagnifyingGlassIcon
-            className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
-            size={14}
-          />
+        <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-2.5 dark:border-gray-600 dark:bg-gray-800">
+          <MagnifyingGlassIcon className="shrink-0 text-gray-400" size={14} aria-hidden />
           <input
             type="text"
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
             placeholder="Filter tags…"
-            className="w-full rounded-md border border-gray-200 bg-gray-50 py-1.5 pl-7 pr-7 text-sm dark:border-gray-600 dark:bg-gray-800"
+            className="min-w-0 flex-1 bg-transparent py-1.5 text-sm outline-none"
             aria-label="Filter tags"
           />
           {filter && (
             <button
               type="button"
               onClick={() => setFilter("")}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-gray-400 hover:text-gray-600"
+              className="shrink-0 rounded p-0.5 text-gray-400 hover:text-gray-600"
               aria-label="Clear tag filter"
             >
               <XIcon size={14} />

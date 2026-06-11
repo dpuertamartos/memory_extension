@@ -1,19 +1,9 @@
 import { TrashIcon } from "@phosphor-icons/react"
 import { useEffect, useRef, useState } from "react"
-import MarkdownEditor from "./MarkdownEditor"
+import MarkdownEditor, { type MarkdownEditorHandle } from "./MarkdownEditor"
 import TagSelector from "./TagSelector"
 import { useDeleteNote, useNote, useUpdateNote } from "../../hooks/useNotes"
 import { useAppStore } from "../../store/useAppStore"
-
-const stripTagTrigger = (text: string, query: string) => {
-  const hashIndex = text.lastIndexOf("#")
-  if (hashIndex === -1) return text
-
-  const typed = text.slice(hashIndex + 1)
-  if (!typed.startsWith(query)) return text
-
-  return text.slice(0, hashIndex) + text.slice(hashIndex + 1 + query.length)
-}
 
 const NoteEditor = () => {
   const { selectedNoteId, setSelectedNoteId } = useAppStore()
@@ -26,6 +16,7 @@ const NoteEditor = () => {
   const [tagQuery, setTagQuery] = useState("")
   const [tagAnchor, setTagAnchor] = useState<{ top: number; left: number } | null>(null)
   const hydratedNoteIdRef = useRef<string | null>(null)
+  const editorRef = useRef<MarkdownEditorHandle>(null)
 
   // Hydrate local editor state only when the user switches notes — not on every
   // query refetch after a debounced save (which caused text rollback while typing).
@@ -76,13 +67,7 @@ const NoteEditor = () => {
   }
 
   const handleTagApplied = () => {
-    if (!tagQuery) return
-
-    const stripped = stripTagTrigger(content, tagQuery)
-    if (stripped !== content) {
-      setContent(stripped)
-      updateNote(note.id, { content: stripped })
-    }
+    editorRef.current?.removeTagTrigger()
   }
 
   return (
@@ -142,6 +127,7 @@ const NoteEditor = () => {
 
       <div className="relative flex-1 overflow-y-auto p-4">
         <MarkdownEditor
+          ref={editorRef}
           noteId={note.id}
           content={content}
           onChange={handleContentChange}

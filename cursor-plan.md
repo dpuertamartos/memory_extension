@@ -200,3 +200,28 @@ Build a local-first note-taking app that users access via a URL, but where all d
   - Provide Daily, Weekly, Monthly, and Yearly scopes.
   - Visualize note activity (creation/updates) on the calendar.
   - Surface top keywords, tags, or topics relevant to the selected timeframe to help users organize and recall their memory contextually.
+
+## Phase 11: UX Polish, App Install & Tech Debt
+
+*Objective: Improve mobile usability, fix UI glitches, allow explicit app installation, and pay down technical debt.*
+
+- [x] **11.1 Search Bar UI & Mobile UX**
+  - Fix the aesthetics of the search bar (magnifying glass icon overlapping the input text).
+  - Improve mobile search interaction (make it more obvious how to search without relying exclusively on the "Enter" key; e.g., add a visible submit/search button).
+- [x] **11.2 Calendar Interactivity**
+  - Make the notes clickable directly within the calendar view so users can navigate to and edit them.
+- [x] **11.3 PWA Installation**
+  - Create an explicit "Install App" (Add to Home Screen) button to make the PWA easily accessible as a native-like app on mobile devices.
+- [ ] **11.4 Codebase Refactoring**
+  - Conduct a comprehensive refactor to address technical debt, improving overall maintainability and extensibility of the codebase.
+
+## Phase 12: SEO Landing Page (Astro)
+
+*Objective: Build a marketing landing page optimized for search engines to drive traffic to the main application.*
+
+- [ ] **12.1 Astro Setup**
+  - Initialize a new Astro project (e.g., inside a `landing` package) optimized for Google SEO.
+- [ ] **12.2 Custom Memory/Brain Aesthetic**
+  - Design a unique, handcrafted visual identity centered around the concepts of memory, the brain, and local-first privacy (specifically avoiding generic "AI slop" aesthetics).
+- [ ] **12.3 App Routing**
+  - Provide clear calls-to-action (CTAs) linking the marketing landing page directly to the main PWA application.

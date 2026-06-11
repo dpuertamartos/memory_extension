@@ -1,4 +1,5 @@
-import { DownloadSimpleIcon, UploadSimpleIcon } from "@phosphor-icons/react"
+import { DeviceMobileIcon, DownloadSimpleIcon, UploadSimpleIcon } from "@phosphor-icons/react"
+import { usePwaInstall } from "../hooks/usePwaInstall"
 import JSZip from "jszip"
 import { eq } from "drizzle-orm"
 import { noteTagsTable, notesTable, tagsTable } from "../db/schema"
@@ -14,6 +15,8 @@ const downloadBlob = (blob: Blob, filename: string) => {
 }
 
 const SettingsPage = () => {
+  const { canInstall, isInstalled, showIosHint, promptInstall } = usePwaInstall()
+
   const handleSqliteExport = async () => {
     const blob = await exportDatabaseFile()
     downloadBlob(blob, "local-brain.sqlite")
@@ -76,6 +79,28 @@ const SettingsPage = () => {
       </p>
 
       <div className="space-y-4">
+        {isInstalled ? (
+          <p className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
+            App is installed on this device.
+          </p>
+        ) : canInstall ? (
+          <button
+            type="button"
+            onClick={() => void promptInstall()}
+            className="btn-blue flex w-full items-center justify-center gap-2"
+          >
+            <DeviceMobileIcon size={18} />
+            Install app
+          </button>
+        ) : showIosHint ? (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
+            <p className="mb-1 font-medium">Install on iPhone or iPad</p>
+            <p>
+              Tap the Share button in Safari, then choose &ldquo;Add to Home Screen&rdquo;.
+            </p>
+          </div>
+        ) : null}
+
         <button
           type="button"
           onClick={() => void handleSqliteExport()}

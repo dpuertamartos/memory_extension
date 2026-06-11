@@ -34,11 +34,16 @@ const TagSelector = ({ noteId, selectedTags, anchor, query, onClose, onTagApplie
   }, [onClose])
 
   const applyTag = async (tag: Tag) => {
-    const nextIds = selectedIds.has(tag.id)
-      ? selectedTags.filter((item) => item.id !== tag.id).map((item) => item.id)
-      : [...selectedTags.map((item) => item.id), tag.id]
+    if (selectedIds.has(tag.id)) {
+      onTagApplied?.()
+      onClose()
+      return
+    }
 
-    await setNoteTags.mutateAsync({ noteId, tagIds: nextIds })
+    await setNoteTags.mutateAsync({
+      noteId,
+      tagIds: [...selectedTags.map((item) => item.id), tag.id],
+    })
     onTagApplied?.()
     onClose()
   }
