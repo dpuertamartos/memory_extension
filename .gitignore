@@ -2,3 +2,6 @@ node_modules
 .pnpm-store
 dist
 .env
+test-results
+playwright-report
+.playwright-browsers

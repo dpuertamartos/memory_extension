@@ -6,10 +6,8 @@
     "build": "pnpm run build:client",
     "dev": "pnpm --filter @fsb/client run dev",
     "start": "pnpm --filter @fsb/client run start",
-    "test": "pnpm --filter @fsb/tests-e2e run test",
+    "test": "pnpm --filter @fsb/client run test",
+    "test:e2e": "pnpm --filter @fsb/tests-e2e run test",
     "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' + && find . -name 'package-lock.json' -type f -delete && find . -name 'yarn.lock' -type f -delete && find . -name 'pnpm-lock.yaml' -type f -delete && find . -name 'dist' -type d -prune -exec rm -rf '{}' +"
-  },
-  "devDependencies": {
-    "wait-port": "^1.1.0"
   }
 }

@@ -2,8 +2,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { BrowserRouter } from "react-router"
 import LayoutApp from "./layout/LayoutApp"
 import DbProvider from "./providers/DbProvider"
-import { useThemeStore } from "./store/useThemeStore"
-
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
@@ -25,17 +23,14 @@ function getQueryClient() {
 }
 
 const App = () => {
-  const { isDarkMode } = useThemeStore()
   const queryClient = getQueryClient()
 
   return (
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
-        <div className={isDarkMode ? "dark" : "light"}>
-          <DbProvider>
-            <LayoutApp />
-          </DbProvider>
-        </div>
+        <DbProvider>
+          <LayoutApp />
+        </DbProvider>
       </QueryClientProvider>
     </BrowserRouter>
   )

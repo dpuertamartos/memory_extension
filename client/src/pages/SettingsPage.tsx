@@ -2,10 +2,8 @@ import { DeviceMobileIcon, DownloadSimpleIcon, HardDrivesIcon, UploadSimpleIcon 
 import { useTranslation } from "react-i18next"
 import { usePwaInstall } from "../hooks/usePwaInstall"
 import { LOCALE_LABELS, SUPPORTED_LOCALES } from "../i18n"
-import JSZip from "jszip"
-import { eq } from "drizzle-orm"
-import { noteTagsTable, notesTable, tagsTable } from "../db/schema"
-import { db, exportDatabaseFile, importDatabaseFile, initDb } from "../lib/db"
+import { exportDatabaseFile, importDatabaseFile } from "../lib/db"
+import { exportNotesAsMarkdownZip } from "../lib/exportMarkdown"
 import { useLocaleStore } from "../store/useLocaleStore"
 
 const downloadBlob = (blob: Blob, filename: string) => {
@@ -28,39 +26,7 @@ const SettingsPage = () => {
   }
 
   const handleMarkdownExport = async () => {
-    await initDb()
-
-    const notes = await db.select().from(notesTable).where(eq(notesTable.isDeleted, false))
-    const zip = new JSZip()
-    const untitled = t("common.untitled")
-
-    for (const note of notes) {
-      const tagRows = await db
-        .select({ name: tagsTable.name })
-        .from(noteTagsTable)
-        .innerJoin(tagsTable, eq(noteTagsTable.tagId, tagsTable.id))
-        .where(eq(noteTagsTable.noteId, note.id))
-
-      const tagNames = tagRows.map((row) => row.name)
-      const frontmatter = [
-        "---",
-        `title: ${JSON.stringify(note.title || untitled)}`,
-        `id: ${note.id}`,
-        `created_at: ${note.createdAt.toISOString()}`,
-        `updated_at: ${note.updatedAt.toISOString()}`,
-        `tags: [${tagNames.map((name) => JSON.stringify(name)).join(", ")}]`,
-        "---",
-        "",
-      ].join("\n")
-
-      const filename = `${note.title || "untitled"}-${note.id.slice(0, 8)}.md`
-        .replace(/[^\w.-]+/g, "-")
-        .toLowerCase()
-
-      zip.file(filename, `${frontmatter}${note.content}`)
-    }
-
-    const blob = await zip.generateAsync({ type: "blob" })
+    const blob = await exportNotesAsMarkdownZip(t("common.untitled"))
     downloadBlob(blob, "local-brain-notes.zip")
   }
 

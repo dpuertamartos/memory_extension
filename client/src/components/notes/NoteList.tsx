@@ -2,6 +2,7 @@ import { NotePencilIcon, PlusIcon } from "@phosphor-icons/react"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import FilterBanner from "./FilterBanner"
+import TagChip from "./TagChip"
 import { useCreateNote, useNotes } from "../../hooks/useNotes"
 import { isSearchActive, useGlobalSearch } from "../../hooks/useSearch"
 import { formatRelativeTime } from "../../lib/formatRelativeTime"
@@ -177,13 +178,7 @@ const NoteList = () => {
               {(note.tags ?? []).length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {(note.tags ?? []).map((tag) => (
-                    <span
-                      key={tag.id}
-                      className="rounded-full px-2 py-0.5 text-[10px] text-white"
-                      style={{ backgroundColor: tag.color }}
-                    >
-                      {tag.name}
-                    </span>
+                    <TagChip key={tag.id} tag={tag} size="xs" showHash={false} />
                   ))}
                 </div>
               )}

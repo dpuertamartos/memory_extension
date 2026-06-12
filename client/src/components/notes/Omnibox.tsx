@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { type DateField, type DatePreset } from "../../lib/searchQuery"
 import { useTags } from "../../hooks/useTags"
 import { useAppStore } from "../../store/useAppStore"
+import TagChip from "./TagChip"
 
 const DATE_PRESETS: DatePreset[] = ["last_week", "last_month", "this_month", "this_year"]
 
@@ -93,21 +94,12 @@ const Omnibox = () => {
           ))}
 
           {selectedTags.map((tag) => (
-            <span
+            <TagChip
               key={tag.id}
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs text-white"
-              style={{ backgroundColor: tag.color }}
-            >
-              #{tag.name}
-              <button
-                type="button"
-                onClick={() => removeTag(tag.id)}
-                className="rounded hover:opacity-80"
-                aria-label={t("search.removeTagFilter", { name: tag.name })}
-              >
-                <XIcon size={12} />
-              </button>
-            </span>
+              tag={tag}
+              onRemove={() => removeTag(tag.id)}
+              removeLabel={t("search.removeTagFilter", { name: tag.name })}
+            />
           ))}
 
           {searchFilters.datePreset && (

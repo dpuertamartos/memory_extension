@@ -4,7 +4,7 @@ A local-first, installable PWA for personal note-taking. All data stays in your 
 
 ## Status
 
-Phases 1–6 of the [project plan](cursor-plan.md) are complete. The app runs as a client-only PWA with in-browser SQLite, full-text search, tags, and backup export/import.
+Phases 1–10 of the [project plan](cursor-plan.md) are complete (plus partial i18n). The app runs as a client-only PWA with in-browser SQLite, full-text search, tags, calendar view, and backup export/import.
 
 ## Features
 
@@ -53,12 +53,20 @@ pnpm run build
 pnpm run start   # serves the production build at http://localhost:3000
 ```
 
-### E2E tests
+### Tests
 
-Start the dev server, then in another terminal:
+Unit, component, and integration tests (Vitest — works on WSL):
 
 ```bash
 pnpm run test
+```
+
+Integration tests in `client/src/integration/` cover note CRUD, tag assignment, and search flows without a real browser. This is the recommended test path on WSL, where Playwright’s Chromium download often fails or hangs.
+
+Optional browser E2E (Playwright; requires `pnpm exec playwright install chromium` in `tests-e2e/`; best on native Linux, macOS, or Windows host — not WSL):
+
+```bash
+pnpm run test:e2e
 ```
 
 ## Project layout

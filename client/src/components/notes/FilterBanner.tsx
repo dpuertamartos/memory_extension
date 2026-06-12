@@ -2,6 +2,7 @@ import { FunnelIcon, XIcon } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
 import { useTags } from "../../hooks/useTags"
 import { useAppStore } from "../../store/useAppStore"
+import TagChip from "./TagChip"
 
 type FilterBannerProps = {
   noteCount: number
@@ -24,12 +25,7 @@ const FilterBanner = ({ noteCount }: FilterBannerProps) => {
         <span className="text-xs font-medium text-accent dark:text-accent-muted">
           {t("tags.filteredBy")}
         </span>
-        <span
-          className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
-          style={{ backgroundColor: tag.color }}
-        >
-          #{tag.name}
-        </span>
+        <TagChip tag={tag} />
         <span className="text-xs text-accent/80 dark:text-accent-muted/80">
           {t("common.note", { count: noteCount })}
         </span>

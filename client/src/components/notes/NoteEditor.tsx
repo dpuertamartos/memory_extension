@@ -2,6 +2,7 @@ import { ArrowLeftIcon, NotePencilIcon, TrashIcon } from "@phosphor-icons/react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import MarkdownEditor, { type MarkdownEditorHandle } from "./MarkdownEditor"
+import TagChip from "./TagChip"
 import TagSelector from "./TagSelector"
 import { useDeleteNote, useNote, useUpdateNote } from "../../hooks/useNotes"
 import { useAppStore } from "../../store/useAppStore"
@@ -174,13 +175,7 @@ const NoteEditor = () => {
       {note.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 border-b border-border px-4 py-2 dark:border-charcoal-border">
           {note.tags.map((tag) => (
-            <span
-              key={tag.id}
-              className="rounded-full px-2 py-0.5 text-xs text-white"
-              style={{ backgroundColor: tag.color }}
-            >
-              #{tag.name}
-            </span>
+            <TagChip key={tag.id} tag={tag} />
           ))}
         </div>
       )}

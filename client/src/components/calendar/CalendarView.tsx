@@ -3,18 +3,18 @@ import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
   formatScopeLabel,
-  getMonthGridDays,
   getMonthLabels,
-  getWeekDays,
   getWeekdayLabels,
-  isSameDay,
   shiftAnchor,
-  toDateKey,
   type CalendarScope,
 } from "../../lib/calendarUtils"
-import { formatRelativeTime } from "../../lib/formatRelativeTime"
 import { useCalendarNotes } from "../../hooks/useCalendarNotes"
 import { useAppStore } from "../../store/useAppStore"
+import TagChip from "../notes/TagChip"
+import DayList from "./DayList"
+import MonthGrid from "./MonthGrid"
+import WeekGrid from "./WeekGrid"
+import YearGrid from "./YearGrid"
 
 const CalendarView = () => {
   const { t, i18n } = useTranslation()
@@ -29,7 +29,6 @@ const CalendarView = () => {
 
   const weekdayLabels = useMemo(() => getWeekdayLabels(i18n.language), [i18n.language])
   const monthLabels = useMemo(() => getMonthLabels(i18n.language), [i18n.language])
-  const untitled = t("common.untitled")
 
   const openNote = (noteId: string) => {
     setMainView("notes")
@@ -59,166 +58,11 @@ const CalendarView = () => {
     setSelectedDay(today)
   }
 
-  const renderActivityDots = (day: Date) => {
-    const activity = activityByDay.get(toDateKey(day))
-    if (!activity) return null
-
-    return (
-      <div className="mt-0.5 flex justify-center gap-0.5">
-        {activity.created > 0 && (
-          <span
-            className="h-1.5 w-1.5 rounded-full bg-pulse-create"
-            title={t("calendar.activityCreated")}
-          />
-        )}
-        {activity.updated > 0 && (
-          <span
-            className="h-1.5 w-1.5 rounded-full bg-pulse-update"
-            title={t("calendar.activityUpdated")}
-          />
-        )}
-      </div>
-    )
+  const handleSelectMonth = (monthDate: Date) => {
+    setScope("month")
+    setAnchor(monthDate)
+    setSelectedDay(monthDate)
   }
-
-  const renderMonthGrid = () => {
-    const days = getMonthGridDays(anchor)
-    const month = anchor.getMonth()
-
-    return (
-      <div className="grid grid-cols-7 gap-1">
-        {weekdayLabels.map((label) => (
-          <div key={label} className="section-label py-1 text-center">
-            {label}
-          </div>
-        ))}
-        {days.map((day) => {
-          const inMonth = day.getMonth() === month
-          const selected = selectedDay && isSameDay(day, selectedDay)
-          const isToday = isSameDay(day, new Date())
-
-          return (
-            <button
-              key={day.toISOString()}
-              type="button"
-              onClick={() => setSelectedDay(day)}
-              className={`flex min-h-[3.25rem] flex-col items-center rounded-lg p-1 text-sm transition-colors ${
-                selected
-                  ? "bg-accent-soft text-accent dark:bg-accent/20 dark:text-accent-muted"
-                  : inMonth
-                    ? "hover:bg-accent-soft/50 dark:hover:bg-charcoal"
-                    : "text-ink-subtle dark:text-charcoal-subtle"
-              } ${isToday ? "ring-1 ring-accent-muted dark:ring-accent/50" : ""}`}
-            >
-              <span>{day.getDate()}</span>
-              {renderActivityDots(day)}
-            </button>
-          )
-        })}
-      </div>
-    )
-  }
-
-  const renderWeekGrid = () => {
-    const days = getWeekDays(anchor)
-
-    return (
-      <div className="grid grid-cols-7 gap-2">
-        {days.map((day) => {
-          const selected = selectedDay && isSameDay(day, selectedDay)
-          const isToday = isSameDay(day, new Date())
-
-          return (
-            <button
-              key={day.toISOString()}
-              type="button"
-              onClick={() => setSelectedDay(day)}
-              className={`rounded-lg border p-3 text-left transition-colors ${
-                selected
-                  ? "border-accent-muted bg-accent-soft dark:border-accent/50 dark:bg-accent/15"
-                  : "border-border hover:bg-accent-soft/40 dark:border-charcoal-border dark:hover:bg-charcoal"
-              } ${isToday ? "ring-1 ring-accent-muted dark:ring-accent/50" : ""}`}
-            >
-              <p className="text-xs text-ink-subtle">
-                {day.toLocaleDateString(i18n.language, { weekday: "short" })}
-              </p>
-              <p className="font-display text-lg font-semibold">{day.getDate()}</p>
-              {renderActivityDots(day)}
-            </button>
-          )
-        })}
-      </div>
-    )
-  }
-
-  const renderYearGrid = () => (
-    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-      {monthLabels.map((label, index) => {
-        const monthDate = new Date(anchor.getFullYear(), index, 1)
-        const monthActivity = [...activityByDay.entries()].filter(([key]) => {
-          const [year, month] = key.split("-").map(Number)
-          return year === anchor.getFullYear() && month === index + 1
-        })
-        const noteCount = monthActivity.reduce((sum, [, activity]) => sum + activity.notes.length, 0)
-
-        return (
-          <button
-            key={label}
-            type="button"
-            onClick={() => {
-              setScope("month")
-              setAnchor(monthDate)
-              setSelectedDay(monthDate)
-            }}
-            className="surface-inset p-3 text-left transition-colors hover:bg-accent-soft/40 dark:hover:bg-charcoal"
-          >
-            <p className="font-medium">{label}</p>
-            <p className="mt-1 text-xs text-ink-subtle">
-              {noteCount === 0
-                ? t("calendar.noActivity")
-                : t("calendar.noteActivity", { count: noteCount })}
-            </p>
-          </button>
-        )
-      })}
-    </div>
-  )
-
-  const renderDayList = () => (
-    <div className="space-y-2">
-      {selectedDayNotes.length === 0 && (
-        <p className="text-sm text-ink-subtle">{t("calendar.noNoteActivity")}</p>
-      )}
-      {selectedDayNotes.map((note) => (
-        <button
-          key={note.id}
-          type="button"
-          onClick={() => openNote(note.id)}
-          className="surface-inset w-full p-3 text-left transition-colors hover:bg-accent-soft/40 dark:hover:bg-charcoal"
-        >
-          <div className="flex items-start justify-between gap-2">
-            <p className="font-medium">{note.title || untitled}</p>
-            <span className="shrink-0 text-xs text-ink-subtle">
-              {formatRelativeTime(note.updatedAt, i18n.language)}
-            </span>
-          </div>
-          {note.tags.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {note.tags.map((tag) => (
-                <span
-                  key={tag.id}
-                  className="rounded-full px-2 py-0.5 text-[10px] text-white"
-                  style={{ backgroundColor: tag.color }}
-                >
-                  {tag.name}
-                </span>
-              ))}
-            </div>
-          )}
-        </button>
-      ))}
-    </div>
-  )
 
   return (
     <div className="flex h-full flex-col">
@@ -270,10 +114,35 @@ const CalendarView = () => {
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 lg:flex-row">
         <div className="min-w-0 flex-1">
           {isLoading && <p className="text-sm text-ink-subtle">{t("calendar.loading")}</p>}
-          {!isLoading && scope === "month" && renderMonthGrid()}
-          {!isLoading && scope === "week" && renderWeekGrid()}
-          {!isLoading && scope === "year" && renderYearGrid()}
-          {!isLoading && scope === "day" && renderDayList()}
+          {!isLoading && scope === "month" && (
+            <MonthGrid
+              anchor={anchor}
+              selectedDay={selectedDay}
+              activityByDay={activityByDay}
+              weekdayLabels={weekdayLabels}
+              onSelectDay={setSelectedDay}
+            />
+          )}
+          {!isLoading && scope === "week" && (
+            <WeekGrid
+              anchor={anchor}
+              selectedDay={selectedDay}
+              activityByDay={activityByDay}
+              locale={i18n.language}
+              onSelectDay={setSelectedDay}
+            />
+          )}
+          {!isLoading && scope === "year" && (
+            <YearGrid
+              anchor={anchor}
+              monthLabels={monthLabels}
+              activityByDay={activityByDay}
+              onSelectMonth={handleSelectMonth}
+            />
+          )}
+          {!isLoading && scope === "day" && (
+            <DayList notes={selectedDayNotes} locale={i18n.language} onOpenNote={openNote} />
+          )}
         </div>
 
         {scope !== "day" && (
@@ -288,7 +157,7 @@ const CalendarView = () => {
                     })
                   : t("calendar.selectedPeriod")}
               </h3>
-              {renderDayList()}
+              <DayList notes={selectedDayNotes} locale={i18n.language} onOpenNote={openNote} />
             </div>
 
             {topTags.length > 0 && (
@@ -296,13 +165,11 @@ const CalendarView = () => {
                 <h3 className="section-label mb-2">{t("calendar.topTags")}</h3>
                 <div className="flex flex-wrap gap-1.5">
                   {topTags.map((tag) => (
-                    <span
+                    <TagChip
                       key={tag.name}
-                      className="rounded-full px-2 py-0.5 text-xs text-white"
-                      style={{ backgroundColor: tag.color }}
-                    >
-                      #{tag.name} ({tag.count})
-                    </span>
+                      tag={{ id: tag.name, name: tag.name, color: tag.color }}
+                      suffix={` (${tag.count})`}
+                    />
                   ))}
                 </div>
               </div>

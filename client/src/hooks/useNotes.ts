@@ -13,11 +13,19 @@ const noteKey = (id: string) => ["notes", id] as const
 async function fetchNotes(tagId?: string): Promise<NoteWithTags[]> {
   await initDb()
 
-  const notes = await db
-    .select()
-    .from(notesTable)
-    .where(eq(notesTable.isDeleted, false))
-    .orderBy(desc(notesTable.updatedAt))
+  const notes = tagId
+    ? await db
+        .select({ note: notesTable })
+        .from(notesTable)
+        .innerJoin(noteTagsTable, eq(noteTagsTable.noteId, notesTable.id))
+        .where(and(eq(notesTable.isDeleted, false), eq(noteTagsTable.tagId, tagId)))
+        .orderBy(desc(notesTable.updatedAt))
+        .then((rows) => rows.map((row) => row.note))
+    : await db
+        .select()
+        .from(notesTable)
+        .where(eq(notesTable.isDeleted, false))
+        .orderBy(desc(notesTable.updatedAt))
 
   if (notes.length === 0) return []
 
@@ -38,13 +46,10 @@ async function fetchNotes(tagId?: string): Promise<NoteWithTags[]> {
     tagsByNote.set(row.noteId, existing)
   }
 
-  const withTags = notes.map((note) => ({
+  return notes.map((note) => ({
     ...note,
     tags: tagsByNote.get(note.id) ?? [],
   }))
-
-  if (!tagId) return withTags
-  return withTags.filter((note) => note.tags.some((tag) => tag.id === tagId))
 }
 
 async function fetchNote(id: string): Promise<NoteWithTags | null> {

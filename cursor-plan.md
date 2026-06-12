@@ -214,8 +214,13 @@ Build a local-first note-taking app that users access via a URL, but where all d
   - Make the notes clickable directly within the calendar view so users can navigate to and edit them.
 - [x] **11.3 PWA Installation**
   - Create an explicit "Install App" (Add to Home Screen) button to make the PWA easily accessible as a native-like app on mobile devices.
-- [ ] **11.4 Codebase Refactoring**
+- [x] **11.4 Codebase Refactoring**
   - Conduct a comprehensive refactor to address technical debt, improving overall maintainability and extensibility of the codebase.
+- [ ] **11.5 Chromium End-to-End Tests**
+  - Playwright specs exist in `tests-e2e/tests/` (smoke, note CRUD, tags, search); `webServer` is configured to start the dev server from the repo root.
+  - Install browsers (`cd tests-e2e && pnpm run install:browsers`) and verify `pnpm test:e2e` passes on a non-WSL environment (native Linux, macOS, or Windows host). Chromium downloads often hang or extract incompletely on WSL.
+  - Until E2E is green in CI or locally, rely on Vitest integration tests in `client/src/integration/userFlows.test.tsx` (`pnpm test`) for the same user flows without a real browser.
+  - Optional follow-up: add a GitHub Actions workflow that runs `pnpm test:e2e` on `ubuntu-latest` after `playwright install chromium`.
 
 ## Phase 12: SEO Landing Page (Astro)
 
