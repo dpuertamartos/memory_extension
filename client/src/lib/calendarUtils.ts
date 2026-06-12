@@ -182,6 +182,26 @@ const STOP_WORDS = new Set([
   "untitled",
 ])
 
+export function aggregateTopTags(
+  notes: { tags: { id: string; name: string; color: string }[] }[],
+  limit = 8,
+): { name: string; color: string; count: number }[] {
+  const counts = new Map<string, { name: string; color: string; count: number }>()
+
+  for (const note of notes) {
+    for (const tag of note.tags) {
+      const existing = counts.get(tag.id)
+      if (existing) {
+        existing.count += 1
+      } else {
+        counts.set(tag.id, { name: tag.name, color: tag.color, count: 1 })
+      }
+    }
+  }
+
+  return [...counts.values()].sort((a, b) => b.count - a.count).slice(0, limit)
+}
+
 export function extractTopKeywords(
   texts: string[],
   limit = 8,

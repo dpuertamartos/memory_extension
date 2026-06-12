@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   addDays,
+  aggregateTopTags,
   extractTopKeywords,
   getMonthGridDays,
   getScopeRange,
@@ -60,6 +61,40 @@ describe("getWeekDays", () => {
     const days = getWeekDays(new Date(2026, 5, 11))
     expect(days).toHaveLength(7)
     expect(isSameDay(days[0], days[6])).toBe(false)
+  })
+})
+
+describe("aggregateTopTags", () => {
+  it("returns empty array for no notes", () => {
+    expect(aggregateTopTags([])).toEqual([])
+  })
+
+  it("deduplicates tags across notes and sorts by count", () => {
+    const notes = [
+      {
+        tags: [
+          { id: "t1", name: "ideas", color: "#111" },
+          { id: "t2", name: "work", color: "#222" },
+        ],
+      },
+      {
+        tags: [
+          { id: "t1", name: "ideas", color: "#111" },
+          { id: "t3", name: "personal", color: "#333" },
+        ],
+      },
+      { tags: [{ id: "t1", name: "ideas", color: "#111" }] },
+    ]
+    const result = aggregateTopTags(notes)
+    expect(result[0]).toEqual({ name: "ideas", color: "#111", count: 3 })
+    expect(result).toHaveLength(3)
+  })
+
+  it("respects the limit", () => {
+    const notes = Array.from({ length: 10 }, (_, index) => ({
+      tags: [{ id: `t${index}`, name: `tag${index}`, color: "#000" }],
+    }))
+    expect(aggregateTopTags(notes, 3)).toHaveLength(3)
   })
 })
 

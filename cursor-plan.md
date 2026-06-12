@@ -2,7 +2,7 @@
 
 ## Current Status (June 2026)
 
-**Phases 1–10 are complete.** The app is a client-only PWA with in-browser SQLite (OPFS), Drizzle ORM, full-text search, a responsive 3-pane UI, export/import, advanced markdown editing, cloud-sync preparation, advanced discovery filters, and a calendar memory view.
+**Phases 1–13 are complete (except playwright - chromium 11.5).** The app is a client-only PWA with in-browser SQLite (OPFS), Drizzle ORM, full-text search, a responsive 3-pane UI, export/import, advanced markdown editing, cloud-sync preparation, advanced discovery filters, and a calendar memory view.
 
 | Phase | Status |
 | ----- | ------ |
@@ -17,6 +17,7 @@
 | 9. Cloud Sync Preparation | Done |
 | 10. Advanced Discovery & Calendar Memory | Done |
 | 13. Internationalization (i18n) | Partial (en + es) |
+| 14. Tag & Calendar UX Enhancements | Pending |
 
 ### What shipped
 
@@ -203,48 +204,68 @@ Build a local-first note-taking app that users access via a URL, but where all d
   - Visualize note activity (creation/updates) on the calendar.
   - Surface top keywords, tags, or topics relevant to the selected timeframe to help users organize and recall their memory contextually.
 
-## Phase 11: UX Polish, App Install & Tech Debt
+---
+
+## Phase 11: Internationalization (i18n)
+
+*Objective: Make the app accessible in multiple languages, starting with Spanish, with an architecture that scales to additional locales.*
+
+- [x] **11.1 i18n Infrastructure**
+  - Add `i18next` and `react-i18next` to the client package.
+  - Create `client/src/i18n/` with locale JSON files (`en`, `es`) and a central init module.
+  - Detect browser language on first visit; persist user choice in `localStorage`.
+- [x] **11.2 UI String Extraction**
+  - Replace hardcoded UI strings across pages and components with `useTranslation()` keys.
+  - Localize relative timestamps (`formatRelativeTime`), calendar labels, and date-filter presets via `Intl` + locale-aware helpers.
+- [x] **11.3 Language Selector**
+  - Add a language picker in Settings so users can switch between English and Spanish at runtime.
+
+---
+
+## Phase 12: UX Polish, App Install & Tech Debt
 
 *Objective: Improve mobile usability, fix UI glitches, allow explicit app installation, and pay down technical debt.*
 
-- [x] **11.1 Search Bar UI & Mobile UX**
+- [x] **12.1 Search Bar UI & Mobile UX**
   - Fix the aesthetics of the search bar (magnifying glass icon overlapping the input text).
   - Improve mobile search interaction (make it more obvious how to search without relying exclusively on the "Enter" key; e.g., add a visible submit/search button).
-- [x] **11.2 Calendar Interactivity**
+- [x] **12.2 Calendar Interactivity**
   - Make the notes clickable directly within the calendar view so users can navigate to and edit them.
-- [x] **11.3 PWA Installation**
+- [x] **12.3 PWA Installation**
   - Create an explicit "Install App" (Add to Home Screen) button to make the PWA easily accessible as a native-like app on mobile devices.
-- [x] **11.4 Codebase Refactoring**
+- [x] **12.4 Codebase Refactoring**
   - Conduct a comprehensive refactor to address technical debt, improving overall maintainability and extensibility of the codebase.
-- [ ] **11.5 Chromium End-to-End Tests**
+- [ ] **12.5 Chromium End-to-End Tests**
   - Playwright specs exist in `tests-e2e/tests/` (smoke, note CRUD, tags, search); `webServer` is configured to start the dev server from the repo root.
   - Install browsers (`cd tests-e2e && pnpm run install:browsers`) and verify `pnpm test:e2e` passes on a non-WSL environment (native Linux, macOS, or Windows host). Chromium downloads often hang or extract incompletely on WSL.
   - Until E2E is green in CI or locally, rely on Vitest integration tests in `client/src/integration/userFlows.test.tsx` (`pnpm test`) for the same user flows without a real browser.
   - Optional follow-up: add a GitHub Actions workflow that runs `pnpm test:e2e` on `ubuntu-latest` after `playwright install chromium`.
 
-## Phase 12: SEO Landing Page (Astro)
+---
+
+## Phase 13: Tag & Calendar UX Enhancements
+
+*Objective: Improve tag management on individual notes and make calendar insights more useful across scopes.*
+
+- [x] **13.1 Remove Tags from Notes**
+  - Allow users to remove an assigned tag from the current note (e.g., × button on tag chips in `NoteEditor.tsx` via existing `TagChip` `onRemove` support).
+  - Wire removal through `useSetNoteTags` so the note–tag join is updated without deleting the tag globally.
+- [x] **13.2 Fix Calendar Keyword Truncation**
+  - When a selected day has many notes, top keywords in the calendar sidebar are clipped or cut off.
+  - Improve layout in `CalendarView.tsx` (overflow, wrapping, scroll, or expandable list) so top keywords remain readable on busy days.
+- [x] **13.3 Scope-Level Tags & Keywords in Calendar**
+  - Extend `useCalendarNotes` so top tags and keywords aggregate over the active scope (week, month, year), not only the selected day.
+  - Surface period-level insights in the calendar sidebar alongside per-day stats when a broader scope is selected.
+
+---
+
+## Phase 14: SEO Landing Page (Astro)
 
 *Objective: Build a marketing landing page optimized for search engines to drive traffic to the main application.*
 
-- [ ] **12.1 Astro Setup**
+- [ ] **14.1 Astro Setup**
   - Initialize a new Astro project (e.g., inside a `landing` package) optimized for Google SEO.
-- [ ] **12.2 Custom Memory/Brain Aesthetic**
+- [ ] **14.2 Custom Memory/Brain Aesthetic**
   - Design a unique, handcrafted visual identity centered around the concepts of memory, the brain, and local-first privacy (specifically avoiding generic "AI slop" aesthetics).
-- [ ] **12.3 App Routing**
+- [ ] **14.3 App Routing**
   - Provide clear calls-to-action (CTAs) linking the marketing landing page directly to the main PWA application.
-
-## Phase 13: Internationalization (i18n)
-
-*Objective: Make the app accessible in multiple languages, starting with Spanish, with an architecture that scales to additional locales.*
-
-- [x] **13.1 i18n Infrastructure**
-  - Add `i18next` and `react-i18next` to the client package.
-  - Create `client/src/i18n/` with locale JSON files (`en`, `es`) and a central init module.
-  - Detect browser language on first visit; persist user choice in `localStorage`.
-- [x] **13.2 UI String Extraction**
-  - Replace hardcoded UI strings across pages and components with `useTranslation()` keys.
-  - Localize relative timestamps (`formatRelativeTime`), calendar labels, and date-filter presets via `Intl` + locale-aware helpers.
-- [x] **13.3 Language Selector**
-  - Add a language picker in Settings so users can switch between English and Spanish at runtime.
-- [ ] **13.4 Additional Locales**
-  - Add new locale files under `client/src/i18n/locales/` and register them in `SUPPORTED_LOCALES` to support more languages.

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import MarkdownEditor, { type MarkdownEditorHandle } from "./MarkdownEditor"
 import TagChip from "./TagChip"
 import TagSelector from "./TagSelector"
-import { useDeleteNote, useNote, useUpdateNote } from "../../hooks/useNotes"
+import { useDeleteNote, useNote, useSetNoteTags, useUpdateNote } from "../../hooks/useNotes"
 import { useAppStore } from "../../store/useAppStore"
 
 const NoteEditor = () => {
@@ -19,6 +19,7 @@ const NoteEditor = () => {
   const { data: note } = useNote(selectedNoteId)
   const { updateNote, saveStatus } = useUpdateNote()
   const deleteNote = useDeleteNote()
+  const setNoteTags = useSetNoteTags()
 
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
@@ -105,6 +106,13 @@ const NoteEditor = () => {
     editorRef.current?.removeTagTrigger()
   }
 
+  const handleRemoveTag = (tagId: string) => {
+    void setNoteTags.mutateAsync({
+      noteId: note.id,
+      tagIds: note.tags.filter((tag) => tag.id !== tagId).map((tag) => tag.id),
+    })
+  }
+
   const handleBack = () => {
     setMobilePane("list")
   }
@@ -175,7 +183,12 @@ const NoteEditor = () => {
       {note.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 border-b border-border px-4 py-2 dark:border-charcoal-border">
           {note.tags.map((tag) => (
-            <TagChip key={tag.id} tag={tag} />
+            <TagChip
+              key={tag.id}
+              tag={tag}
+              onRemove={() => handleRemoveTag(tag.id)}
+              removeLabel={t("notes.removeTagFromNote", { name: tag.name })}
+            />
           ))}
         </div>
       )}

@@ -2,6 +2,7 @@ import { useMemo } from "react"
 import type { NoteWithTags } from "./useNotes"
 import { useNotes } from "./useNotes"
 import {
+  aggregateTopTags,
   extractTopKeywords,
   getScopeRange,
   toDateKey,
@@ -69,33 +70,20 @@ export function useCalendarNotes(scope: CalendarScope, anchor: Date, selectedDay
     return activityByDay.get(key)?.notes ?? []
   }, [activityByDay, notesInScope, selectedDay])
 
-  const topTags = useMemo(() => {
-    const counts = new Map<string, { name: string; color: string; count: number }>()
-    for (const note of selectedDayNotes) {
-      for (const tag of note.tags) {
-        const existing = counts.get(tag.id)
-        if (existing) {
-          existing.count += 1
-        } else {
-          counts.set(tag.id, { name: tag.name, color: tag.color, count: 1 })
-        }
-      }
-    }
-    return [...counts.values()].sort((a, b) => b.count - a.count).slice(0, 8)
-  }, [selectedDayNotes])
+  const scopeTopTags = useMemo(() => aggregateTopTags(notesInScope), [notesInScope])
 
-  const topKeywords = useMemo(() => {
-    const texts = selectedDayNotes.flatMap((note) => [note.title, note.content])
+  const scopeTopKeywords = useMemo(() => {
+    const texts = notesInScope.flatMap((note) => [note.title, note.content])
     return extractTopKeywords(texts)
-  }, [selectedDayNotes])
+  }, [notesInScope])
 
   return {
     isLoading,
     notesInScope,
     activityByDay,
     selectedDayNotes,
-    topTags,
-    topKeywords,
+    scopeTopTags,
+    scopeTopKeywords,
     range: { from, to },
   }
 }

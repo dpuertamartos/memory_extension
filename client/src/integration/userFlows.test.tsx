@@ -61,8 +61,8 @@ vi.mock("../hooks/useCalendarNotes", () => ({
     isLoading: false,
     activityByDay: new Map(),
     selectedDayNotes: [],
-    topTags: [],
-    topKeywords: [],
+    scopeTopTags: [],
+    scopeTopKeywords: [],
   }),
 }))
 

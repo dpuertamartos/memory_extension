@@ -53,7 +53,8 @@
     "sortNotes": "Ordenar notas",
     "sortUpdated": "Actualizadas recientemente",
     "sortCreated": "Creadas recientemente",
-    "sortAlpha": "Alfabético"
+    "sortAlpha": "Alfabético",
+    "removeTagFromNote": "Quitar etiqueta {{name}} de la nota"
   },
   "tags": {
     "title": "Etiquetas",
@@ -117,6 +118,8 @@
     "selectedPeriod": "Periodo seleccionado",
     "topTags": "Etiquetas principales",
     "topKeywords": "Palabras clave principales",
+    "periodTopTags": "Etiquetas principales — {{period}}",
+    "periodTopKeywords": "Palabras clave principales — {{period}}",
     "activityCreated": "Creada",
     "activityUpdated": "Actualizada"
   },

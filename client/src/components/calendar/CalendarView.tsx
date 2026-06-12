@@ -44,11 +44,10 @@ const CalendarView = () => {
     }
   }, [scope, anchor])
 
-  const { isLoading, activityByDay, selectedDayNotes, topTags, topKeywords } = useCalendarNotes(
-    scope,
-    anchor,
-    selectedDay,
-  )
+  const { isLoading, activityByDay, selectedDayNotes, scopeTopTags, scopeTopKeywords } =
+    useCalendarNotes(scope, anchor, selectedDay)
+
+  const periodLabel = formatScopeLabel(scope, anchor, i18n.language)
 
   const handlePrev = () => setAnchor((current) => shiftAnchor(scope, current, -1))
   const handleNext = () => setAnchor((current) => shiftAnchor(scope, current, 1))
@@ -146,8 +145,44 @@ const CalendarView = () => {
         </div>
 
         {scope !== "day" && (
-          <aside className="w-full shrink-0 space-y-4 lg:w-72">
-            <div>
+          <aside className="flex w-full shrink-0 flex-col gap-4 min-h-0 lg:max-h-full lg:w-72">
+            {(scopeTopTags.length > 0 || scopeTopKeywords.length > 0) && (
+              <div className="shrink-0 space-y-4">
+                {scopeTopTags.length > 0 && (
+                  <div>
+                    <h3 className="section-label mb-2">
+                      {t("calendar.periodTopTags", { period: periodLabel })}
+                    </h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {scopeTopTags.map((tag) => (
+                        <TagChip
+                          key={tag.name}
+                          tag={{ id: tag.name, name: tag.name, color: tag.color }}
+                          suffix={` (${tag.count})`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {scopeTopKeywords.length > 0 && (
+                  <div>
+                    <h3 className="section-label mb-2">
+                      {t("calendar.periodTopKeywords", { period: periodLabel })}
+                    </h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {scopeTopKeywords.map(({ word, count }) => (
+                        <span key={word} className="chip-muted">
+                          {word} ({count})
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="min-h-0 flex-1 overflow-y-auto">
               <h3 className="section-label mb-2">
                 {selectedDay
                   ? selectedDay.toLocaleDateString(i18n.language, {
@@ -159,34 +194,6 @@ const CalendarView = () => {
               </h3>
               <DayList notes={selectedDayNotes} locale={i18n.language} onOpenNote={openNote} />
             </div>
-
-            {topTags.length > 0 && (
-              <div>
-                <h3 className="section-label mb-2">{t("calendar.topTags")}</h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {topTags.map((tag) => (
-                    <TagChip
-                      key={tag.name}
-                      tag={{ id: tag.name, name: tag.name, color: tag.color }}
-                      suffix={` (${tag.count})`}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {topKeywords.length > 0 && (
-              <div>
-                <h3 className="section-label mb-2">{t("calendar.topKeywords")}</h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {topKeywords.map(({ word, count }) => (
-                    <span key={word} className="chip-muted">
-                      {word} ({count})
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
           </aside>
         )}
       </div>
