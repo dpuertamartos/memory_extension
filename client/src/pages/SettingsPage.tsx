@@ -4,6 +4,7 @@ import { usePwaInstall } from "../hooks/usePwaInstall"
 import { LOCALE_LABELS, SUPPORTED_LOCALES } from "../i18n"
 import { exportDatabaseFile, importDatabaseFile } from "../lib/db"
 import { exportNotesAsMarkdownZip } from "../lib/exportMarkdown"
+import { useAppStore } from "../store/useAppStore"
 import { useLocaleStore } from "../store/useLocaleStore"
 
 const downloadBlob = (blob: Blob, filename: string) => {
@@ -18,6 +19,7 @@ const downloadBlob = (blob: Blob, filename: string) => {
 const SettingsPage = () => {
   const { t } = useTranslation()
   const { locale, setLocale } = useLocaleStore()
+  const { showInactiveDivisions, setShowInactiveDivisions } = useAppStore()
   const { canInstall, isInstalled, showIosHint, promptInstall } = usePwaInstall()
 
   const handleSqliteExport = async () => {
@@ -74,6 +76,18 @@ const SettingsPage = () => {
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="surface-inset p-4">
+          <label className="flex items-center gap-2 text-sm font-medium">
+            <input
+              type="checkbox"
+              checked={showInactiveDivisions}
+              onChange={(event) => setShowInactiveDivisions(event.target.checked)}
+            />
+            {t("divisions.showInactive")}
+          </label>
+          <p className="mt-2 text-xs text-ink-subtle">{t("divisions.showInactiveHint")}</p>
         </div>
 
         {isInstalled ? (

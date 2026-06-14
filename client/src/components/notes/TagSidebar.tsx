@@ -6,6 +6,7 @@ import { useCreateTag, useTags } from "../../hooks/useTags"
 import { TAG_COLORS } from "../../lib/tagColors"
 import { useAppStore } from "../../store/useAppStore"
 import TagEditDialog from "./TagEditDialog"
+import DivisionTree from "./DivisionTree"
 
 const TagSidebar = () => {
   const { t } = useTranslation()
@@ -33,6 +34,7 @@ const TagSidebar = () => {
 
   return (
     <div className="flex h-full flex-col">
+      <DivisionTree />
       <div className="surface-header flex items-center justify-between px-4 py-3">
         <h2 className="section-label">{t("tags.title")}</h2>
         <button

@@ -4,6 +4,7 @@ import NoteEditor from "../components/notes/NoteEditor"
 import NoteList from "../components/notes/NoteList"
 import Omnibox from "../components/notes/Omnibox"
 import TagSidebar from "../components/notes/TagSidebar"
+import DivisionBreadcrumb from "../components/notes/DivisionBreadcrumb"
 import { useAppStore } from "../store/useAppStore"
 
 const BrainPage = () => {
@@ -14,6 +15,7 @@ const BrainPage = () => {
   return (
     <div className="flex h-full flex-col">
       <div className="surface-header px-3 py-2.5 md:px-4 md:py-3">
+        <DivisionBreadcrumb />
         <div className="segmented-control mb-2.5 md:mb-3">
           <button
             type="button"

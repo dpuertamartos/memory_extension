@@ -143,5 +143,28 @@
     "error": "Database error",
     "initFailed": "Failed to initialize database",
     "opening": "Opening your local memory…"
+  },
+  "divisions": {
+    "title": "Sub-brains",
+    "breadcrumb": "Division path",
+    "newSubBrain": "New sub-brain",
+    "namePlaceholder": "Sub-brain name…",
+    "editDivision": "Edit sub-brain",
+    "description": "Description",
+    "activeLabel": "Active (visible in navigation)",
+    "inactiveBadge": "off",
+    "showInactive": "Show inactive sub-brains",
+    "showInactiveHint": "Inactive sub-brains are hidden from the tree unless this is enabled.",
+    "rootNameLocked": "The main brain name cannot be changed.",
+    "deleteDivision": "Delete sub-brain",
+    "deleteConfirm": "Delete \"{{name}}\"? This only works when the sub-brain is empty.",
+    "deleteBlockedChildren": "Cannot delete: this sub-brain has child divisions.",
+    "deleteBlockedNotes": "Cannot delete: this sub-brain still has notes.",
+    "deleteBlockedTags": "Cannot delete: this sub-brain still has tags.",
+    "deleteFailed": "Could not delete this sub-brain.",
+    "includeCheckbox": "Include notes from this sub-brain",
+    "includeDivision": "Include {{name}}",
+    "includeIndeterminate": "{{name}} is partially included",
+    "inclusionHelp": "Check sub-brains to include their notes. Focus sets where new notes are created."
   }
 }

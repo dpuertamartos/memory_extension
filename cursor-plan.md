@@ -2,7 +2,7 @@
 
 ## Current Status (June 2026)
 
-**Phases 1–13 are complete (except Playwright Chromium E2E in 12.5). Phase 14 is planned.** The app is a client-only PWA with in-browser SQLite (OPFS), Drizzle ORM, full-text search, a responsive 3-pane UI, export/import, advanced markdown editing, cloud-sync preparation, advanced discovery filters, and a calendar memory view.
+**Phases 1–14 core are complete (except Playwright Chromium E2E in 12.5 and Phase 15 sub-brain polish).** The app is a client-only PWA with in-browser SQLite (OPFS), Drizzle ORM, full-text search, a responsive 3-pane UI, export/import, advanced markdown editing, cloud-sync preparation, advanced discovery filters, a calendar memory view, and hierarchical sub-brains with explicit inclusion.
 
 | Phase | Status |
 | ----- | ------ |
@@ -19,7 +19,8 @@
 | 11. Internationalization (i18n) | Partial (en + es) |
 | 12. UX Polish, App Install & Tech Debt | Partial (E2E pending) |
 | 13. Tag & Calendar UX Enhancements | Done |
-| 14. Sub Brains (Hierarchical Divisions) | Planned (redesign — explicit inclusion tree) |
+| 14. Sub Brains (Hierarchical Divisions) | Done (core explicit inclusion); follow-ups in Phase 15 |
+| 15. Sub Brain UX, Ownership & Optional Feature | Planned |
 
 ### What shipped
 
@@ -453,6 +454,42 @@ Rebuild the children map when the divisions query updates — not on every rende
 7. i18n + verification (**14.3.5**, **14.5**).
 
 Schema + migration from the first pass can be reused as-is; the redesign is primarily **state model + UI + query filter**.
+
+---
+
+## Phase 15: Sub Brain UX, Ownership & Optional Feature (Planned)
+
+*Objective: Make sub-brains easier to understand and control — especially on mobile — and let users who do not want the feature turn it off entirely without losing data unexpectedly.*
+
+### 15.1 Note ownership in the editor
+
+- [ ] **15.1.1 Show owning sub-brain** — In `NoteEditor`, display a clear, always-visible indicator of which sub-brain owns the note (name + breadcrumb path, e.g. `Main Brain › Football › Barcelona`). Use the same typography, spacing, and accent tokens as tags and the save-status row.
+- [ ] **15.1.2 Optional list chip** — When a note’s owning division differs from `focusDivisionId`, show a small division chip in `NoteList` so users can spot cross-division notes at a glance (called out in 14.3.4; promote to required here).
+- [ ] **15.1.3 Move note between sub-brains** — Add a division picker in the editor (searchable tree or flat path selector). Updating `notes.division_id` must bump `updated_at` and invalidate note/tag queries. Warn if the target division is inactive or not currently included in the view.
+- [ ] **15.1.4 Tag scope guard** — When moving a note, strip or block tag assignments that belong to a different `division_id` (tags are division-scoped).
+
+### 15.2 Optional sub-brain feature (per database)
+
+- [ ] **15.2.1 Settings toggle** — Add **Enable sub-brains** in Settings (persisted in `localStorage`, device-local — same pattern as inclusion prefs). Default **on** for existing DBs that already have child divisions; default **off** for fresh installs is a product call (document in UI).
+- [ ] **15.2.2 Double confirmation on disable** — Turning the feature off requires **two explicit confirmations**, each stating that sub-brain navigation, checkboxes, and breadcrumbs will be hidden and all notes will appear as a single flat brain. Copy must **not** imply data deletion — divisions and `division_id` values stay in SQLite.
+- [ ] **15.2.3 Hidden UI when off** — When disabled: hide `DivisionTree`, breadcrumb, division chips, and division fields in the editor; collapse layout to the pre–Phase 14 sidebar (tags only). Reads use root-only or all-division semantics (TBD: show all notes regardless of `division_id`, or only root-owned notes — prefer **all notes, flat list**).
+- [ ] **15.2.4 Re-enable** — Turning back on restores the tree and last persisted `focusDivisionId` / `includedDivisionIds` without migration.
+
+### 15.3 UI & mobile exploration polish
+
+- [ ] **15.3.1 Visual design pass** — Restyle the sub-brain tree to match the rest of the app: `surface-*` panels, `section-label`, accent/indeterminate checkbox states, consistent row hover/active (`row-active`), and dark-mode contrast. Avoid one-off colors; reuse `BrainIcon`, tag chip patterns, and segmented-control styling where appropriate.
+- [ ] **15.3.2 Mobile-first navigation** — Sub-brains buried under the Tags pane is hard to discover on mobile. Options (pick one or combine): dedicated **Sub-brains** item in `MobileNav`, a top-level segmented control (Notes | Sub-brains | Tags), or a collapsible “Where am I?” sheet opened from the breadcrumb. Success: user can switch focus and inclusion in ≤2 taps without opening tag search.
+- [ ] **15.3.3 Tree ergonomics** — Larger tap targets for checkbox vs label, sticky breadcrumb on scroll, clearer expand/collapse affordances, and optional “Include all visible” / “Clear inclusion” bulk actions for power users.
+- [ ] **15.3.4 Empty & partial states** — When no divisions are included, show actionable empty state (“Select sub-brains above”) instead of a blank list. When focus has no notes, distinguish “no notes here” vs “filtered out by inclusion”.
+- [ ] **15.3.5 i18n** — New strings for editor ownership, move-division picker, feature toggle warnings, and mobile nav labels (`en` + `es`).
+
+### 15.4 Verification
+
+- [ ] Editor shows correct owning division; move updates `division_id` and list/search reflect the change.
+- [ ] Disable sub-brains: two-step confirm, UI hidden, notes still editable and exportable with `division_id` intact.
+- [ ] Re-enable restores tree and inclusion without data loss.
+- [ ] Mobile: switch sub-brain focus from bottom nav (or chosen pattern) without using the tag sidebar.
+- [ ] Visual review: sub-brain UI matches tag sidebar and note list in light and dark mode.
 
 ---
 

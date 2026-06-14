@@ -4,7 +4,6 @@ import type {
   SyncMergeStats,
   SyncNote,
   SyncNoteTag,
-  SyncSide,
   SyncSnapshot,
 } from "./types"
 import { SYNC_SNAPSHOT_VERSION } from "./types"
@@ -14,14 +13,13 @@ type TimestampedEntity = { id: string; updatedAt: number }
 export function pickSyncWinner<T extends TimestampedEntity>(
   local: T,
   remote: T,
-): { winner: T; side: SyncSide } {
+): { winner: T; side: "local" | "remote" } {
   if (remote.updatedAt > local.updatedAt) {
     return { winner: remote, side: "remote" }
   }
   if (remote.updatedAt < local.updatedAt) {
     return { winner: local, side: "local" }
   }
-  // Same millisecond: prefer remote for deterministic convergence across devices.
   return { winner: remote, side: "remote" }
 }
 
@@ -31,7 +29,7 @@ function mergeEntityCollection<T extends TimestampedEntity>(
   entityType: SyncConflict["entityType"],
 ): {
   merged: T[]
-  winners: Record<string, SyncSide>
+  winners: Record<string, "local" | "remote">
   conflicts: SyncConflict[]
   stats: { localWins: number; remoteWins: number; total: number }
 } {
@@ -40,7 +38,7 @@ function mergeEntityCollection<T extends TimestampedEntity>(
   const ids = new Set([...localById.keys(), ...remoteById.keys()])
 
   const merged: T[] = []
-  const winners: Record<string, SyncSide> = {}
+  const winners: Record<string, "local" | "remote"> = {}
   const conflicts: SyncConflict[] = []
   let localWins = 0
   let remoteWins = 0
@@ -71,7 +69,7 @@ function mergeEntityCollection<T extends TimestampedEntity>(
     const sole = localItem ?? remoteItem
     if (!sole) continue
 
-    const side: SyncSide = localItem ? "local" : "remote"
+    const side: "local" | "remote" = localItem ? "local" : "remote"
     merged.push(sole)
     winners[id] = side
     if (side === "local") localWins += 1
@@ -89,7 +87,7 @@ function mergeEntityCollection<T extends TimestampedEntity>(
 function mergeNoteTags(
   localNoteTags: SyncNoteTag[],
   remoteNoteTags: SyncNoteTag[],
-  noteWinners: Record<string, SyncSide>,
+  noteWinners: Record<string, "local" | "remote">,
   mergedNotes: SyncNote[],
 ): SyncNoteTag[] {
   const merged = new Map<string, SyncNoteTag>()
@@ -111,9 +109,13 @@ function mergeNoteTags(
 }
 
 export function mergeSyncSnapshots(local: SyncSnapshot, remote: SyncSnapshot): SyncMergeResult {
+  const divisionMerge = mergeEntityCollection(local.divisions, remote.divisions, "division")
   const noteMerge = mergeEntityCollection(local.notes, remote.notes, "note")
   const tagMerge = mergeEntityCollection(local.tags, remote.tags, "tag")
   const mergedTagIds = new Set(tagMerge.merged.map((tag) => tag.id))
+  const mergedDivisionIds = new Set(
+    divisionMerge.merged.filter((d) => !d.isDeleted).map((d) => d.id),
+  )
 
   const mergedNoteTags = mergeNoteTags(
     local.noteTags,
@@ -126,18 +128,23 @@ export function mergeSyncSnapshots(local: SyncSnapshot, remote: SyncSnapshot): S
   const stats: SyncMergeStats = {
     notes: noteMerge.stats,
     tags: tagMerge.stats,
+    divisions: divisionMerge.stats,
   }
+
+  const activeNotes = noteMerge.merged.filter((note) => mergedDivisionIds.has(note.divisionId))
+  const activeTags = tagMerge.merged.filter((tag) => mergedDivisionIds.has(tag.divisionId))
 
   return {
     merged: {
       version: SYNC_SNAPSHOT_VERSION,
       exportedAt,
-      notes: noteMerge.merged,
-      tags: tagMerge.merged,
+      divisions: divisionMerge.merged.filter((d) => !d.isDeleted),
+      notes: activeNotes,
+      tags: activeTags,
       noteTags: mergedNoteTags,
     },
     noteWinners: noteMerge.winners,
-    conflicts: [...noteMerge.conflicts, ...tagMerge.conflicts],
+    conflicts: [...divisionMerge.conflicts, ...noteMerge.conflicts, ...tagMerge.conflicts],
     stats,
   }
 }

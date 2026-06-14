@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm"
-import { MIGRATION_SQL } from "./migrate"
+import { runMigrations, type MigrationDb } from "./migrate"
 
 const DB_PATH = "/local-brain.sqlite3"
 
@@ -30,9 +30,27 @@ let db: any = null
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let capi: any = null
 
+function getMigrationDb(): MigrationDb {
+  if (!db) throw new Error("Database not initialized")
+  return {
+    exec: (sql: string) => db.exec(sql),
+    prepare: (sql: string) => db.prepare(sql),
+    selectObjects: (sql: string, params: unknown[] = []) => {
+      const stmt = db.prepare(sql)
+      if (params.length > 0) stmt.bind(params)
+      const rows: Record<string, unknown>[] = []
+      while (stmt.step()) {
+        rows.push(stmt.get({}))
+      }
+      stmt.finalize()
+      return rows
+    },
+  }
+}
+
 function runMigration() {
   if (!db) return
-  db.exec(MIGRATION_SQL)
+  runMigrations(getMigrationDb())
 }
 
 function executeQuery(sql: string, params: unknown[], method: QueryMethod): unknown {

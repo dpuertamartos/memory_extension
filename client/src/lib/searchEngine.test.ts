@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { searchNotes } from "./searchEngine"
 import { emptySearchFilters } from "./searchQuery"
+import { ROOT_DIVISION_ID } from "./divisions"
 
 vi.mock("./db", () => ({
   initDb: vi.fn().mockResolvedValue(undefined),
@@ -10,6 +11,7 @@ vi.mock("./db", () => ({
 import { runRawQuery } from "./db"
 
 const mockRunRawQuery = vi.mocked(runRawQuery)
+const visibleDivisionIds = [ROOT_DIVISION_ID]
 
 describe("searchNotes", () => {
   beforeEach(() => {
@@ -17,7 +19,14 @@ describe("searchNotes", () => {
   })
 
   it("returns empty array when search is inactive", async () => {
-    await expect(searchNotes(emptySearchFilters())).resolves.toEqual([])
+    await expect(searchNotes(visibleDivisionIds, emptySearchFilters())).resolves.toEqual([])
+    expect(mockRunRawQuery).not.toHaveBeenCalled()
+  })
+
+  it("returns empty array when no visible divisions", async () => {
+    await expect(
+      searchNotes([], { ...emptySearchFilters(), keywords: ["hello"] }),
+    ).resolves.toEqual([])
     expect(mockRunRawQuery).not.toHaveBeenCalled()
   })
 
@@ -40,18 +49,22 @@ describe("searchNotes", () => {
       return []
     })
 
-    const results = await searchNotes({
+    const results = await searchNotes(visibleDivisionIds, {
       ...emptySearchFilters(),
       keywords: ["hello"],
     })
     expect(results).toHaveLength(1)
     expect(results[0]?.note_id).toBe("note-1")
     expect(results[0]?.title_snippet).toContain("<mark>")
+    expect(mockRunRawQuery).toHaveBeenCalledWith(
+      expect.stringContaining("division_id IN"),
+      expect.arrayContaining([ROOT_DIVISION_ID]),
+    )
   })
 
   it("intersects keyword and tag filters", async () => {
     mockRunRawQuery.mockImplementation(async (sql: string) => {
-      if (sql.includes("GROUP BY note_id")) {
+      if (sql.includes("GROUP BY nt.note_id")) {
         return [{ note_id: "note-1" }]
       }
       if (sql.includes("t.name AS tag_name")) {
@@ -71,21 +84,18 @@ describe("searchNotes", () => {
       if (sql.includes("notes_fts MATCH")) {
         return [{ note_id: "note-1" }, { note_id: "note-2" }]
       }
-      if (sql.includes("t.name AS tag_name")) {
-        return []
-      }
       return []
     })
 
-    const results = await searchNotes({
+    const results = await searchNotes(visibleDivisionIds, {
       ...emptySearchFilters(),
       keywords: ["hello"],
       tagIds: ["tag-1"],
     })
     expect(results).toHaveLength(1)
     expect(mockRunRawQuery).toHaveBeenCalledWith(
-      expect.stringContaining("note_tags"),
-      expect.arrayContaining(["tag-1", 1]),
+      expect.stringContaining("n.division_id IN"),
+      expect.arrayContaining([ROOT_DIVISION_ID, "tag-1", 1]),
     )
   })
 })

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
+import { ROOT_DIVISION_ID } from "../lib/divisions"
 
 vi.mock("../lib/db", () => ({
   db: {},
@@ -11,9 +12,23 @@ import { SYNC_SNAPSHOT_VERSION, type SyncSnapshot } from "./types"
 const sampleSnapshot: SyncSnapshot = {
   version: SYNC_SNAPSHOT_VERSION,
   exportedAt: 1_700_000_000_000,
+  divisions: [
+    {
+      id: ROOT_DIVISION_ID,
+      parentId: null,
+      name: "Main Brain",
+      description: "",
+      isActive: true,
+      sortOrder: 0,
+      isDeleted: false,
+      createdAt: 1_700_000_000_000,
+      updatedAt: 1_700_000_000_000,
+    },
+  ],
   notes: [
     {
       id: "note-1",
+      divisionId: ROOT_DIVISION_ID,
       title: "Test",
       content: "Body",
       isDeleted: false,
@@ -24,6 +39,7 @@ const sampleSnapshot: SyncSnapshot = {
   tags: [
     {
       id: "tag-1",
+      divisionId: ROOT_DIVISION_ID,
       name: "ideas",
       color: "#6366f1",
       createdAt: 1_700_000_000_000,

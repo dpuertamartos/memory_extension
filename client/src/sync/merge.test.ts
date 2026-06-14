@@ -1,11 +1,27 @@
 import { describe, expect, it } from "vitest"
+import { ROOT_DIVISION_ID } from "../lib/divisions"
 import { mergeSyncSnapshots, pickSyncWinner } from "./merge"
 import type { SyncSnapshot } from "./types"
 import { SYNC_SNAPSHOT_VERSION } from "./types"
 
-const snapshot = (partial: Partial<SyncSnapshot> & Pick<SyncSnapshot, "notes">): SyncSnapshot => ({
+const rootDivision = {
+  id: ROOT_DIVISION_ID,
+  parentId: null,
+  name: "Main Brain",
+  description: "",
+  isActive: true,
+  sortOrder: 0,
+  isDeleted: false,
+  createdAt: 100,
+  updatedAt: 100,
+}
+
+const snapshot = (
+  partial: Partial<SyncSnapshot> & Pick<SyncSnapshot, "notes">,
+): SyncSnapshot => ({
   version: SYNC_SNAPSHOT_VERSION,
   exportedAt: 1_700_000_000_000,
+  divisions: [rootDivision],
   tags: [],
   noteTags: [],
   ...partial,
@@ -34,6 +50,7 @@ describe("mergeSyncSnapshots", () => {
       notes: [
         {
           id: "01NOTE",
+          divisionId: ROOT_DIVISION_ID,
           title: "Local title",
           content: "Local body",
           isDeleted: false,
@@ -46,6 +63,7 @@ describe("mergeSyncSnapshots", () => {
       notes: [
         {
           id: "01NOTE",
+          divisionId: ROOT_DIVISION_ID,
           title: "Remote title",
           content: "Remote body",
           isDeleted: false,
@@ -68,6 +86,7 @@ describe("mergeSyncSnapshots", () => {
       notes: [
         {
           id: "01NOTE",
+          divisionId: ROOT_DIVISION_ID,
           title: "Still here",
           content: "Body",
           isDeleted: false,
@@ -80,6 +99,7 @@ describe("mergeSyncSnapshots", () => {
       notes: [
         {
           id: "01NOTE",
+          divisionId: ROOT_DIVISION_ID,
           title: "Still here",
           content: "Body",
           isDeleted: true,
@@ -100,6 +120,7 @@ describe("mergeSyncSnapshots", () => {
       notes: [
         {
           id: "01LOCAL",
+          divisionId: ROOT_DIVISION_ID,
           title: "Only local",
           content: "",
           isDeleted: false,
@@ -112,6 +133,7 @@ describe("mergeSyncSnapshots", () => {
       notes: [
         {
           id: "01REMOTE",
+          divisionId: ROOT_DIVISION_ID,
           title: "Only remote",
           content: "",
           isDeleted: false,
@@ -129,6 +151,7 @@ describe("mergeSyncSnapshots", () => {
   it("takes note tag links from the winning note revision", () => {
     const tagLocal = {
       id: "01TAGLOCAL",
+      divisionId: ROOT_DIVISION_ID,
       name: "local",
       color: "#000000",
       createdAt: 100,
@@ -136,6 +159,7 @@ describe("mergeSyncSnapshots", () => {
     }
     const tagRemote = {
       id: "01TAGREMOTE",
+      divisionId: ROOT_DIVISION_ID,
       name: "remote",
       color: "#ffffff",
       createdAt: 100,
@@ -146,6 +170,7 @@ describe("mergeSyncSnapshots", () => {
       notes: [
         {
           id: "01NOTE",
+          divisionId: ROOT_DIVISION_ID,
           title: "Note",
           content: "",
           isDeleted: false,
@@ -160,6 +185,7 @@ describe("mergeSyncSnapshots", () => {
       notes: [
         {
           id: "01NOTE",
+          divisionId: ROOT_DIVISION_ID,
           title: "Note",
           content: "edited remotely",
           isDeleted: false,
@@ -183,6 +209,7 @@ describe("mergeSyncSnapshots", () => {
       tags: [
         {
           id: "01TAG",
+          divisionId: ROOT_DIVISION_ID,
           name: "dogs",
           color: "#111111",
           createdAt: 100,
@@ -195,6 +222,7 @@ describe("mergeSyncSnapshots", () => {
       tags: [
         {
           id: "01TAG",
+          divisionId: ROOT_DIVISION_ID,
           name: "cats",
           color: "#222222",
           createdAt: 100,
@@ -207,5 +235,21 @@ describe("mergeSyncSnapshots", () => {
 
     expect(result.merged.tags[0]?.name).toBe("cats")
     expect(result.stats.tags.remoteWins).toBe(1)
+  })
+
+  it("resolves division rename conflicts with last-write-wins", () => {
+    const local = snapshot({
+      notes: [],
+      divisions: [{ ...rootDivision, name: "Local Brain", updatedAt: 100 }],
+    })
+    const remote = snapshot({
+      notes: [],
+      divisions: [{ ...rootDivision, name: "Remote Brain", updatedAt: 250 }],
+    })
+
+    const result = mergeSyncSnapshots(local, remote)
+
+    expect(result.merged.divisions[0]?.name).toBe("Remote Brain")
+    expect(result.stats.divisions.remoteWins).toBe(1)
   })
 })

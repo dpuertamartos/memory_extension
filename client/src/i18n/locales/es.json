@@ -143,5 +143,28 @@
     "error": "Error de base de datos",
     "initFailed": "No se pudo inicializar la base de datos",
     "opening": "Abriendo tu memoria local…"
+  },
+  "divisions": {
+    "title": "Sub-cerebros",
+    "breadcrumb": "Ruta de división",
+    "newSubBrain": "Nuevo sub-cerebro",
+    "namePlaceholder": "Nombre del sub-cerebro…",
+    "editDivision": "Editar sub-cerebro",
+    "description": "Descripción",
+    "activeLabel": "Activo (visible en la navegación)",
+    "inactiveBadge": "off",
+    "showInactive": "Mostrar sub-cerebros inactivos",
+    "showInactiveHint": "Los sub-cerebros inactivos se ocultan del árbol a menos que esto esté activado.",
+    "rootNameLocked": "El nombre del cerebro principal no se puede cambiar.",
+    "deleteDivision": "Eliminar sub-cerebro",
+    "deleteConfirm": "¿Eliminar \"{{name}}\"? Solo funciona cuando el sub-cerebro está vacío.",
+    "deleteBlockedChildren": "No se puede eliminar: este sub-cerebro tiene divisiones hijas.",
+    "deleteBlockedNotes": "No se puede eliminar: este sub-cerebro aún tiene notas.",
+    "deleteBlockedTags": "No se puede eliminar: este sub-cerebro aún tiene etiquetas.",
+    "deleteFailed": "No se pudo eliminar este sub-cerebro.",
+    "includeCheckbox": "Incluir notas de este sub-cerebro",
+    "includeDivision": "Incluir {{name}}",
+    "includeIndeterminate": "{{name}} está parcialmente incluido",
+    "inclusionHelp": "Marca sub-cerebros para incluir sus notas. El foco define dónde se crean notas nuevas."
   }
 }
