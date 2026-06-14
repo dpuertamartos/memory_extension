@@ -2,7 +2,7 @@
 
 ## Current Status (June 2026)
 
-**Phases 1–13 are complete (except playwright - chromium 11.5).** The app is a client-only PWA with in-browser SQLite (OPFS), Drizzle ORM, full-text search, a responsive 3-pane UI, export/import, advanced markdown editing, cloud-sync preparation, advanced discovery filters, and a calendar memory view.
+**Phases 1–13 are complete (except Playwright Chromium E2E in 12.5). Phase 14 is planned.** The app is a client-only PWA with in-browser SQLite (OPFS), Drizzle ORM, full-text search, a responsive 3-pane UI, export/import, advanced markdown editing, cloud-sync preparation, advanced discovery filters, and a calendar memory view.
 
 | Phase | Status |
 | ----- | ------ |
@@ -16,8 +16,10 @@
 | 8. Advanced Search & Polish | Done |
 | 9. Cloud Sync Preparation | Done |
 | 10. Advanced Discovery & Calendar Memory | Done |
-| 13. Internationalization (i18n) | Partial (en + es) |
-| 14. Tag & Calendar UX Enhancements | Pending |
+| 11. Internationalization (i18n) | Partial (en + es) |
+| 12. UX Polish, App Install & Tech Debt | Partial (E2E pending) |
+| 13. Tag & Calendar UX Enhancements | Done |
+| 14. Sub Brains (Hierarchical Divisions) | Pending |
 
 ### What shipped
 
@@ -259,13 +261,154 @@ Build a local-first note-taking app that users access via a URL, but where all d
 
 ---
 
-## Phase 14: SEO Landing Page (Astro)
+## Phase 14: Sub Brains (Hierarchical Divisions)
+
+*Objective: Let users optionally partition their brain into named, nestable sub-brains — each with its own notes, tags, and calendar — while keeping the data model flat enough to scale to thousands of divisions and remain sync-ready.*
+
+### Design principles
+
+1. **One tree, many namespaces** — A single `divisions` table forms an arbitrarily deep hierarchy (main → blue / red → football / arcade → …). Depth is unbounded; 1 000+ nodes must remain fast on in-browser SQLite.
+2. **Scoped content, shared mechanics** — Notes, tags, search, and calendar behave exactly as today, but every query is filtered by the active `division_id`. No duplicate UI logic per sub-brain.
+3. **Opt-in activation** — Divisions can be created but left inactive (`is_active = false`); inactive branches are hidden from navigation while their data is preserved.
+4. **Sync-compatible** — Divisions get ULIDs, timestamps, and soft deletes like every other entity. Existing LWW merge extends cleanly.
+
+### 14.0 Data model
+
+#### New table: `divisions`
+
+| Column | Type | Notes |
+| ------ | ---- | ----- |
+| `id` | TEXT PK | ULID |
+| `parent_id` | TEXT NULL | FK → `divisions.id` ON DELETE CASCADE. `NULL` = root container ("Main Brain"). |
+| `name` | TEXT | Display name (unique among siblings: `UNIQUE(parent_id, name)`). |
+| `description` | TEXT | Optional user-facing blurb. Default `''`. |
+| `is_active` | INTEGER | Boolean. Inactive divisions (and optionally their descendants) hidden from nav. |
+| `sort_order` | INTEGER | Sibling ordering in the tree UI. |
+| `is_deleted` | INTEGER | Soft delete for sync. |
+| `created_at` / `updated_at` | INTEGER | ms timestamps. |
+
+**Indexes (required for scale):**
+
+```sql
+CREATE INDEX idx_divisions_parent       ON divisions(parent_id);
+CREATE INDEX idx_divisions_parent_sort  ON divisions(parent_id, sort_order);
+CREATE INDEX idx_divisions_active       ON divisions(parent_id, is_active, is_deleted);
+```
+
+**Why adjacency list (`parent_id`)?** For ≤ few thousand nodes in a single-user local DB, adjacency list + indexes is the simplest correct model. Closure tables and materialized paths add write complexity (moves, sync merges) without meaningful read gains at this scale. If subtree queries become hot later, add a denormalized `depth` column or a `path` TEXT column in a follow-up — do not pre-build both.
+
+#### Extend existing tables
+
+| Table | Change |
+| ----- | ------ |
+| `notes` | Add `division_id TEXT NOT NULL` FK → `divisions.id`. Index `(division_id, is_deleted, updated_at)`. |
+| `tags` | Add `division_id TEXT NOT NULL` FK → `divisions.id`. Replace global `UNIQUE(name)` with `UNIQUE(division_id, name)`. Index `(division_id)`. |
+| `note_tags` | No change — scoping is implicit via note/tag FKs. |
+| `notes_fts` | No schema change — FTS queries join `notes` and filter `division_id = ?`. |
+
+#### Root division & migration
+
+- On migration, insert one root row (`parent_id = NULL`, `name = 'Main Brain'`, `is_active = 1`).
+- Backfill `division_id` on all existing `notes` and `tags` to the root ULID.
+- Migration lives in `client/src/db/migrate.ts` as a versioned step (e.g. `MIGRATION_V2`) so existing OPFS databases upgrade in place.
+
+```
+divisions (tree)                notes / tags (scoped)
+─────────────────               ─────────────────────
+NULL  → Main Brain (root)       division_id = root
+  ├─ blue                       division_id = blue
+  └─ red                        division_id = red
+       ├─ football              division_id = football
+       └─ arcade                division_id = arcade
+```
+
+A note always belongs to **exactly one** division — the one the user is viewing when they create it. Parent divisions are containers; they may also hold their own notes if the user works there directly.
+
+### 14.1 Data access layer
+
+- [ ] **14.1.1 Division hooks** (`client/src/hooks/useDivisions.ts`)
+  - `useDivisions(parentId?)` — children of a node (or top-level when `parentId` is root sentinel).
+  - `useDivisionAncestors(divisionId)` — breadcrumb chain via iterative `parent_id` lookups (depth ≤ ~20 in practice; guard with max-iteration cap).
+  - `useCreateDivision`, `useUpdateDivision`, `useDeleteDivision` (soft), `useMoveDivision` (change `parent_id` + `sort_order`), `useSetDivisionActive`.
+  - TanStack Query keys: `["divisions", parentId]`, `["divisions", "ancestors", divisionId]`.
+
+- [ ] **14.1.2 Scope existing hooks**
+  - Add `divisionId` parameter (or read from store) to `useNotes`, `useTags`, `useGlobalSearch`, `useCalendarNotes`.
+  - Every Drizzle query adds `WHERE division_id = ?` (or equivalent `eq()`).
+  - Query keys become `["notes", divisionId, tagId?]`, `["tags", divisionId]`, etc. — prevents cross-division cache bleed.
+
+- [ ] **14.1.3 Division context**
+  - Extend `useAppStore` with `activeDivisionId` (persist to `localStorage`).
+  - Provide `DivisionProvider` or store actions: `setActiveDivisionId`, `resetSelectionOnSwitch` (clear `selectedNoteId` / `selectedTagId` / search filters when switching divisions).
+
+### 14.2 Sync & export
+
+- [ ] **14.2.1 Extend `SyncSnapshot`** (`client/src/sync/types.ts`) — add `divisions: SyncDivision[]`; bump `SYNC_SNAPSHOT_VERSION` to `2`.
+- [ ] **14.2.2 LWW merge for divisions** (`client/src/sync/merge.ts`) — same `updated_at` comparison as notes/tags. Deleting a division soft-deletes it; children remain (orphan policy: keep children, set `parent_id` to deleted node's parent, or block delete if children exist — **prefer block-with-message** to avoid accidental mass moves).
+- [ ] **14.2.3 Export / import** — SQLite export picks up new table automatically. Markdown zip export should include `division` in YAML frontmatter. Import maps unknown division IDs to root.
+
+### 14.3 UI
+
+- [ ] **14.3.1 Division tree sidebar**
+  - Collapsible tree in `TagSidebar` header or a dedicated `DivisionTree` panel above tags.
+  - Show only `is_active = 1` divisions; dim or hide inactive ones behind a "Show inactive" toggle in Settings.
+  - Clicking a division sets `activeDivisionId` and reloads the scoped panes (list, editor, calendar).
+  - Indentation by depth; drag-and-drop reorder among siblings (updates `sort_order`) is a nice-to-have, not blocking.
+
+- [ ] **14.3.2 Breadcrumb navigation**
+  - Header bar: `Main Brain › red › football` — each segment clickable to jump to that ancestor division.
+
+- [ ] **14.3.3 Division management**
+  - "New sub-brain" action on any active division (creates child with `parent_id = activeDivisionId`).
+  - Edit name / description inline or via a small modal.
+  - Toggle active/inactive (with confirm if deactivating a branch that has children).
+  - Delete with confirmation (block if children exist; offer "delete subtree" as explicit destructive action).
+
+- [ ] **14.3.4 Scoped calendar & search**
+  - `CalendarView` and `Omnibox` automatically respect `activeDivisionId` via scoped hooks — no separate calendar per division in the DB.
+  - Tag sidebar search (`TagSidebar` filter input) remains division-local.
+
+- [ ] **14.3.5 i18n**
+  - Add keys for division UI strings in `en` / `es` locale files.
+
+### 14.4 Performance checklist (1 000+ divisions)
+
+| Concern | Mitigation |
+| ------- | ---------- |
+| Tree render | Virtualize the sidebar list if visible nodes exceed ~200 (e.g. `@tanstack/react-virtual`). Load children lazily per expanded node. |
+| Queries | Always index `division_id` on `notes` and `tags`. Never full-table scan in the hot path. |
+| Cache | TanStack Query keys must include `divisionId`. Invalidate narrowly (`["notes", id]`, not `["notes"]`). |
+| Moves | `UPDATE divisions SET parent_id = ?` is O(1); no subtree rewrite. |
+| Search | FTS + `JOIN notes ON … WHERE notes.division_id = ?` keeps index use on `division_id`. |
+
+### 14.5 Verification
+
+- [ ] Migration: existing DB with notes/tags upgrades cleanly; all legacy data lands in root division.
+- [ ] CRUD: create nested divisions 4+ levels deep; notes/tags in leaf divisions do not appear in siblings.
+- [ ] Activation: inactive division hidden from tree; toggling active makes it reappear without data loss.
+- [ ] Scale smoke test: script or Vitest fixture inserting 1 000 divisions + 5 000 notes; tree expand and note list remain < 100 ms on dev hardware.
+- [ ] Sync: merge two snapshots with conflicting division renames resolves via LWW; export/import round-trip preserves hierarchy.
+- [ ] i18n: division UI renders in en and es.
+
+### Implementation order
+
+1. Schema + migration + root backfill (**14.0**)
+2. Division hooks + store context (**14.1**)
+3. Scope existing data hooks (**14.1.2**)
+4. Sidebar tree + breadcrumb (**14.3.1–14.3.2**)
+5. Division CRUD UI (**14.3.3**)
+6. Sync snapshot v2 (**14.2**)
+7. i18n + verification (**14.3.5**, **14.5**)
+
+---
+
+## Last Phase: SEO Landing Page (Astro)
 
 *Objective: Build a marketing landing page optimized for search engines to drive traffic to the main application.*
 
-- [ ] **14.1 Astro Setup**
+- [ ] **XX.1 Astro Setup**
   - Initialize a new Astro project (e.g., inside a `landing` package) optimized for Google SEO.
-- [ ] **14.2 Custom Memory/Brain Aesthetic**
+- [ ] **XX.2 Custom Memory/Brain Aesthetic**
   - Design a unique, handcrafted visual identity centered around the concepts of memory, the brain, and local-first privacy (specifically avoiding generic "AI slop" aesthetics).
-- [ ] **14.3 App Routing**
+- [ ] **XX.4.3 App Routing**
   - Provide clear calls-to-action (CTAs) linking the marketing landing page directly to the main PWA application.
