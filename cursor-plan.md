@@ -19,7 +19,7 @@
 | 11. Internationalization (i18n) | Partial (en + es) |
 | 12. UX Polish, App Install & Tech Debt | Partial (E2E pending) |
 | 13. Tag & Calendar UX Enhancements | Done |
-| 14. Sub Brains (Hierarchical Divisions) | Pending |
+| 14. Sub Brains (Hierarchical Divisions) | Planned (redesign — explicit inclusion tree) |
 
 ### What shipped
 
@@ -263,14 +263,53 @@ Build a local-first note-taking app that users access via a URL, but where all d
 
 ## Phase 14: Sub Brains (Hierarchical Divisions)
 
-*Objective: Let users optionally partition their brain into named, nestable sub-brains — each with its own notes, tags, and calendar — while keeping the data model flat enough to scale to thousands of divisions and remain sync-ready.*
+*Objective: Let users partition their brain into a nestable tree of sub-brains, then **choose exactly which subdivisions contribute notes/tags to the current view** via checkboxes — without duplicating data and while staying fast at 1 000+ divisions.*
+
+> **Note (June 2026):** An initial Phase 14 implementation exists in the codebase (schema, divisions table, tree UI). It used automatic ancestor/descendant visibility and must be **reimplemented** against the explicit inclusion model below before this phase is considered done.
 
 ### Design principles
 
-1. **One tree, many namespaces** — A single `divisions` table forms an arbitrarily deep hierarchy (main → blue / red → football / arcade → …). Depth is unbounded; 1 000+ nodes must remain fast on in-browser SQLite.
-2. **Scoped content, shared mechanics** — Notes, tags, search, and calendar behave exactly as today, but every query is filtered by the active `division_id`. No duplicate UI logic per sub-brain.
-3. **Opt-in activation** — Divisions can be created but left inactive (`is_active = false`); inactive branches are hidden from navigation while their data is preserved.
-4. **Sync-compatible** — Divisions get ULIDs, timestamps, and soft deletes like every other entity. Existing LWW merge extends cleanly.
+1. **One tree, many namespaces** — A single `divisions` table forms an arbitrarily deep hierarchy (Main Brain → Football / Basketball → Real Madrid / Barcelona → …). Depth is unbounded; 1 000+ nodes must remain fast on in-browser SQLite.
+2. **Ownership vs inclusion (split concerns)** — Every note/tag still belongs to **exactly one** `division_id` (where it was created). What the user sees is controlled by a separate **inclusion set** (`includedDivisionIds`), not by implicit parent/child bubbling.
+3. **Explicit inclusion, downward cascade by default** — The sidebar tree shows checkboxes. Checking a subdivision includes it **and all descendants by default**. The user can then uncheck individual children (or check siblings on other branches) at will. **Parents are never auto-included** — notes created in a parent division do not appear unless that parent is explicitly checked.
+4. **Focus vs filter** — `focusDivisionId` (navigation / breadcrumb / create target) and `includedDivisionIds` (query filter) are distinct state. New notes and tags are always created in `focusDivisionId`, regardless of which divisions are checked for display.
+5. **Opt-in activation** — Divisions can be created but left inactive (`is_active = false`); inactive branches are hidden from the tree unless the user enables "Show inactive" in Settings. Their data is preserved.
+6. **Sync-compatible** — Divisions get ULIDs, timestamps, and soft deletes. Inclusion preferences are local UI state (persisted in `localStorage`), not synced — same pattern as locale or theme.
+
+### Inclusion semantics (product rules)
+
+Example tree:
+
+```
+Main Brain
+├─ Football
+│  ├─ Real Madrid
+│  └─ Barcelona
+└─ Basketball
+```
+
+| User action | Default inclusion result |
+| ----------- | ------------------------ |
+| Focus **Football** (first visit) | `{ Football, Real Madrid, Barcelona }` — **not** Main Brain |
+| Check **Barcelona** manually | `{ Barcelona }` only (unless user also checks descendants) |
+| Check **Football** | `{ Football, Real Madrid, Barcelona }` (all descendants checked) |
+| Uncheck **Barcelona** after checking Football | `{ Football, Real Madrid }` — parent stays checked, one child removed |
+| Focus **Main Brain** | `{ Main Brain, Football, Real Madrid, Barcelona, Basketball }` (focus node + all descendants) |
+
+**Hard rules:**
+
+- Checking division `D` → add `D` and all descendants to `includedDivisionIds` (one-shot cascade downward).
+- Unchecking `D` → remove `D` from the set; descendants stay as-is unless the UI offers "uncheck subtree" (optional; not required for v1).
+- **Never** auto-add ancestors when focusing or checking a child.
+- Notes/tags query: `WHERE division_id IN (includedDivisionIds)` — only explicitly included divisions, no notes from unchecked parents or siblings.
+
+**Checkbox UI states (tri-state):**
+
+| State | Meaning |
+| ----- | ------- |
+| Checked | Division is in `includedDivisionIds`. |
+| Unchecked | Division is not included. |
+| Indeterminate | Division is not included, but at least one descendant is. |
 
 ### 14.0 Data model
 
@@ -279,15 +318,15 @@ Build a local-first note-taking app that users access via a URL, but where all d
 | Column | Type | Notes |
 | ------ | ---- | ----- |
 | `id` | TEXT PK | ULID |
-| `parent_id` | TEXT NULL | FK → `divisions.id` ON DELETE CASCADE. `NULL` = root container ("Main Brain"). |
-| `name` | TEXT | Display name (unique among siblings: `UNIQUE(parent_id, name)`). |
-| `description` | TEXT | Optional user-facing blurb. Default `''`. |
-| `is_active` | INTEGER | Boolean. Inactive divisions (and optionally their descendants) hidden from nav. |
-| `sort_order` | INTEGER | Sibling ordering in the tree UI. |
+| `parent_id` | TEXT NULL | FK → `divisions.id` ON DELETE CASCADE. `NULL` = root ("Main Brain"). |
+| `name` | TEXT | Display name (`UNIQUE(parent_id, name)`). |
+| `description` | TEXT | Optional. Default `''`. |
+| `is_active` | INTEGER | Boolean. Inactive = hidden from tree (unless setting on). |
+| `sort_order` | INTEGER | Sibling ordering. |
 | `is_deleted` | INTEGER | Soft delete for sync. |
 | `created_at` / `updated_at` | INTEGER | ms timestamps. |
 
-**Indexes (required for scale):**
+**Indexes:**
 
 ```sql
 CREATE INDEX idx_divisions_parent       ON divisions(parent_id);
@@ -295,110 +334,125 @@ CREATE INDEX idx_divisions_parent_sort  ON divisions(parent_id, sort_order);
 CREATE INDEX idx_divisions_active       ON divisions(parent_id, is_active, is_deleted);
 ```
 
-**Why adjacency list (`parent_id`)?** For ≤ few thousand nodes in a single-user local DB, adjacency list + indexes is the simplest correct model. Closure tables and materialized paths add write complexity (moves, sync merges) without meaningful read gains at this scale. If subtree queries become hot later, add a denormalized `depth` column or a `path` TEXT column in a follow-up — do not pre-build both.
+**Why adjacency list?** Sufficient for ≤ few thousand nodes. Build an in-memory `childrenByParentId` map once per divisions fetch — O(1) child lookup, O(subtree) for cascade toggles. Do **not** add closure table or materialized path unless profiling proves tree walks are a bottleneck.
 
 #### Extend existing tables
 
 | Table | Change |
 | ----- | ------ |
-| `notes` | Add `division_id TEXT NOT NULL` FK → `divisions.id`. Index `(division_id, is_deleted, updated_at)`. |
-| `tags` | Add `division_id TEXT NOT NULL` FK → `divisions.id`. Replace global `UNIQUE(name)` with `UNIQUE(division_id, name)`. Index `(division_id)`. |
-| `note_tags` | No change — scoping is implicit via note/tag FKs. |
-| `notes_fts` | No schema change — FTS queries join `notes` and filter `division_id = ?`. |
+| `notes` | `division_id TEXT NOT NULL` FK → `divisions.id`. Index `(division_id, is_deleted, updated_at)`. |
+| `tags` | `division_id TEXT NOT NULL` FK → `divisions.id`. `UNIQUE(division_id, name)`. Index `(division_id)`. |
+| `note_tags` | No change — scoping via note/tag FKs. |
+| `notes_fts` | No schema change — filter via `notes.division_id IN (includedIds)`. |
 
 #### Root division & migration
 
-- On migration, insert one root row (`parent_id = NULL`, `name = 'Main Brain'`, `is_active = 1`).
-- Backfill `division_id` on all existing `notes` and `tags` to the root ULID.
-- Migration lives in `client/src/db/migrate.ts` as a versioned step (e.g. `MIGRATION_V2`) so existing OPFS databases upgrade in place.
+- Insert root row (`parent_id = NULL`, `name = 'Main Brain'`) on migration.
+- Backfill legacy `notes` / `tags` to root ULID.
+- Versioned step in `client/src/db/migrate.ts` (e.g. `MIGRATION_V2`).
 
 ```
-divisions (tree)                notes / tags (scoped)
-─────────────────               ─────────────────────
-NULL  → Main Brain (root)       division_id = root
-  ├─ blue                       division_id = blue
-  └─ red                        division_id = red
-       ├─ football              division_id = football
-       └─ arcade                division_id = arcade
+divisions (tree)                notes / tags (owned)
+─────────────────               ────────────────────
+NULL  → Main Brain              division_id = root
+  ├─ Football                   division_id = football
+  │    ├─ Real Madrid           division_id = madrid
+  │    └─ Barcelona             division_id = barcelona
+  └─ Basketball                 division_id = basketball
 ```
 
-A note always belongs to **exactly one** division — the one the user is viewing when they create it. Parent divisions are containers; they may also hold their own notes if the user works there directly.
+A note created while focused on **Barcelona** always has `division_id = barcelona`. It appears in the list only if **Barcelona** (or an ancestor that was **explicitly checked** — rare) is in `includedDivisionIds`. By default, focusing Football shows it; focusing Basketball does not.
 
-### 14.1 Data access layer
+### 14.1 State & data access
 
-- [ ] **14.1.1 Division hooks** (`client/src/hooks/useDivisions.ts`)
-  - `useDivisions(parentId?)` — children of a node (or top-level when `parentId` is root sentinel).
-  - `useDivisionAncestors(divisionId)` — breadcrumb chain via iterative `parent_id` lookups (depth ≤ ~20 in practice; guard with max-iteration cap).
-  - `useCreateDivision`, `useUpdateDivision`, `useDeleteDivision` (soft), `useMoveDivision` (change `parent_id` + `sort_order`), `useSetDivisionActive`.
-  - TanStack Query keys: `["divisions", parentId]`, `["divisions", "ancestors", divisionId]`.
+#### 14.1.1 Division tree index (in-memory, not in DB)
 
-- [ ] **14.1.2 Scope existing hooks**
-  - Add `divisionId` parameter (or read from store) to `useNotes`, `useTags`, `useGlobalSearch`, `useCalendarNotes`.
-  - Every Drizzle query adds `WHERE division_id = ?` (or equivalent `eq()`).
-  - Query keys become `["notes", divisionId, tagId?]`, `["tags", divisionId]`, etc. — prevents cross-division cache bleed.
+`client/src/lib/divisionTree.ts`:
 
-- [ ] **14.1.3 Division context**
-  - Extend `useAppStore` with `activeDivisionId` (persist to `localStorage`).
-  - Provide `DivisionProvider` or store actions: `setActiveDivisionId`, `resetSelectionOnSwitch` (clear `selectedNoteId` / `selectedTagId` / search filters when switching divisions).
+- `buildChildrenMap(divisions)` → `Map<parentId, Division[]>`
+- `getDescendantIds(divisions, id)` → `string[]` (for cascade-on-check)
+- `getAncestorChain(divisions, id)` → breadcrumb only; **not** used for query filtering
+- `computeCheckboxState(id, includedIds, childrenMap)` → `checked | unchecked | indeterminate`
+
+Rebuild the children map when the divisions query updates — not on every render.
+
+#### 14.1.2 App store (`useAppStore`)
+
+| Field | Purpose |
+| ----- | ------- |
+| `focusDivisionId` | Navigation target, breadcrumb, **create** scope for new notes/tags. Persisted. |
+| `includedDivisionIds` | `string[]` — explicit filter for reads. Persisted. |
+| `setFocusDivision(id)` | Set focus; **reset** `includedDivisionIds` to `[id, ...descendantIds(id)]`; clear note/tag/search selection. |
+| `toggleDivisionIncluded(id, checked)` | If checking: union `id + descendants`. If unchecking: delete `id` only. Recompute indeterminate states. |
+| `setIncludedDivisionIds(ids)` | Bulk replace (e.g. "select all visible", "clear all"). |
+
+**Query key shape:** `["notes", focusDivisionId, includedIds.join(","), tagId?]` — inclusion must be part of the cache key so toggling checkboxes invalidates correctly.
+
+#### 14.1.3 Division hooks (`useDivisions.ts`)
+
+- `useDivisions()` — all non-deleted divisions (full list for index build).
+- `useDivisionTree()` — tree + children map for sidebar.
+- CRUD: `useCreateDivision`, `useUpdateDivision`, `useDeleteDivision` (block if children/notes/tags), `useSetDivisionActive`.
+- **Remove** `getVisibleDivisionIds()` / ancestor-based visibility — replaced by `includedDivisionIds` from store.
+
+#### 14.1.4 Scope existing hooks
+
+- `useNotes`, `useTags`, `useGlobalSearch`, `useCalendarNotes` — read `includedDivisionIds` from store; query `division_id IN (...)`.
+- Mutations (create) use `focusDivisionId` only.
+- Mutations (update/delete) keyed by note/tag `id` (globally unique ULIDs) — no division guard needed on write.
+- If `includedDivisionIds` is empty, return empty lists (don't fall back to all notes).
 
 ### 14.2 Sync & export
 
-- [ ] **14.2.1 Extend `SyncSnapshot`** (`client/src/sync/types.ts`) — add `divisions: SyncDivision[]`; bump `SYNC_SNAPSHOT_VERSION` to `2`.
-- [ ] **14.2.2 LWW merge for divisions** (`client/src/sync/merge.ts`) — same `updated_at` comparison as notes/tags. Deleting a division soft-deletes it; children remain (orphan policy: keep children, set `parent_id` to deleted node's parent, or block delete if children exist — **prefer block-with-message** to avoid accidental mass moves).
-- [ ] **14.2.3 Export / import** — SQLite export picks up new table automatically. Markdown zip export should include `division` in YAML frontmatter. Import maps unknown division IDs to root.
+- [ ] **14.2.1** `SyncSnapshot` v2 — `divisions[]` + `divisionId` on notes/tags.
+- [ ] **14.2.2** LWW merge for divisions; block delete if children exist.
+- [ ] **14.2.3** Markdown export includes `division_id` + path; import maps unknown IDs to root.
+- Inclusion preferences are **not** in the sync snapshot (device-local UX state).
 
 ### 14.3 UI
 
-- [ ] **14.3.1 Division tree sidebar**
-  - Collapsible tree in `TagSidebar` header or a dedicated `DivisionTree` panel above tags.
-  - Show only `is_active = 1` divisions; dim or hide inactive ones behind a "Show inactive" toggle in Settings.
-  - Clicking a division sets `activeDivisionId` and reloads the scoped panes (list, editor, calendar).
-  - Indentation by depth; drag-and-drop reorder among siblings (updates `sort_order`) is a nice-to-have, not blocking.
+- [ ] **14.3.1 Inclusion tree** — Above tags in `TagSidebar`: collapsible tree with **checkbox** + label per division. Clicking the label sets `focusDivisionId` (highlight row); clicking the checkbox toggles inclusion only.
+- [ ] **14.3.2 Breadcrumb** — `Main Brain › Football › Barcelona`; segments set `focusDivisionId` and apply the default inclusion reset for that node.
+- [ ] **14.3.3 Division management** — Create / edit / activate / delete (existing dialog pattern). "New sub-brain" creates under `focusDivisionId`.
+- [ ] **14.3.4 Scoped panes** — Note list, editor, Omnibox, calendar all respect `includedDivisionIds`. Optional: show a small chip on each note indicating its owning division when viewed from a parent focus.
+- [ ] **14.3.5 i18n** — `divisions.*` keys in `en` / `es` (checkbox labels, indeterminate aria, inclusion help text).
 
-- [ ] **14.3.2 Breadcrumb navigation**
-  - Header bar: `Main Brain › red › football` — each segment clickable to jump to that ancestor division.
-
-- [ ] **14.3.3 Division management**
-  - "New sub-brain" action on any active division (creates child with `parent_id = activeDivisionId`).
-  - Edit name / description inline or via a small modal.
-  - Toggle active/inactive (with confirm if deactivating a branch that has children).
-  - Delete with confirmation (block if children exist; offer "delete subtree" as explicit destructive action).
-
-- [ ] **14.3.4 Scoped calendar & search**
-  - `CalendarView` and `Omnibox` automatically respect `activeDivisionId` via scoped hooks — no separate calendar per division in the DB.
-  - Tag sidebar search (`TagSidebar` filter input) remains division-local.
-
-- [ ] **14.3.5 i18n**
-  - Add keys for division UI strings in `en` / `es` locale files.
-
-### 14.4 Performance checklist (1 000+ divisions)
+### 14.4 Performance (1 000+ divisions)
 
 | Concern | Mitigation |
 | ------- | ---------- |
-| Tree render | Virtualize the sidebar list if visible nodes exceed ~200 (e.g. `@tanstack/react-virtual`). Load children lazily per expanded node. |
-| Queries | Always index `division_id` on `notes` and `tags`. Never full-table scan in the hot path. |
-| Cache | TanStack Query keys must include `divisionId`. Invalidate narrowly (`["notes", id]`, not `["notes"]`). |
-| Moves | `UPDATE divisions SET parent_id = ?` is O(1); no subtree rewrite. |
-| Search | FTS + `JOIN notes ON … WHERE notes.division_id = ?` keeps index use on `division_id`. |
+| Tree render | Virtualize if expanded nodes > ~200 (`@tanstack/react-virtual`). Lazy expand per node. |
+| Children map | Build once per divisions query result; share via `useMemo` / query `select`. |
+| Toggle cascade | O(subtree) set union on check — acceptable; subtrees are small in practice. |
+| SQL `IN` clause | Indexed `division_id`; batch IDs (SQLite default max ~999 variables — stay under or chunk). |
+| Query cache | Keys include sorted `includedDivisionIds` fingerprint. Invalidate `["notes"]` / `["tags"]` on inclusion change. |
+| Persisted state | Store `includedDivisionIds` as sorted JSON array in `localStorage` for stable keys. |
+| Search FTS | `JOIN notes ON … WHERE notes.division_id IN (includedIds)` — same pattern as list. |
+
+**Do not** walk the full tree on every keystroke or search debounce — read the precomputed `includedDivisionIds` array from Zustand.
 
 ### 14.5 Verification
 
-- [ ] Migration: existing DB with notes/tags upgrades cleanly; all legacy data lands in root division.
-- [ ] CRUD: create nested divisions 4+ levels deep; notes/tags in leaf divisions do not appear in siblings.
-- [ ] Activation: inactive division hidden from tree; toggling active makes it reappear without data loss.
-- [ ] Scale smoke test: script or Vitest fixture inserting 1 000 divisions + 5 000 notes; tree expand and note list remain < 100 ms on dev hardware.
-- [ ] Sync: merge two snapshots with conflicting division renames resolves via LWW; export/import round-trip preserves hierarchy.
-- [ ] i18n: division UI renders in en and es.
+- [ ] Migration: legacy DB upgrades; all old notes/tags owned by root.
+- [ ] Default inclusion: focus Football → sees Football + Real Madrid + Barcelona notes; **not** Main Brain or Basketball notes.
+- [ ] Cascade: check Football → all children checked; uncheck Barcelona → Football + Real Madrid remain.
+- [ ] Parents excluded: note created in Main Brain invisible when focused on Football (Main Brain unchecked).
+- [ ] Create: note created while focused on Barcelona has `division_id = barcelona`; appears when Barcelona is included, even if Football is unchecked.
+- [ ] Performance: 1 000 divisions + 5 000 notes — inclusion toggle and list query < 100 ms on dev hardware.
+- [ ] Sync v2 round-trip preserves hierarchy; inclusion prefs stay local.
+- [ ] i18n: inclusion UI in en and es.
 
-### Implementation order
+### Implementation order (revised)
 
-1. Schema + migration + root backfill (**14.0**)
-2. Division hooks + store context (**14.1**)
-3. Scope existing data hooks (**14.1.2**)
-4. Sidebar tree + breadcrumb (**14.3.1–14.3.2**)
-5. Division CRUD UI (**14.3.3**)
-6. Sync snapshot v2 (**14.2**)
-7. i18n + verification (**14.3.5**, **14.5**)
+1. Revert or refactor ancestor-based visibility (`getVisibleDivisionIds`) → explicit `includedDivisionIds` in store (**14.1.2**).
+2. Division tree index + checkbox state helpers (**14.1.1**).
+3. Rewire hooks to `IN (includedDivisionIds)` + create on `focusDivisionId` (**14.1.4**).
+4. Inclusion tree UI + breadcrumb focus behavior (**14.3.1–14.3.2**).
+5. Division CRUD UI (**14.3.3**).
+6. Sync snapshot v2 if not already complete (**14.2**).
+7. i18n + verification (**14.3.5**, **14.5**).
+
+Schema + migration from the first pass can be reused as-is; the redesign is primarily **state model + UI + query filter**.
 
 ---
 
