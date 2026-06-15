@@ -43,7 +43,7 @@ const BrainPage = () => {
       ) : (
         <div className="flex min-h-0 flex-1">
           <aside
-            className={`surface-panel w-full shrink-0 border-r border-border transition-opacity duration-200 dark:border-charcoal-border md:block md:w-52 lg:w-60 ${
+            className={`surface-panel w-full shrink-0 border-r border-border transition-opacity duration-200 dark:border-charcoal-border md:block md:w-64 lg:w-72 ${
               mobilePane === "tags" ? "block opacity-100" : "hidden opacity-0 md:opacity-100"
             }`}
           >
@@ -61,7 +61,7 @@ const BrainPage = () => {
           )}
 
           <section
-            className={`surface-panel w-full shrink-0 border-r border-border transition-opacity duration-200 dark:border-charcoal-border md:block md:w-72 lg:w-80 ${
+            className={`surface-panel w-full shrink-0 border-r border-border transition-opacity duration-200 dark:border-charcoal-border md:block md:w-96 md:min-w-80 lg:min-w-96 lg:flex-[2] lg:max-w-xl ${
               mobilePane === "list" ? "block opacity-100" : "hidden opacity-0 md:block md:opacity-100"
             }`}
           >
@@ -69,7 +69,7 @@ const BrainPage = () => {
           </section>
 
           <section
-            className={`surface-app min-w-0 flex-1 transition-opacity duration-200 ${
+            className={`surface-app min-w-0 flex-1 transition-opacity duration-200 md:max-w-2xl lg:max-w-xl xl:max-w-2xl ${
               mobilePane === "editor" ? "block opacity-100" : "hidden opacity-0 md:block md:opacity-100"
             }`}
           >

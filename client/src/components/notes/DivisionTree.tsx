@@ -1,4 +1,12 @@
-import { CaretDownIcon, CaretRightIcon, BrainIcon, PencilSimpleIcon, PlusIcon } from "@phosphor-icons/react"
+import {
+  CaretDownIcon,
+  CaretRightIcon,
+  BrainIcon,
+  CheckSquareIcon,
+  PencilSimpleIcon,
+  PlusIcon,
+  ProhibitIcon,
+} from "@phosphor-icons/react"
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import type { Division } from "../../db/schema"
@@ -132,7 +140,21 @@ const TreeRow = ({
   )
 }
 
-const DivisionTree = ({ className = "", compact = false }: { className?: string; compact?: boolean }) => {
+type DivisionTreeProps = {
+  className?: string
+  compact?: boolean
+  collapsible?: boolean
+  expanded?: boolean
+  onToggle?: () => void
+}
+
+const DivisionTree = ({
+  className = "",
+  compact = false,
+  collapsible = false,
+  expanded = true,
+  onToggle,
+}: DivisionTreeProps) => {
   const { t } = useTranslation()
   useBootstrapDivisionState()
   useBootstrapSubBrainsEnabled()
@@ -198,32 +220,76 @@ const DivisionTree = ({ className = "", compact = false }: { className?: string;
     setIncludedDivisionIds([])
   }
 
-  return (
-    <div className={`flex flex-col ${compact ? "min-h-0" : "h-full"} ${className}`}>
-      <div className="surface-header flex items-center justify-between px-4 py-2.5">
-        <h2 className="section-label">{t("divisions.title")}</h2>
+  const headerActions = (
+    <div className="flex shrink-0 items-center gap-0.5">
+      <button
+        type="button"
+        onClick={handleIncludeAllVisible}
+        className="icon-btn !p-1.5"
+        aria-label={t("divisions.includeAllVisible")}
+        title={t("divisions.includeAllVisible")}
+      >
+        <CheckSquareIcon size={16} />
+      </button>
+      <button
+        type="button"
+        onClick={handleClearInclusion}
+        className="icon-btn !p-1.5"
+        aria-label={t("divisions.clearInclusion")}
+        title={t("divisions.clearInclusion")}
+      >
+        <ProhibitIcon size={16} />
+      </button>
+      <button
+        type="button"
+        onClick={() => setIsAdding((v) => !v)}
+        className="icon-btn !p-1.5"
+        aria-label={t("divisions.newSubBrain")}
+      >
+        <PlusIcon size={16} />
+      </button>
+    </div>
+  )
+
+  const showBody = !collapsible || expanded
+
+  const sectionHeader = (
+    <div className="surface-header flex items-center gap-1 px-3 py-2">
+      {collapsible ? (
         <button
           type="button"
-          onClick={() => setIsAdding((v) => !v)}
-          className="icon-btn !p-1.5"
-          aria-label={t("divisions.newSubBrain")}
+          onClick={onToggle}
+          className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md py-0.5 text-left"
+          aria-expanded={expanded}
+          aria-label={
+            expanded
+              ? t("common.collapseSection", { title: t("divisions.title") })
+              : t("common.expandSection", { title: t("divisions.title") })
+          }
         >
-          <PlusIcon size={16} />
+          {expanded ? (
+            <CaretDownIcon className="shrink-0 text-ink-subtle" size={12} aria-hidden />
+          ) : (
+            <CaretRightIcon className="shrink-0 text-ink-subtle" size={12} aria-hidden />
+          )}
+          <h2 className="section-label truncate">{t("divisions.title")}</h2>
         </button>
-      </div>
+      ) : (
+        <h2 className="section-label min-w-0 flex-1 truncate">{t("divisions.title")}</h2>
+      )}
+      {showBody && headerActions}
+    </div>
+  )
 
-      <p className="px-4 pb-2 text-[11px] leading-snug text-ink-subtle">{t("divisions.inclusionHelp")}</p>
+  return (
+    <div
+      className={`flex flex-col border-b border-border dark:border-charcoal-border ${
+        collapsible && expanded ? "min-h-0 flex-1" : collapsible ? "shrink-0" : compact ? "min-h-0" : "h-full"
+      } ${className}`}
+    >
+      {sectionHeader}
 
-      <div className="flex gap-2 px-4 pb-2">
-        <button type="button" onClick={handleIncludeAllVisible} className="btn-secondary !px-2 !py-1 text-xs">
-          {t("divisions.includeAllVisible")}
-        </button>
-        <button type="button" onClick={handleClearInclusion} className="btn-muted !px-2 !py-1 text-xs">
-          {t("divisions.clearInclusion")}
-        </button>
-      </div>
-
-      {isAdding && (
+      {showBody && isAdding && (
         <div className="border-b border-border px-3 py-2 dark:border-charcoal-border">
           <input
             type="text"
@@ -240,25 +306,27 @@ const DivisionTree = ({ className = "", compact = false }: { className?: string;
         </div>
       )}
 
-      <div
-        className={`overflow-y-auto px-2 py-1.5 ${compact ? "min-h-0 flex-1" : "min-h-0 flex-1"}`}
-      >
-        {tree.map((node) => (
-          <TreeRow
-            key={node.id}
-            node={node}
-            focusDivisionId={focusDivisionId}
-            includedSet={includedSet}
-            childrenMap={childrenMap}
-            expandedIds={expandedIds}
-            inactiveLabel={t("divisions.inactiveBadge")}
-            onToggleExpand={toggleExpand}
-            onFocus={focusDivision}
-            onToggleIncluded={handleToggleIncluded}
-            onEdit={setEditingDivision}
-          />
-        ))}
-      </div>
+      {showBody && (
+        <div
+          className={`overflow-y-auto px-2 py-1.5 ${compact ? "min-h-0 flex-1" : "min-h-0 flex-1"}`}
+        >
+          {tree.map((node) => (
+            <TreeRow
+              key={node.id}
+              node={node}
+              focusDivisionId={focusDivisionId}
+              includedSet={includedSet}
+              childrenMap={childrenMap}
+              expandedIds={expandedIds}
+              inactiveLabel={t("divisions.inactiveBadge")}
+              onToggleExpand={toggleExpand}
+              onFocus={focusDivision}
+              onToggleIncluded={handleToggleIncluded}
+              onEdit={setEditingDivision}
+            />
+          ))}
+        </div>
+      )}
 
       {editingDivision && (
         <DivisionEditDialog

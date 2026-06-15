@@ -323,7 +323,15 @@ Build a local-first note-taking app that users access via a URL, but where all d
 - [x] Mobile: switch sub-brain focus from bottom nav.
 - [x] Vitest: 76 tests pass; `pnpm run build` green. Playwright E2E still deferred (12.5).
 
+### 15.7 Sidebar & mobile UX polish
+
+- [x] **15.7.1 Mobile tags tab** — Sub-brains removed from `TagSidebar` on mobile; dedicated **Sub-brains** nav pane only.
+- [x] **15.7.2 Compact division chrome** — Help text and full-width bulk buttons removed from `DivisionTree`; icon-only include-all / clear / add in header.
+- [x] **15.7.3 Collapsible desktop sidebar** — Sub-brains and Tags are independent collapsible sections with persisted state; equal flex split when both expanded (no fixed 42% cap).
+- [x] **15.7.4 Copy** — No-inclusion hint updated for mobile/desktop flows.
+
 ---
+
 
 ## Last Phase: SEO Landing Page (Astro)
 

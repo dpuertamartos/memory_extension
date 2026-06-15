@@ -8,9 +8,11 @@ type DivisionPickerProps = {
   value: string
   onChange: (divisionId: string) => void
   disabled?: boolean
+  compact?: boolean
+  className?: string
 }
 
-const DivisionPicker = ({ value, onChange, disabled }: DivisionPickerProps) => {
+const DivisionPicker = ({ value, onChange, disabled, compact = false, className = "" }: DivisionPickerProps) => {
   const { t } = useTranslation()
   const { data: divisions = [] } = useAllDivisions()
   const [open, setOpen] = useState(false)
@@ -42,12 +44,14 @@ const DivisionPicker = ({ value, onChange, disabled }: DivisionPickerProps) => {
   }
 
   return (
-    <div className="relative">
+    <div className={`relative ${className}`}>
       <button
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-2 rounded-lg border border-border bg-paper-elevated px-3 py-2 text-left text-sm dark:border-charcoal-border dark:bg-charcoal disabled:opacity-50"
+        className={`flex w-full items-center gap-1.5 rounded-md border border-border bg-paper-elevated text-left dark:border-charcoal-border dark:bg-charcoal disabled:opacity-50 ${
+          compact ? "px-2 py-1 text-xs" : "gap-2 rounded-lg px-3 py-2 text-sm"
+        }`}
         aria-expanded={open}
         aria-haspopup="listbox"
       >

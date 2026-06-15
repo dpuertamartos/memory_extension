@@ -593,7 +593,6 @@ describe("user flows (integration)", () => {
     await waitFor(() => {
       expect(screen.getByDisplayValue("Work note")).toBeInTheDocument()
     })
-    expect(screen.getByText("Sub-brain")).toBeInTheDocument()
-    expect(screen.getAllByText("Main Brain › Work").length).toBeGreaterThan(0)
+    expect(screen.getByRole("button", { name: /Main Brain › Work/i })).toBeInTheDocument()
   })
 })
