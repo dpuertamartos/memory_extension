@@ -3,7 +3,9 @@ import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import MarkdownEditor, { type MarkdownEditorHandle } from "./MarkdownEditor"
 import TagChip from "./TagChip"
+import TagEditDialog from "./TagEditDialog"
 import TagSelector from "./TagSelector"
+import type { Tag } from "../../db/schema"
 import DivisionPicker from "./DivisionPicker"
 import { useDeleteNote, useMoveNoteDivision, useNote, useSetNoteTags, useUpdateNote } from "../../hooks/useNotes"
 import { useAllDivisions } from "../../hooks/useDivisions"
@@ -18,6 +20,8 @@ const NoteEditor = () => {
     newlyCreatedNoteId,
     setNewlyCreatedNoteId,
     subBrainsEnabled,
+    selectedTagId,
+    setSelectedTagId,
   } = useAppStore()
   const { data: note } = useNote(selectedNoteId)
   const { data: allDivisions = [] } = useAllDivisions()
@@ -29,6 +33,7 @@ const NoteEditor = () => {
   const [content, setContent] = useState("")
   const [tagQuery, setTagQuery] = useState("")
   const [tagAnchor, setTagAnchor] = useState<{ top: number; left: number } | null>(null)
+  const [editingTag, setEditingTag] = useState<Tag | null>(null)
   const hydratedNoteIdRef = useRef<string | null>(null)
   const editorRef = useRef<MarkdownEditorHandle>(null)
   const titleRef = useRef<HTMLInputElement>(null)
@@ -227,11 +232,23 @@ const NoteEditor = () => {
             <TagChip
               key={tag.id}
               tag={tag}
+              onEdit={() => setEditingTag(tag)}
+              editLabel={t("tags.editTagNamed", { name: tag.name })}
               onRemove={() => handleRemoveTag(tag.id)}
               removeLabel={t("notes.removeTagFromNote", { name: tag.name })}
             />
           ))}
         </div>
+      )}
+
+      {editingTag && (
+        <TagEditDialog
+          tag={editingTag}
+          onClose={() => setEditingTag(null)}
+          onDeleted={() => {
+            if (selectedTagId === editingTag.id) setSelectedTagId(null)
+          }}
+        />
       )}
 
       <div className="relative min-h-0 flex-1 overflow-y-auto p-3 md:p-4">

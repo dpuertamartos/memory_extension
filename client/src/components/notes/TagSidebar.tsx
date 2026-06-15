@@ -76,6 +76,56 @@ const SidebarSection = ({ title, expanded, onToggle, headerActions, children }: 
   )
 }
 
+type AddTagFormProps = {
+  value: string
+  isPending: boolean
+  onChange: (value: string) => void
+  onSubmit: () => void
+  onCancel: () => void
+}
+
+const AddTagForm = ({ value, isPending, onChange, onSubmit, onCancel }: AddTagFormProps) => {
+  const { t } = useTranslation()
+  const canSubmit = value.trim().length > 0 && !isPending
+
+  return (
+    <div className="border-b border-border p-3 dark:border-charcoal-border">
+      <p className="mb-1 text-[11px] text-ink-subtle">{t("tags.newTag")}</p>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && canSubmit) void onSubmit()
+          if (e.key === "Escape") onCancel()
+        }}
+        placeholder={t("tags.namePlaceholder")}
+        className="w-full text-sm"
+        autoFocus
+        disabled={isPending}
+      />
+      <div className="mt-2 flex gap-2">
+        <button
+          type="button"
+          onClick={() => void onSubmit()}
+          disabled={!canSubmit}
+          className="btn-primary !px-3 !py-1.5 text-xs"
+        >
+          {t("tags.createTagAction")}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isPending}
+          className="btn-secondary !px-3 !py-1.5 text-xs"
+        >
+          {t("common.cancel")}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 type TagSidebarProps = {
   mobileOnly?: boolean
 }
@@ -115,23 +165,43 @@ const TagSidebar = ({ mobileOnly = false }: TagSidebarProps) => {
     ? tags.filter((tag) => tag.name.toLowerCase().includes(filterLower))
     : tags
 
+  const startAdd = () => {
+    setIsAdding(true)
+    setName("")
+  }
+
+  const cancelAdd = () => {
+    setIsAdding(false)
+    setName("")
+  }
+
   const handleCreate = async () => {
     const trimmed = name.trim()
     if (!trimmed) return
     const color = TAG_COLORS[tags.length % TAG_COLORS.length]
     await createTag.mutateAsync({ name: trimmed, color })
-    setName("")
-    setIsAdding(false)
+    cancelAdd()
   }
 
-  const tagHeaderActions = (
+  const tagHeaderActionsDesktop = (
     <button
       type="button"
-      onClick={() => setIsAdding((value) => !value)}
+      onClick={startAdd}
       className="icon-btn !p-1.5"
       aria-label={t("tags.addTag")}
     >
       <PlusIcon size={18} />
+    </button>
+  )
+
+  const tagHeaderActionsMobile = (
+    <button
+      type="button"
+      onClick={startAdd}
+      className="btn-primary flex shrink-0 items-center gap-1.5 !px-3 !py-1.5 text-xs"
+    >
+      <PlusIcon size={14} />
+      {t("tags.addTag")}
     </button>
   )
 
@@ -162,20 +232,13 @@ const TagSidebar = ({ mobileOnly = false }: TagSidebarProps) => {
         </div>
 
         {isAdding && (
-          <div className="border-b border-border p-3 dark:border-charcoal-border">
-            <input
-              type="text"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") void handleCreate()
-                if (event.key === "Escape") setIsAdding(false)
-              }}
-              placeholder={t("tags.tagName")}
-              className="w-full text-sm"
-              autoFocus
-            />
-          </div>
+          <AddTagForm
+            value={name}
+            isPending={createTag.isPending}
+            onChange={setName}
+            onSubmit={handleCreate}
+            onCancel={cancelAdd}
+          />
         )}
 
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
@@ -245,7 +308,7 @@ const TagSidebar = ({ mobileOnly = false }: TagSidebarProps) => {
       <div className="flex h-full min-h-0 flex-col">
         <div className="surface-header flex items-center justify-between px-3 py-2">
           <h2 className="section-label">{t("tags.title")}</h2>
-          {tagHeaderActions}
+          {tagHeaderActionsMobile}
         </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{tagsContent}</div>
       </div>
@@ -268,7 +331,7 @@ const TagSidebar = ({ mobileOnly = false }: TagSidebarProps) => {
         title={t("tags.title")}
         expanded={tagsExpanded}
         onToggle={toggleTags}
-        headerActions={tagHeaderActions}
+        headerActions={tagHeaderActionsDesktop}
       >
         {tagsContent}
       </SidebarSection>

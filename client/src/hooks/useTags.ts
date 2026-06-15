@@ -1,20 +1,52 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { asc, eq } from "drizzle-orm"
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query"
+import { and, asc, count, eq } from "drizzle-orm"
 import { ulid } from "ulid"
-import { tagsTable } from "../db/schema"
+import { noteTagsTable, notesTable, tagsTable } from "../db/schema"
 import { db, initDb } from "../lib/db"
 
 const tagsKey = ["tags"] as const
+
+export function tagNoteCountKey(tagId: string) {
+  return ["tags", tagId, "noteCount"] as const
+}
+
+export function invalidateTagNoteCounts(queryClient: QueryClient, tagId?: string) {
+  if (tagId) {
+    void queryClient.invalidateQueries({ queryKey: tagNoteCountKey(tagId) })
+    return
+  }
+  void queryClient.invalidateQueries({
+    predicate: (query) => query.queryKey[0] === "tags" && query.queryKey[2] === "noteCount",
+  })
+}
 
 async function fetchTags() {
   await initDb()
   return db.select().from(tagsTable).orderBy(asc(tagsTable.name))
 }
 
+async function fetchTagNoteCount(tagId: string) {
+  await initDb()
+  const [result] = await db
+    .select({ count: count() })
+    .from(noteTagsTable)
+    .innerJoin(notesTable, eq(noteTagsTable.noteId, notesTable.id))
+    .where(and(eq(noteTagsTable.tagId, tagId), eq(notesTable.isDeleted, false)))
+  return result?.count ?? 0
+}
+
 export function useTags() {
   return useQuery({
     queryKey: tagsKey,
     queryFn: fetchTags,
+  })
+}
+
+export function useTagNoteCount(tagId: string | null) {
+  return useQuery({
+    queryKey: tagId ? tagNoteCountKey(tagId) : ["tags", null, "noteCount"],
+    queryFn: () => fetchTagNoteCount(tagId!),
+    enabled: !!tagId,
   })
 }
 
@@ -52,9 +84,10 @@ export function useDeleteTag() {
       await initDb()
       await db.delete(tagsTable).where(eq(tagsTable.id, id))
     },
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: tagsKey })
       queryClient.invalidateQueries({ queryKey: ["notes"] })
+      invalidateTagNoteCounts(queryClient, id)
     },
   })
 }
@@ -73,9 +106,10 @@ export function useUpdateTag() {
 
       await db.update(tagsTable).set(patch).where(eq(tagsTable.id, input.id))
     },
-    onSuccess: () => {
+    onSuccess: (_data, input) => {
       queryClient.invalidateQueries({ queryKey: tagsKey })
       queryClient.invalidateQueries({ queryKey: ["notes"] })
+      invalidateTagNoteCounts(queryClient, input.id)
     },
   })
 }

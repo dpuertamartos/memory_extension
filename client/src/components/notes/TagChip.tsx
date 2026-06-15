@@ -1,4 +1,4 @@
-import { XIcon } from "@phosphor-icons/react"
+import { PencilSimpleIcon, XIcon } from "@phosphor-icons/react"
 import type { Tag } from "../../db/schema"
 
 type TagChipProps = {
@@ -6,6 +6,8 @@ type TagChipProps = {
   size?: "xs" | "sm"
   showHash?: boolean
   suffix?: string
+  onEdit?: () => void
+  editLabel?: string
   onRemove?: () => void
   removeLabel?: string
 }
@@ -20,6 +22,8 @@ const TagChip = ({
   size = "sm",
   showHash = true,
   suffix,
+  onEdit,
+  editLabel,
   onRemove,
   removeLabel,
 }: TagChipProps) => (
@@ -29,6 +33,16 @@ const TagChip = ({
   >
     {showHash ? `#${tag.name}` : tag.name}
     {suffix}
+    {onEdit && (
+      <button
+        type="button"
+        onClick={onEdit}
+        className="rounded hover:opacity-80"
+        aria-label={editLabel}
+      >
+        <PencilSimpleIcon size={12} />
+      </button>
+    )}
     {onRemove && (
       <button
         type="button"

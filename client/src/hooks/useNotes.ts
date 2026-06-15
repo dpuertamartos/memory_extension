@@ -7,6 +7,7 @@ import { db, initDb } from "../lib/db"
 import { inclusionFingerprint } from "../lib/divisions"
 import { useAppStore } from "../store/useAppStore"
 import { useIncludedDivisionIds, useCreateDivisionId } from "./useDivisions"
+import { invalidateTagNoteCounts } from "./useTags"
 
 export type NoteWithTags = Note & { tags: Tag[] }
 
@@ -263,6 +264,7 @@ export function useSetNoteTags() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["notes", inclusionKey] })
       queryClient.invalidateQueries({ queryKey: noteKey(variables.noteId) })
+      invalidateTagNoteCounts(queryClient)
     },
   })
 }

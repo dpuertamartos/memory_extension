@@ -23,4 +23,11 @@ describe("TagChip", () => {
     fireEvent.click(screen.getByRole("button", { name: "Remove ideas" }))
     expect(onRemove).toHaveBeenCalledOnce()
   })
+
+  it("calls onEdit when edit button is clicked", () => {
+    const onEdit = vi.fn()
+    renderWithI18n(<TagChip tag={tag} onEdit={onEdit} editLabel="Edit ideas" />)
+    fireEvent.click(screen.getByRole("button", { name: "Edit ideas" }))
+    expect(onEdit).toHaveBeenCalledOnce()
+  })
 })

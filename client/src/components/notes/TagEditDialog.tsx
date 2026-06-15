@@ -2,7 +2,7 @@ import { TrashIcon, XIcon } from "@phosphor-icons/react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import type { Tag } from "../../db/schema"
-import { useDeleteTag, useUpdateTag } from "../../hooks/useTags"
+import { useDeleteTag, useTagNoteCount, useUpdateTag } from "../../hooks/useTags"
 import { TAG_COLORS } from "../../lib/tagColors"
 
 type TagEditDialogProps = {
@@ -15,6 +15,7 @@ const TagEditDialog = ({ tag, onClose, onDeleted }: TagEditDialogProps) => {
   const { t } = useTranslation()
   const updateTag = useUpdateTag()
   const deleteTag = useDeleteTag()
+  const { data: noteCount, isPending: isCountPending } = useTagNoteCount(tag.id)
   const [name, setName] = useState(tag.name)
   const [color, setColor] = useState(tag.color)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -65,6 +66,21 @@ const TagEditDialog = ({ tag, onClose, onDeleted }: TagEditDialogProps) => {
         </div>
 
         <div className="space-y-4 p-4">
+          <div className="rounded-lg border border-synapse/30 bg-synapse-soft px-3 py-2 text-xs text-synapse dark:border-synapse/40 dark:bg-synapse/10 dark:text-synapse-soft">
+            {!isCountPending && noteCount === 1 ? (
+              <p>{t("tags.onlyOnOneNote")}</p>
+            ) : (
+              <>
+                <p>{t("tags.editGlobalWarning")}</p>
+                {!isCountPending && noteCount !== undefined && noteCount > 1 && (
+                  <p className="mt-1 opacity-90">
+                    {t("tags.usedOnManyNotes", { count: noteCount })}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+
           <div>
             <label htmlFor="tag-name" className="mb-1 block text-xs font-medium text-ink-subtle">
               {t("common.name")}
