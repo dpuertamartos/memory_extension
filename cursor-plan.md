@@ -2,7 +2,7 @@
 
 ## Current Status (June 2026)
 
-**Phases 1–15 are complete (except Playwright Chromium E2E in 12.5).** The app is a client-only PWA with in-browser SQLite (OPFS), Drizzle ORM, full-text search, a responsive 3-pane UI, export/import, advanced markdown editing, cloud-sync preparation, advanced discovery filters, a calendar memory view, hierarchical sub-brains with explicit inclusion, and optional sub-brain UX (ownership, mobile nav, feature toggle). **Tags are global** (schema v3); only **notes** are division-scoped.
+**Phases 1–15 are complete (except Playwright Chromium E2E in 12.5). Phase 16 (E2E encrypted cloud sync) is planned.** The app is a client-only PWA with in-browser SQLite (OPFS), Drizzle ORM, full-text search, a responsive 3-pane UI, export/import, advanced markdown editing, cloud-sync preparation, advanced discovery filters, a calendar memory view, hierarchical sub-brains with explicit inclusion, and optional sub-brain UX (ownership, mobile nav, feature toggle). **Tags are global** (schema v3); only **notes** are division-scoped.
 
 | Phase | Status |
 | ----- | ------ |
@@ -21,6 +21,7 @@
 | 13. Tag & Calendar UX Enhancements | Done |
 | 14. Sub Brains (Hierarchical Divisions) | Done |
 | 15. Sub Brain UX, Ownership & Optional Feature | Done |
+| 16. E2E Encrypted Cloud Sync | Planned |
 
 ### What shipped
 
@@ -329,6 +330,124 @@ Build a local-first note-taking app that users access via a URL, but where all d
 - [x] **15.7.2 Compact division chrome** — Help text and full-width bulk buttons removed from `DivisionTree`; icon-only include-all / clear / add in header.
 - [x] **15.7.3 Collapsible desktop sidebar** — Sub-brains and Tags are independent collapsible sections with persisted state; equal flex split when both expanded (no fixed 42% cap).
 - [x] **15.7.4 Copy** — No-inclusion hint updated for mobile/desktop flows.
+
+---
+
+## Phase 16: E2E Encrypted Cloud Sync
+
+*Objective: Optional zero-knowledge cloud sync. A minimal Oracle Cloud VM handles account auth and orchestrates encrypted blob storage in OCI Object Storage (10 GB, scalable). The browser encrypts/decrypts using a user passphrase and recovery key; the server never sees plaintext. Reuses existing `SyncSnapshot` v2 + LWW merge. **Manual sync in v1** (Push / Pull in Settings).*
+
+### Architectural decisions (locked)
+
+- **Payload:** Encrypted JSON `SyncSnapshot` (gzipped), not raw `.sqlite` — per-entity LWW merge via `client/src/sync/`.
+- **Encryption:** Envelope encryption in browser — Argon2id passphrase → KEK; random DEK encrypts snapshot; AES-256-GCM via Web Crypto API.
+- **Recovery:** User downloads a `.recovery` file (wraps DEK) before first upload; required for new-device unlock without original setup.
+- **Auth vs encryption:** Separate — account login (JWT) proves identity; encryption passphrase never leaves the browser.
+- **Storage:** OCI Object Storage via presigned URLs; VM holds only user/sync metadata (SQLite, kilobytes per user).
+- **Device-local (not synced):** Division inclusion prefs, sub-brains toggle, locale, sidebar collapse state.
+
+### Threat model
+
+| Actor | Sees |
+| ----- | ---- |
+| Server operator | Account email, blob size, upload timestamps, ciphertext |
+| Attacker with bucket access | Ciphertext only |
+| Attacker with VM DB | User IDs, emails, blob paths — not note content |
+| User who loses passphrase **and** recovery key | Data unrecoverable (by design) |
+
+### Sync flow (manual v1)
+
+```
+Enable → sign in → set passphrase → download recovery key
+Push:  exportSyncSnapshot → gzip → encrypt → presigned PUT → confirm
+Pull:  presigned GET → decrypt → mergeAndApplyRemoteSnapshot → invalidate queries
+Lock:  clear session DEK
+Disable: DELETE /sync (bucket object + metadata), clear local cloud prefs
+```
+
+### Alternatives considered
+
+| Option | Verdict |
+| ------ | ------- |
+| A — Encrypted SyncSnapshot + OCI bucket + minimal API | **Recommended** — fits existing merge code |
+| B — Encrypted full SQLite blob | Rejected — whole-file LWW, no per-note merge |
+| C — VM disk only (no bucket) | Rejected — does not scale |
+| D — WebDAV | Rejected — different product shape |
+
+### 16.1 Server skeleton + OCI (`server/` package)
+
+- [ ] **16.1.1 Revive `server/`** — Node 22 + Hono; pnpm workspace package; API on subdomain (e.g. `api.yourdomain.com`).
+- [ ] **16.1.2 VM SQLite** — `users`, `sync_blobs`, auth tokens/credentials tables; no note data.
+- [ ] **16.1.3 Auth endpoints** — Magic link or passkeys (pick one for v1); JWT access (15 min) + refresh rotation.
+- [ ] **16.1.4 Sync endpoints** — `GET /sync/status`, `POST /sync/upload-url`, `POST /sync/confirm`, `GET /sync/download-url`, `DELETE /sync`.
+- [ ] **16.1.5 OCI integration** — Presigned PUT/GET (15 min TTL); object key `brains/{userId}/snapshot.v{version}.enc`; retain last 3 versions.
+- [ ] **16.1.6 Deploy** — Oracle VM + Caddy/nginx TLS (Let's Encrypt); CORS restricted to PWA origin; rate limits on auth.
+
+**API surface (v1):**
+
+| Method | Path | Purpose |
+| ------ | ---- | ------- |
+| POST | `/auth/magic-link` | Send login email (if magic link chosen) |
+| POST | `/auth/verify` | Exchange token → JWT |
+| POST | `/auth/refresh` | Rotate JWT |
+| DELETE | `/auth/session` | Logout |
+| GET | `/sync/status` | Remote version, updatedAt, sizeBytes |
+| POST | `/sync/upload-url` | Presigned PUT URL |
+| POST | `/sync/confirm` | Record version after successful PUT |
+| GET | `/sync/download-url` | Presigned GET URL |
+| DELETE | `/sync` | Opt-out: delete blob + metadata |
+
+### 16.2 Client crypto (`client/src/crypto/`)
+
+- [ ] **16.2.1 KDF** — `deriveKek(passphrase, salt)` via Argon2id (`argon2-wasm` or equivalent).
+- [ ] **16.2.2 Envelope** — `generateDek`, `wrapKey`, `unwrapKey`, `encryptSnapshot`, `decryptSnapshot` (AES-256-GCM).
+- [ ] **16.2.3 Blob format** — Versioned envelope: `kdf` + `wrap` (wrapped DEK) + `payload` (gzipped snapshot) + `exportedAt` + `snapshotVersion`.
+- [ ] **16.2.4 Recovery key** — `createRecoveryKeyFile`, `unlockWithRecoveryKey`; `.recovery` JSON export.
+- [ ] **16.2.5 Session unlock** — Store wrapped DEK in `sessionStorage`; explicit Lock button; passphrase never persisted.
+- [ ] **16.2.6 Tests** — Vitest round-trip encrypt/decrypt; wrong passphrase fails; recovery key unwrap.
+
+### 16.3 Cloud sync orchestration (`client/src/cloud/`)
+
+- [ ] **16.3.1 API client** — Authenticated fetch wrapper with JWT refresh.
+- [ ] **16.3.2 Push** — `exportSyncSnapshot` → serialize → gzip → encrypt → presigned upload → confirm.
+- [ ] **16.3.3 Pull** — Download → decrypt → `mergeAndApplyRemoteSnapshot`; surface `SyncMergeResult` conflict stats.
+- [ ] **16.3.4 Integration tests** — Vitest with mocked API.
+
+### 16.4 Settings UI
+
+- [ ] **16.4.1 Cloud Sync section** — Off by default in `SettingsPage.tsx`.
+- [ ] **16.4.2 Enable flow** — Sign in → set passphrase → forced recovery key download before first push.
+- [ ] **16.4.3 Manual actions** — Push, Pull, Lock, Disable sync (with confirmation).
+- [ ] **16.4.4 Status** — Last sync time, remote version, merge summary after pull.
+- [ ] **16.4.5 Copy** — Document that view prefs (inclusion, locale) stay device-local.
+- [ ] **16.4.6 i18n** — `cloudSync.*` keys in `en` and `es`.
+
+### 16.5 Hardening & docs
+
+- [ ] **16.5.1 Security** — HTTPS/HSTS, presigned URL scope, no logging of keys/passphrases/blobs.
+- [ ] **16.5.2 Error states** — Network failures, wrong passphrase, version conflicts, opt-out cleanup.
+- [ ] **16.5.3 README** — Threat model, env vars, OCI setup, recovery key warning.
+
+### 16.6 Verification
+
+- [ ] Round-trip: encrypt snapshot → upload → download → decrypt → merge produces expected local state.
+- [ ] Multi-device: two browsers, same account + passphrase; Push on A, Pull on B reflects changes.
+- [ ] LWW: concurrent edits on two devices resolve deterministically; merge stats shown on Pull.
+- [ ] Recovery: new device unlocks via `.recovery` file without original passphrase setup.
+- [ ] Opt-out: `DELETE /sync` removes remote blob; local brain unaffected.
+- [ ] Vitest + `pnpm run build` green.
+
+### Open decisions (defer past v1)
+
+- Passkeys vs magic link for account auth.
+- Single "Sync" button that Pull-then-Push vs separate Push/Pull buttons.
+- Incremental changelog sync (only if snapshot size or latency becomes a problem).
+
+### Future v2 (not in scope)
+
+- Automatic debounced sync while app is open.
+- Background sync via service worker.
+- Per-row `sync_ops` changelog instead of full snapshot upload.
 
 ---
 
