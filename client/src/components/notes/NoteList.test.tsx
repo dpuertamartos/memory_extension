@@ -74,7 +74,7 @@ vi.mock("../../store/useAppStore", () => ({
     setSelectedNoteId: mockSetSelectedNoteId,
     setNewlyCreatedNoteId: mockSetNewlyCreatedNoteId,
     setNoteSort: mockSetNoteSort,
-    setMobilePane: vi.fn(),
+    setActivePane: vi.fn(),
   }),
 }))
 

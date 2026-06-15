@@ -14,7 +14,7 @@ import type { SearchFilters } from "../lib/searchQuery"
 import { ROOT_DIVISION_ID } from "../lib/divisions"
 import { getDescendantIds, getDefaultIncludedDivisionIds } from "../lib/divisionTree"
 import BrainPage from "../pages/BrainPage"
-import MobileNav from "../components/notes/MobileNav"
+import AppNav from "../components/notes/AppNav"
 import { renderApp } from "../test/renderApp"
 import { resetAppStore } from "../test/resetAppStore"
 import { useAppStore } from "../store/useAppStore"
@@ -286,6 +286,20 @@ vi.mock("../hooks/useNotes", () => ({
 
 describe("user flows (integration)", () => {
   beforeEach(() => {
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: (query: string) => ({
+        matches: query.includes("min-width: 768px"),
+        media: query,
+        onchange: null,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        dispatchEvent: () => false,
+      }),
+    })
+
     testState.notes = []
     testState.tags = []
     testState.divisions = [{ ...rootDivision }]
@@ -372,7 +386,7 @@ describe("user flows (integration)", () => {
     expect(screen.getByText("Searchable Alpha Note")).toBeInTheDocument()
   })
 
-  it("filters notes by tag selected in the sidebar", async () => {
+  it("filters notes by tag from tags tab", async () => {
     testState.tags = [
       {
         id: "tag-1",
@@ -405,13 +419,20 @@ describe("user flows (integration)", () => {
       },
     ]
 
-    renderApp(<BrainPage />)
+    renderApp(
+      <>
+        <BrainPage />
+        <AppNav />
+      </>,
+    )
 
+    fireEvent.click(screen.getByRole("button", { name: "Tags" }))
     fireEvent.click(screen.getByRole("button", { name: "ideas" }))
 
     await waitFor(() => {
       expect(screen.getByText("Filtered")).toBeInTheDocument()
     })
+    expect(useAppStore.getState().activePane).toBe("list")
     expect(screen.getByText("Tagged note")).toBeInTheDocument()
     expect(screen.queryByText("Other note")).not.toBeInTheDocument()
     expect(useAppStore.getState().selectedTagId).toBe("tag-1")
@@ -548,15 +569,74 @@ describe("user flows (integration)", () => {
     })
   })
 
-  it("shows sub-brains nav item when feature is enabled", () => {
+  it("shows sub-brains pane from unified bottom nav", () => {
     useAppStore.getState().setSubBrainsEnabled(true)
     renderApp(
       <>
         <BrainPage />
-        <MobileNav />
+        <AppNav />
       </>,
     )
+    fireEvent.click(screen.getByRole("button", { name: "Sub-brains" }))
+    expect(screen.getByRole("button", { name: "Main Brain" })).toBeInTheDocument()
+  })
+
+  it("uses unified bottom nav tabs", () => {
+    useAppStore.getState().setSubBrainsEnabled(true)
+    renderApp(<AppNav />)
+    expect(screen.getByRole("button", { name: "Notes" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Calendar" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Sub-brains" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Tags" })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Editor" })).not.toBeInTheDocument()
+  })
+
+  it("opens editor from note selection while staying on notes tab", async () => {
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: (query: string) => ({
+        matches: !query.includes("min-width: 768px"),
+        media: query,
+        onchange: null,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        dispatchEvent: () => false,
+      }),
+    })
+
+    testState.notes = [
+      {
+        id: "note-1",
+        divisionId: ROOT_DIVISION_ID,
+        title: "Context note",
+        content: "body",
+        isDeleted: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        tags: [],
+      },
+    ]
+
+    renderApp(
+      <>
+        <BrainPage />
+        <AppNav />
+      </>,
+    )
+
+    fireEvent.click(screen.getByText("Context note"))
+
+    await waitFor(() => {
+      expect(useAppStore.getState().activePane).toBe("list")
+      expect(useAppStore.getState().selectedNoteId).toBe("note-1")
+      expect(screen.getByDisplayValue("Context note")).toBeInTheDocument()
+    })
+    expect(screen.getByRole("navigation").querySelector('[aria-current="page"]')).toHaveAttribute(
+      "aria-label",
+      "Notes",
+    )
   })
 
   it("shows note ownership in editor when sub-brains enabled", async () => {

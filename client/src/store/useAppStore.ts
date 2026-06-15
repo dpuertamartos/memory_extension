@@ -11,9 +11,9 @@ import {
 } from "../lib/divisions"
 import { emptySearchFilters, type SearchFilters } from "../lib/searchQuery"
 
-export type MobilePane = "tags" | "divisions" | "list" | "editor" | "settings" | "calendar"
+export type NavPane = "list" | "calendar" | "divisions" | "tags"
+
 export type NoteSort = "updated" | "created" | "alpha"
-export type MainView = "notes" | "calendar"
 
 type AppState = {
   focusDivisionId: string
@@ -23,8 +23,7 @@ type AppState = {
   newlyCreatedNoteId: string | null
   searchFilters: SearchFilters
   noteSort: NoteSort
-  mobilePane: MobilePane
-  mainView: MainView
+  activePane: NavPane
   showInactiveDivisions: boolean
   subBrainsEnabled: boolean
   setFocusDivision: (id: string, defaultIncludedIds: string[]) => void
@@ -37,8 +36,7 @@ type AppState = {
   updateSearchFilters: (patch: Partial<SearchFilters>) => void
   clearSearchFilters: () => void
   setNoteSort: (sort: NoteSort) => void
-  setMobilePane: (pane: MobilePane) => void
-  setMainView: (view: MainView) => void
+  setActivePane: (pane: NavPane) => void
   setShowInactiveDivisions: (show: boolean) => void
   setSubBrainsEnabled: (enabled: boolean) => void
 }
@@ -49,7 +47,7 @@ function resetDivisionSelection() {
     selectedNoteId: null,
     newlyCreatedNoteId: null,
     searchFilters: emptySearchFilters(),
-    mobilePane: "list" as MobilePane,
+    activePane: "list" as NavPane,
   }
 }
 
@@ -65,8 +63,7 @@ export const useAppStore = create<AppState>((set) => ({
   newlyCreatedNoteId: null,
   searchFilters: emptySearchFilters(),
   noteSort: "updated",
-  mobilePane: "list",
-  mainView: "notes",
+  activePane: "list",
   showInactiveDivisions: false,
   subBrainsEnabled: getStoredSubBrainsEnabled() ?? false,
   setFocusDivision: (id, defaultIncludedIds) => {
@@ -93,21 +90,22 @@ export const useAppStore = create<AppState>((set) => ({
     setStoredIncludedDivisionIds(sorted)
     set({ includedDivisionIds: sorted })
   },
-  setSelectedTagId: (id) => set({ selectedTagId: id, mobilePane: "list" }),
-  setSelectedNoteId: (id) => set({ selectedNoteId: id, mobilePane: id ? "editor" : "list" }),
+  setSelectedTagId: (id) => set({ selectedTagId: id, activePane: "list" }),
+  setSelectedNoteId: (id) => set({ selectedNoteId: id }),
   setNewlyCreatedNoteId: (id) => set({ newlyCreatedNoteId: id }),
   setSearchFilters: (filters) => set({ searchFilters: filters }),
   updateSearchFilters: (patch) =>
     set((state) => ({ searchFilters: { ...state.searchFilters, ...patch } })),
   clearSearchFilters: () => set({ searchFilters: emptySearchFilters() }),
   setNoteSort: (sort) => set({ noteSort: sort }),
-  setMobilePane: (pane) => set({ mobilePane: pane, mainView: pane === "calendar" ? "calendar" : "notes" }),
-  setMainView: (view) =>
-    set({ mainView: view, mobilePane: view === "calendar" ? "calendar" : "list" }),
+  setActivePane: (pane) => set({ activePane: pane }),
   setShowInactiveDivisions: (show) => set({ showInactiveDivisions: show }),
   setSubBrainsEnabled: (enabled) => {
     setStoredSubBrainsEnabled(enabled)
-    set({ subBrainsEnabled: enabled })
+    set((state) => ({
+      subBrainsEnabled: enabled,
+      activePane: !enabled && state.activePane === "divisions" ? "list" : state.activePane,
+    }))
   },
 }))
 

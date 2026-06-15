@@ -16,7 +16,11 @@ const downloadBlob = (blob: Blob, filename: string) => {
   URL.revokeObjectURL(url)
 }
 
-const SettingsPage = () => {
+type SettingsPageProps = {
+  embedded?: boolean
+}
+
+const SettingsPage = ({ embedded = false }: SettingsPageProps) => {
   const { t } = useTranslation()
   const { locale, setLocale } = useLocaleStore()
   const {
@@ -64,9 +68,11 @@ const SettingsPage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-lg p-6">
-      <h1>{t("settings.title")}</h1>
-      <p className="mb-6 text-sm text-ink-muted">{t("settings.description")}</p>
+    <div className={`mx-auto max-w-lg ${embedded ? "px-3 py-4 sm:px-4" : "p-4 sm:p-6"}`}>
+      {!embedded && <h1>{t("settings.title")}</h1>}
+      <p className={`text-sm text-ink-muted ${embedded ? "mb-4" : "mb-6"}`}>
+        {t("settings.description")}
+      </p>
 
       <div className="space-y-4">
         <div className="rounded-lg border border-synapse/30 bg-synapse-soft p-4 dark:border-synapse/40 dark:bg-synapse/10">

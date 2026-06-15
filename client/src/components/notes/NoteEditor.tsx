@@ -17,7 +17,6 @@ const NoteEditor = () => {
     setSelectedNoteId,
     newlyCreatedNoteId,
     setNewlyCreatedNoteId,
-    setMobilePane,
     subBrainsEnabled,
     includedDivisionIds,
   } = useAppStore()
@@ -79,7 +78,7 @@ const NoteEditor = () => {
         </div>
         <button
           type="button"
-          onClick={() => setMobilePane("list")}
+          onClick={() => setSelectedNoteId(null)}
           className="btn-primary !px-4 !py-2 md:hidden"
         >
           {t("notes.browseNotes")}
@@ -120,7 +119,7 @@ const NoteEditor = () => {
   }
 
   const handleBack = () => {
-    setMobilePane("list")
+    setSelectedNoteId(null)
   }
 
   const handleMoveDivision = async (targetDivisionId: string) => {
@@ -185,9 +184,9 @@ const NoteEditor = () => {
           className="min-w-0 flex-1 border-0 bg-transparent font-display text-base font-semibold shadow-none focus:ring-0 md:text-lg"
         />
 
-        <div className="flex shrink-0 items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
           <span
-            className={`whitespace-nowrap text-xs text-ink-subtle transition-opacity duration-300 ${
+            className={`hidden text-xs text-ink-subtle transition-opacity duration-300 sm:inline ${
               saveStatus === "saving" ? "opacity-100" : "opacity-0"
             }`}
             aria-live="polite"
@@ -195,7 +194,7 @@ const NoteEditor = () => {
             {t("notes.saving")}
           </span>
           <span
-            className={`whitespace-nowrap text-xs text-synapse transition-opacity duration-300 dark:text-synapse-soft ${
+            className={`hidden text-xs text-synapse transition-opacity duration-300 dark:text-synapse-soft sm:inline ${
               saveStatus === "saved" ? "opacity-100" : "opacity-0"
             }`}
             aria-live="polite"

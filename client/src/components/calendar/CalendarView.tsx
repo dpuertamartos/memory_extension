@@ -18,7 +18,7 @@ import YearGrid from "./YearGrid"
 
 const CalendarView = () => {
   const { t, i18n } = useTranslation()
-  const { setSelectedNoteId, setMainView } = useAppStore()
+  const { setSelectedNoteId, setActivePane } = useAppStore()
 
   const scopes: { id: CalendarScope; label: string }[] = [
     { id: "day", label: t("calendar.day") },
@@ -31,7 +31,7 @@ const CalendarView = () => {
   const monthLabels = useMemo(() => getMonthLabels(i18n.language), [i18n.language])
 
   const openNote = (noteId: string) => {
-    setMainView("notes")
+    setActivePane("list")
     setSelectedNoteId(noteId)
   }
   const [scope, setScope] = useState<CalendarScope>("month")
@@ -65,17 +65,15 @@ const CalendarView = () => {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="surface-header flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-        <div className="flex items-center gap-1">
+      <div className="surface-header flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:px-4 sm:py-3">
+        <div className="segmented-control w-full shrink-0 sm:w-auto">
           {scopes.map(({ id, label }) => (
             <button
               key={id}
               type="button"
               onClick={() => setScope(id)}
-              className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
-                scope === id
-                  ? "bg-accent-soft text-accent dark:bg-accent/20 dark:text-accent-muted"
-                  : "text-ink-muted hover:bg-paper dark:text-charcoal-muted dark:hover:bg-charcoal"
+              className={`segmented-item !px-2 !py-1.5 text-xs sm:!px-3 sm:text-sm ${
+                scope === id ? "segmented-item-active" : ""
               }`}
             >
               {label}
@@ -83,7 +81,7 @@ const CalendarView = () => {
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center justify-between gap-1 sm:w-auto sm:justify-end sm:gap-2">
           <button
             type="button"
             onClick={handlePrev}
@@ -95,7 +93,7 @@ const CalendarView = () => {
           <button
             type="button"
             onClick={handleToday}
-            className="min-w-[10rem] font-display text-sm font-medium"
+            className="min-w-0 flex-1 truncate px-1 text-center font-display text-xs font-medium sm:min-w-[8rem] sm:flex-none sm:text-sm md:min-w-[10rem]"
           >
             {formatScopeLabel(scope, anchor, i18n.language)}
           </button>
@@ -111,7 +109,7 @@ const CalendarView = () => {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row lg:gap-4 lg:p-4">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 lg:p-0">
+        <div className="flex min-h-0 flex-[2] flex-col overflow-hidden p-3 sm:p-4 lg:flex-1 lg:p-0">
           {isLoading && <p className="text-sm text-ink-subtle">{t("calendar.loading")}</p>}
           {!isLoading && scope === "month" && (
             <MonthGrid
@@ -147,7 +145,7 @@ const CalendarView = () => {
         </div>
 
         {scope !== "day" && (
-          <aside className="flex min-h-0 flex-1 flex-col overflow-hidden border-t border-border p-4 dark:border-charcoal-border lg:w-72 lg:shrink-0 lg:border-t-0 lg:p-0">
+          <aside className="flex min-h-0 max-h-[40vh] flex-col overflow-hidden border-t border-border p-3 dark:border-charcoal-border sm:max-h-none sm:flex-1 sm:p-4 lg:w-72 lg:max-h-none lg:shrink-0 lg:border-t-0 lg:p-0">
             {(scopeTopTags.length > 0 || scopeTopKeywords.length > 0) && (
               <div className="mb-4 shrink-0 space-y-4">
                 {scopeTopTags.length > 0 && (

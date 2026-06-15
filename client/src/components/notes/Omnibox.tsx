@@ -119,7 +119,7 @@ const Omnibox = () => {
         </div>
       )}
 
-      <div className="flex gap-2">
+      <div className="toolbar-compact">
         <div className="surface-inset flex min-w-0 flex-1 items-center gap-2 px-3">
           <MagnifyingGlassIcon className="shrink-0 text-ink-subtle" size={18} aria-hidden />
           <input
@@ -152,6 +152,7 @@ const Omnibox = () => {
           )}
         </div>
 
+        <div className="toolbar-compact-actions">
         <button
           type="button"
           onClick={handleSubmitInput}
@@ -225,6 +226,7 @@ const Omnibox = () => {
               )}
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

@@ -20,3 +20,19 @@ if (typeof localStorage === "undefined") {
 if (typeof navigator === "undefined") {
   vi.stubGlobal("navigator", { language: "en" })
 }
+
+if (typeof window !== "undefined" && typeof window.matchMedia === "undefined") {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: (query: string) => ({
+      matches: query.includes("min-width: 768px"),
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    }),
+  })
+}

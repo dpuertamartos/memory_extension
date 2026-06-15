@@ -188,6 +188,45 @@ input[type='number'] {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* App top tab navigation */
+.app-top-nav {
+  @apply flex shrink-0 border-b border-border bg-paper-elevated dark:border-charcoal-border dark:bg-charcoal;
+}
+
+.app-nav-item {
+  @apply relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-ink-subtle transition-colors dark:text-charcoal-subtle md:gap-1 md:py-2;
+  min-height: 3rem;
+}
+
+.app-nav-item-active {
+  @apply text-accent dark:text-accent-muted;
+}
+
+.app-nav-label {
+  @apply max-w-full truncate px-0.5 text-[0.625rem] leading-tight font-medium md:text-xs;
+}
+
+.app-nav-indicator {
+  @apply absolute bottom-0 left-1/2 h-0.5 w-7 -translate-x-1/2 rounded-full bg-accent dark:bg-accent-muted;
+}
+
+/* Compact segmented controls on narrow screens */
+.segmented-item {
+  @apply min-w-0 truncate flex-1 rounded-md px-3 py-2 text-sm font-medium text-ink-muted transition-colors dark:text-charcoal-muted;
+}
+
+.segmented-item-active {
+  @apply bg-paper-elevated text-accent shadow-sm dark:bg-charcoal dark:text-accent-muted;
+}
+
+.toolbar-compact {
+  @apply flex flex-col gap-2 sm:flex-row sm:items-center;
+}
+
+.toolbar-compact-actions {
+  @apply flex shrink-0 items-center gap-2 self-end sm:self-auto;
+}
+
 /* Reusable surfaces */
 .surface-app {
   @apply bg-paper-elevated text-ink dark:bg-charcoal dark:text-stone-200;
@@ -211,14 +250,6 @@ input[type='number'] {
 
 .segmented-control {
   @apply flex gap-1 rounded-lg border border-border bg-paper p-1 dark:border-charcoal-border dark:bg-charcoal-elevated;
-}
-
-.segmented-item {
-  @apply flex-1 rounded-md px-3 py-2 text-sm font-medium text-ink-muted transition-colors dark:text-charcoal-muted;
-}
-
-.segmented-item-active {
-  @apply bg-paper-elevated text-accent shadow-sm dark:bg-charcoal dark:text-accent-muted;
 }
 
 .row-active {

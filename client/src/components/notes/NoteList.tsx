@@ -26,7 +26,7 @@ const NoteList = () => {
     setSelectedNoteId,
     setNewlyCreatedNoteId,
     setNoteSort,
-    setMobilePane,
+    setActivePane,
   } = useAppStore()
   const { data: notes = [], isLoading } = useNotes(selectedTagId ?? undefined)
   const { data: searchResults = [] } = useGlobalSearch(searchFilters)
@@ -150,7 +150,7 @@ const NoteList = () => {
               {noInclusion && (
                 <button
                   type="button"
-                  onClick={() => setMobilePane("divisions")}
+                  onClick={() => setActivePane("divisions")}
                   className="btn-primary mt-3 !px-4 !py-2 md:hidden"
                 >
                   {t("divisions.openSubBrains")}

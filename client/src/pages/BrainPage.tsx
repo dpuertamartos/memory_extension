@@ -1,82 +1,56 @@
-import { useTranslation } from "react-i18next"
 import CalendarView from "../components/calendar/CalendarView"
+import DivisionTree from "../components/notes/DivisionTree"
 import NoteEditor from "../components/notes/NoteEditor"
 import NoteList from "../components/notes/NoteList"
 import Omnibox from "../components/notes/Omnibox"
 import TagSidebar from "../components/notes/TagSidebar"
 import DivisionBreadcrumb from "../components/notes/DivisionBreadcrumb"
-import DivisionTree from "../components/notes/DivisionTree"
+import { useIsDesktop } from "../hooks/useMediaQuery"
 import { useAppStore } from "../store/useAppStore"
 
 const BrainPage = () => {
-  const { t } = useTranslation()
-  const { mobilePane, mainView, setMainView, subBrainsEnabled } = useAppStore()
-  const showCalendar = mainView === "calendar" || mobilePane === "calendar"
+  const { activePane, subBrainsEnabled, selectedNoteId } = useAppStore()
+  const isDesktop = useIsDesktop()
+
+  const showList = activePane === "list" && (isDesktop || !selectedNoteId)
+  const showEditor = activePane === "list" && (isDesktop || Boolean(selectedNoteId))
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="surface-header px-3 py-2.5 md:px-4 md:py-3">
-        {subBrainsEnabled && <DivisionBreadcrumb />}
-        <div className="segmented-control mb-2.5 md:mb-3">
-          <button
-            type="button"
-            onClick={() => setMainView("notes")}
-            className={`segmented-item ${!showCalendar ? "segmented-item-active" : ""}`}
-          >
-            {t("nav.notes")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setMainView("calendar")}
-            className={`segmented-item ${showCalendar ? "segmented-item-active" : ""}`}
-          >
-            {t("nav.calendar")}
-          </button>
-        </div>
-        {!showCalendar && <Omnibox />}
-      </div>
-
-      {showCalendar ? (
-        <div className="min-h-0 flex-1">
-          <CalendarView />
-        </div>
-      ) : (
-        <div className="flex min-h-0 flex-1">
-          <aside
-            className={`surface-panel w-full shrink-0 border-r border-border transition-opacity duration-200 dark:border-charcoal-border md:block md:w-64 lg:w-72 ${
-              mobilePane === "tags" ? "block opacity-100" : "hidden opacity-0 md:opacity-100"
-            }`}
-          >
-            <TagSidebar />
-          </aside>
-
-          {subBrainsEnabled && (
-            <aside
-              className={`surface-panel w-full shrink-0 border-r border-border transition-opacity duration-200 dark:border-charcoal-border md:hidden ${
-                mobilePane === "divisions" ? "block opacity-100" : "hidden opacity-0"
-              }`}
-            >
-              <DivisionTree />
-            </aside>
-          )}
-
-          <section
-            className={`surface-panel w-full shrink-0 border-r border-border transition-opacity duration-200 dark:border-charcoal-border md:block md:w-96 md:min-w-80 lg:min-w-96 lg:flex-[2] lg:max-w-xl ${
-              mobilePane === "list" ? "block opacity-100" : "hidden opacity-0 md:block md:opacity-100"
-            }`}
-          >
-            <NoteList />
-          </section>
-
-          <section
-            className={`surface-app min-w-0 flex-1 transition-opacity duration-200 md:max-w-2xl lg:max-w-xl xl:max-w-2xl ${
-              mobilePane === "editor" ? "block opacity-100" : "hidden opacity-0 md:block md:opacity-100"
-            }`}
-          >
-            <NoteEditor />
-          </section>
+    <div className="flex h-full min-h-0 flex-col">
+      {activePane === "list" && (
+        <div className="surface-header shrink-0 px-3 py-2.5 md:px-4 md:py-3">
+          {subBrainsEnabled && <DivisionBreadcrumb />}
+          <Omnibox />
         </div>
       )}
+
+      <div className="min-h-0 flex-1 overflow-hidden">
+        {activePane === "calendar" && <CalendarView />}
+
+        {activePane === "tags" && <TagSidebar mobileOnly />}
+
+        {activePane === "divisions" && subBrainsEnabled && (
+          <div className="flex h-full min-h-0 flex-col">
+            <DivisionTree className="h-full flex-1 border-b-0" />
+          </div>
+        )}
+
+        {activePane === "list" && (
+          <div className="flex h-full min-h-0">
+            {showList && (
+              <section className="surface-panel flex min-h-0 w-full flex-col border-r border-border dark:border-charcoal-border md:w-96 md:min-w-80 lg:min-w-96 lg:flex-[2] lg:max-w-xl">
+                <NoteList />
+              </section>
+            )}
+
+            {showEditor && (
+              <section className="surface-app flex min-h-0 min-w-0 flex-1 flex-col md:max-w-2xl lg:max-w-xl xl:max-w-2xl">
+                <NoteEditor />
+              </section>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

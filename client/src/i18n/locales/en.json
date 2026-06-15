@@ -28,6 +28,9 @@
     "editor": "Editor",
     "settings": "Settings",
     "subBrains": "Sub-brains",
+    "library": "Library",
+    "more": "More",
+    "mobileNav": "Main navigation",
     "toggleTheme": "Toggle theme",
     "localOnly": "On this device",
     "localTrustHint": "Your notes are stored only in this browser — never sent to a server"

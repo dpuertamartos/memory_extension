@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import { Link } from "react-router"
 import AppRouter from "../AppRouter"
 import LocalTrustBadge from "../components/brand/LocalTrustBadge"
-import MobileNav from "../components/notes/MobileNav"
+import AppNav from "../components/notes/AppNav"
 import LogoApp from "./LogoApp"
 import { useThemeStore } from "../store/useThemeStore"
 
@@ -12,9 +12,9 @@ const LayoutApp = () => {
   const { isDarkMode, toggleDarkMode } = useThemeStore()
 
   return (
-    <div className={`${isDarkMode ? "dark" : ""} flex h-screen flex-col`}>
+    <div className={`${isDarkMode ? "dark" : ""} flex h-dvh flex-col`}>
       <div className="surface-app flex min-h-0 flex-1 flex-col">
-        <header className="safe-area-top surface-header flex items-center justify-between px-4 py-3">
+        <header className="safe-area-top surface-header flex shrink-0 items-center justify-between px-3 py-2.5 md:px-4 md:py-3">
           <Link to="/" className="flex min-w-0 items-center gap-3">
             <LogoApp compact />
           </Link>
@@ -23,7 +23,7 @@ const LayoutApp = () => {
             <LocalTrustBadge />
             <Link
               to="/settings"
-              className="hidden rounded-md px-3 py-1.5 text-sm text-ink-muted transition-colors hover:bg-paper hover:text-ink md:inline dark:text-charcoal-muted dark:hover:bg-charcoal-elevated dark:hover:text-stone-200"
+              className="rounded-md px-3 py-1.5 text-sm text-ink-muted transition-colors hover:bg-paper hover:text-ink dark:text-charcoal-muted dark:hover:bg-charcoal-elevated dark:hover:text-stone-200"
             >
               {t("common.settings")}
             </Link>
@@ -38,11 +38,11 @@ const LayoutApp = () => {
           </div>
         </header>
 
+        <AppNav />
+
         <main className="min-h-0 flex-1 overflow-hidden">
           <AppRouter />
         </main>
-
-        <MobileNav />
       </div>
     </div>
   )

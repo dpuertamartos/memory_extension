@@ -76,7 +76,11 @@ const SidebarSection = ({ title, expanded, onToggle, headerActions, children }: 
   )
 }
 
-const TagSidebar = () => {
+type TagSidebarProps = {
+  mobileOnly?: boolean
+}
+
+const TagSidebar = ({ mobileOnly = false }: TagSidebarProps) => {
   const { t } = useTranslation()
   const { data: tags = [] } = useTags()
   const createTag = useCreateTag()
@@ -131,24 +135,8 @@ const TagSidebar = () => {
     </button>
   )
 
-  return (
-    <div className="flex h-full min-h-0 flex-col">
-      {subBrainsEnabled && (
-        <DivisionTree
-          compact
-          collapsible
-          expanded={divisionsExpanded}
-          onToggle={toggleDivisions}
-          className="hidden md:flex"
-        />
-      )}
-
-      <SidebarSection
-        title={t("tags.title")}
-        expanded={tagsExpanded}
-        onToggle={toggleTags}
-        headerActions={tagHeaderActions}
-      >
+  const tagsContent = (
+    <>
         <div className="border-b border-border p-3 dark:border-charcoal-border">
           <div className="surface-inset flex items-center gap-2 px-2.5">
             <MagnifyingGlassIcon className="shrink-0 text-ink-subtle" size={14} aria-hidden />
@@ -240,15 +228,49 @@ const TagSidebar = () => {
           ))}
         </div>
 
-        {editingTag && (
-          <TagEditDialog
-            tag={editingTag}
-            onClose={() => setEditingTag(null)}
-            onDeleted={() => {
-              if (selectedTagId === editingTag.id) setSelectedTagId(null)
-            }}
-          />
-        )}
+      {editingTag && (
+        <TagEditDialog
+          tag={editingTag}
+          onClose={() => setEditingTag(null)}
+          onDeleted={() => {
+            if (selectedTagId === editingTag.id) setSelectedTagId(null)
+          }}
+        />
+      )}
+    </>
+  )
+
+  if (mobileOnly) {
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        <div className="surface-header flex items-center justify-between px-3 py-2">
+          <h2 className="section-label">{t("tags.title")}</h2>
+          {tagHeaderActions}
+        </div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{tagsContent}</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      {subBrainsEnabled && (
+        <DivisionTree
+          compact
+          collapsible
+          expanded={divisionsExpanded}
+          onToggle={toggleDivisions}
+          className="hidden md:flex"
+        />
+      )}
+
+      <SidebarSection
+        title={t("tags.title")}
+        expanded={tagsExpanded}
+        onToggle={toggleTags}
+        headerActions={tagHeaderActions}
+      >
+        {tagsContent}
       </SidebarSection>
     </div>
   )

@@ -17,8 +17,7 @@ export function resetAppStore(divisions?: { id: string; parentId: string | null;
     newlyCreatedNoteId: null,
     searchFilters: emptySearchFilters(),
     noteSort: "updated",
-    mobilePane: "list",
-    mainView: "notes",
+    activePane: "list",
     showInactiveDivisions: false,
     subBrainsEnabled: false,
   })
