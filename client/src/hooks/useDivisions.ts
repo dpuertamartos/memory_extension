@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { and, asc, eq, isNull, sql } from "drizzle-orm"
 import { useCallback, useEffect, useMemo } from "react"
 import { ulid } from "ulid"
-import { divisionsTable, notesTable, tagsTable, type Division } from "../db/schema"
+import { divisionsTable, notesTable, type Division } from "../db/schema"
 import { db, initDb } from "../lib/db"
 import {
   buildChildrenMap,
@@ -11,7 +11,7 @@ import {
   getDivisionAncestors,
   type DivisionTreeNode,
 } from "../lib/divisionTree"
-import { getStoredIncludedDivisionIds, ROOT_DIVISION_ID } from "../lib/divisions"
+import { getStoredIncludedDivisionIds, getStoredSubBrainsEnabled, ROOT_DIVISION_ID, setStoredSubBrainsEnabled } from "../lib/divisions"
 import { inclusionFingerprint, useAppStore } from "../store/useAppStore"
 
 export type { DivisionTreeNode }
@@ -113,6 +113,24 @@ export function useBootstrapDivisionState() {
   }, [divisions, focusDivisionId, includedDivisionIds, setFocusDivision, setIncludedDivisionIds])
 }
 
+/** Bootstrap sub-brains enabled: stored value wins; else on if any child division exists. */
+export function useBootstrapSubBrainsEnabled() {
+  const subBrainsEnabled = useAppStore((s) => s.subBrainsEnabled)
+  const setSubBrainsEnabled = useAppStore((s) => s.setSubBrainsEnabled)
+  const { data: divisions = [] } = useAllDivisions()
+
+  useEffect(() => {
+    if (getStoredSubBrainsEnabled() !== null) return
+    if (divisions.length === 0) return
+
+    const hasChildDivisions = divisions.some((d) => !d.isDeleted && d.parentId !== null)
+    if (hasChildDivisions !== subBrainsEnabled) {
+      setStoredSubBrainsEnabled(hasChildDivisions)
+      setSubBrainsEnabled(hasChildDivisions)
+    }
+  }, [divisions, subBrainsEnabled, setSubBrainsEnabled])
+}
+
 export function useFocusDivision() {
   const focusDivisionId = useAppStore((s) => s.focusDivisionId)
   const setFocusDivision = useAppStore((s) => s.setFocusDivision)
@@ -129,8 +147,32 @@ export function useFocusDivision() {
   return { focusDivisionId, focusDivision }
 }
 
-export function useIncludedDivisionIds(): string[] {
+/** Raw persisted inclusion ids (ignores sub-brains feature toggle). */
+export function useRawIncludedDivisionIds(): string[] {
   return useAppStore((s) => s.includedDivisionIds)
+}
+
+/** Effective ids for note/tag/search queries: inclusion when enabled, all divisions when disabled. */
+export function useEffectiveDivisionIds(): string[] {
+  const subBrainsEnabled = useAppStore((s) => s.subBrainsEnabled)
+  const includedDivisionIds = useAppStore((s) => s.includedDivisionIds)
+  const { data: divisions = [] } = useAllDivisions()
+
+  return useMemo(() => {
+    if (subBrainsEnabled) return includedDivisionIds
+    return divisions.filter((d) => !d.isDeleted).map((d) => d.id)
+  }, [subBrainsEnabled, includedDivisionIds, divisions])
+}
+
+/** Division id used when creating new notes/tags. */
+export function useCreateDivisionId(): string {
+  const subBrainsEnabled = useAppStore((s) => s.subBrainsEnabled)
+  const focusDivisionId = useAppStore((s) => s.focusDivisionId)
+  return subBrainsEnabled ? focusDivisionId : ROOT_DIVISION_ID
+}
+
+export function useIncludedDivisionIds(): string[] {
+  return useEffectiveDivisionIds()
 }
 
 export function useCreateDivision() {
@@ -235,16 +277,6 @@ export function useDeleteDivision() {
 
       if (note) {
         throw new Error("DIVISION_HAS_NOTES")
-      }
-
-      const [tag] = await db
-        .select({ id: tagsTable.id })
-        .from(tagsTable)
-        .where(eq(tagsTable.divisionId, id))
-        .limit(1)
-
-      if (tag) {
-        throw new Error("DIVISION_HAS_TAGS")
       }
 
       await db

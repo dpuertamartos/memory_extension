@@ -1,41 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { asc, eq, inArray } from "drizzle-orm"
+import { asc, eq } from "drizzle-orm"
 import { ulid } from "ulid"
 import { tagsTable } from "../db/schema"
 import { db, initDb } from "../lib/db"
-import { inclusionFingerprint, useAppStore } from "../store/useAppStore"
-import { useIncludedDivisionIds } from "./useDivisions"
 
-function tagsKey(inclusionKey: string) {
-  return ["tags", inclusionKey] as const
-}
+const tagsKey = ["tags"] as const
 
-async function fetchTags(includedDivisionIds: string[]) {
+async function fetchTags() {
   await initDb()
-  if (includedDivisionIds.length === 0) return []
-
-  return db
-    .select()
-    .from(tagsTable)
-    .where(inArray(tagsTable.divisionId, includedDivisionIds))
-    .orderBy(asc(tagsTable.name))
+  return db.select().from(tagsTable).orderBy(asc(tagsTable.name))
 }
 
 export function useTags() {
-  const includedDivisionIds = useIncludedDivisionIds()
-  const inclusionKey = inclusionFingerprint(includedDivisionIds)
-
   return useQuery({
-    queryKey: tagsKey(inclusionKey),
-    queryFn: () => fetchTags(includedDivisionIds),
+    queryKey: tagsKey,
+    queryFn: fetchTags,
   })
 }
 
 export function useCreateTag() {
   const queryClient = useQueryClient()
-  const focusDivisionId = useAppStore((s) => s.focusDivisionId)
-  const includedDivisionIds = useIncludedDivisionIds()
-  const inclusionKey = inclusionFingerprint(includedDivisionIds)
 
   return useMutation({
     mutationFn: async (input: { name: string; color?: string }) => {
@@ -44,7 +28,6 @@ export function useCreateTag() {
       const id = ulid()
       await db.insert(tagsTable).values({
         id,
-        divisionId: focusDivisionId,
         name: input.name.trim(),
         color: input.color ?? "#6366f1",
         createdAt: now,
@@ -56,15 +39,13 @@ export function useCreateTag() {
       return tag
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: tagsKey(inclusionKey) })
+      queryClient.invalidateQueries({ queryKey: tagsKey })
     },
   })
 }
 
 export function useDeleteTag() {
   const queryClient = useQueryClient()
-  const includedDivisionIds = useIncludedDivisionIds()
-  const inclusionKey = inclusionFingerprint(includedDivisionIds)
 
   return useMutation({
     mutationFn: async (id: string) => {
@@ -72,16 +53,14 @@ export function useDeleteTag() {
       await db.delete(tagsTable).where(eq(tagsTable.id, id))
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: tagsKey(inclusionKey) })
-      queryClient.invalidateQueries({ queryKey: ["notes", inclusionKey] })
+      queryClient.invalidateQueries({ queryKey: tagsKey })
+      queryClient.invalidateQueries({ queryKey: ["notes"] })
     },
   })
 }
 
 export function useUpdateTag() {
   const queryClient = useQueryClient()
-  const includedDivisionIds = useIncludedDivisionIds()
-  const inclusionKey = inclusionFingerprint(includedDivisionIds)
 
   return useMutation({
     mutationFn: async (input: { id: string; name?: string; color?: string }) => {
@@ -95,8 +74,8 @@ export function useUpdateTag() {
       await db.update(tagsTable).set(patch).where(eq(tagsTable.id, input.id))
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: tagsKey(inclusionKey) })
-      queryClient.invalidateQueries({ queryKey: ["notes", inclusionKey] })
+      queryClient.invalidateQueries({ queryKey: tagsKey })
+      queryClient.invalidateQueries({ queryKey: ["notes"] })
     },
   })
 }

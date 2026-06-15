@@ -45,10 +45,6 @@ export const tagsTable = sqliteTable(
   "tags",
   {
     id: text("id").primaryKey(),
-    divisionId: text("division_id")
-      .notNull()
-      .references(() => divisionsTable.id)
-      .default(ROOT_DIVISION_ID),
     name: text("name").notNull(),
     color: text("color").notNull().default("#6366f1"),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
@@ -58,7 +54,7 @@ export const tagsTable = sqliteTable(
       .notNull()
       .default(sql`(unixepoch() * 1000)`),
   },
-  (table) => [unique().on(table.divisionId, table.name)],
+  (table) => [unique().on(table.name)],
 )
 
 export const noteTagsTable = sqliteTable(
@@ -82,7 +78,6 @@ export const divisionsRelations = relations(divisionsTable, ({ one, many }) => (
   }),
   children: many(divisionsTable, { relationName: "divisionChildren" }),
   notes: many(notesTable),
-  tags: many(tagsTable),
 }))
 
 export const notesRelations = relations(notesTable, ({ one, many }) => ({
@@ -93,11 +88,7 @@ export const notesRelations = relations(notesTable, ({ one, many }) => ({
   noteTags: many(noteTagsTable),
 }))
 
-export const tagsRelations = relations(tagsTable, ({ one, many }) => ({
-  division: one(divisionsTable, {
-    fields: [tagsTable.divisionId],
-    references: [divisionsTable.id],
-  }),
+export const tagsRelations = relations(tagsTable, ({ many }) => ({
   noteTags: many(noteTagsTable),
 }))
 

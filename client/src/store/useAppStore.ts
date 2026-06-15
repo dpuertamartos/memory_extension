@@ -2,14 +2,16 @@ import { create } from "zustand"
 import {
   getStoredFocusDivisionId,
   getStoredIncludedDivisionIds,
+  getStoredSubBrainsEnabled,
   inclusionFingerprint,
   ROOT_DIVISION_ID,
   setStoredFocusDivisionId,
   setStoredIncludedDivisionIds,
+  setStoredSubBrainsEnabled,
 } from "../lib/divisions"
 import { emptySearchFilters, type SearchFilters } from "../lib/searchQuery"
 
-export type MobilePane = "tags" | "list" | "editor" | "settings" | "calendar"
+export type MobilePane = "tags" | "divisions" | "list" | "editor" | "settings" | "calendar"
 export type NoteSort = "updated" | "created" | "alpha"
 export type MainView = "notes" | "calendar"
 
@@ -24,6 +26,7 @@ type AppState = {
   mobilePane: MobilePane
   mainView: MainView
   showInactiveDivisions: boolean
+  subBrainsEnabled: boolean
   setFocusDivision: (id: string, defaultIncludedIds: string[]) => void
   toggleDivisionIncluded: (id: string, checked: boolean, cascadeIds: string[]) => void
   setIncludedDivisionIds: (ids: string[]) => void
@@ -37,6 +40,7 @@ type AppState = {
   setMobilePane: (pane: MobilePane) => void
   setMainView: (view: MainView) => void
   setShowInactiveDivisions: (show: boolean) => void
+  setSubBrainsEnabled: (enabled: boolean) => void
 }
 
 function resetDivisionSelection() {
@@ -64,6 +68,7 @@ export const useAppStore = create<AppState>((set) => ({
   mobilePane: "list",
   mainView: "notes",
   showInactiveDivisions: false,
+  subBrainsEnabled: getStoredSubBrainsEnabled() ?? false,
   setFocusDivision: (id, defaultIncludedIds) => {
     const sorted = sortIds(defaultIncludedIds)
     setStoredFocusDivisionId(id)
@@ -100,6 +105,10 @@ export const useAppStore = create<AppState>((set) => ({
   setMainView: (view) =>
     set({ mainView: view, mobilePane: view === "calendar" ? "calendar" : "list" }),
   setShowInactiveDivisions: (show) => set({ showInactiveDivisions: show }),
+  setSubBrainsEnabled: (enabled) => {
+    setStoredSubBrainsEnabled(enabled)
+    set({ subBrainsEnabled: enabled })
+  },
 }))
 
 export { inclusionFingerprint, ROOT_DIVISION_ID }

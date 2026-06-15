@@ -24,7 +24,8 @@ export type SyncNote = {
 
 export type SyncTag = {
   id: string
-  divisionId: string
+  /** @deprecated Tags are global; kept for v2 snapshot import only. */
+  divisionId?: string
   name: string
   color: string
   createdAt: number

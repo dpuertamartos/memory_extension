@@ -8,6 +8,7 @@ export const ACTIVE_DIVISION_STORAGE_KEY = "local-brain-active-division-id"
 
 export const FOCUS_DIVISION_STORAGE_KEY = "local-brain-focus-division-id"
 export const INCLUDED_DIVISIONS_STORAGE_KEY = "local-brain-included-division-ids"
+export const SUB_BRAINS_ENABLED_STORAGE_KEY = "local-brain-sub-brains-enabled"
 
 export function getStoredFocusDivisionId(): string {
   try {
@@ -54,6 +55,24 @@ export function setStoredIncludedDivisionIds(ids: string[]) {
 
 export function inclusionFingerprint(ids: string[]): string {
   return [...ids].sort().join(",")
+}
+
+export function getStoredSubBrainsEnabled(): boolean | null {
+  try {
+    const raw = localStorage.getItem(SUB_BRAINS_ENABLED_STORAGE_KEY)
+    if (raw === null) return null
+    return raw === "true"
+  } catch {
+    return null
+  }
+}
+
+export function setStoredSubBrainsEnabled(enabled: boolean) {
+  try {
+    localStorage.setItem(SUB_BRAINS_ENABLED_STORAGE_KEY, String(enabled))
+  } catch {
+    // ignore quota / private mode errors
+  }
 }
 
 /** @deprecated Use getStoredFocusDivisionId */

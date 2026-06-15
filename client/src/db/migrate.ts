@@ -1,6 +1,6 @@
 import { ROOT_DIVISION_ID, ROOT_DIVISION_NAME } from "../lib/divisions"
 
-export const SCHEMA_VERSION = 2
+export const SCHEMA_VERSION = 3
 
 export const MIGRATION_V1_SQL = `
 CREATE TABLE IF NOT EXISTS notes (
@@ -145,6 +145,62 @@ function migrateToV2(db: MigrationDb) {
   }
 }
 
+function migrateToV3(db: MigrationDb) {
+  if (!tableExists(db, "tags")) return
+
+  const hasDivisionColumn = columnExists(db, "tags", "division_id")
+  if (!hasDivisionColumn) return
+
+  db.exec(`
+    CREATE TABLE tags_canonical_map (
+      old_id TEXT PRIMARY KEY NOT NULL,
+      canonical_id TEXT NOT NULL
+    );
+
+    INSERT INTO tags_canonical_map (old_id, canonical_id)
+    SELECT t.id,
+      (
+        SELECT t2.id FROM tags t2
+        WHERE t2.name = t.name
+        ORDER BY t2.created_at ASC, t2.id ASC
+        LIMIT 1
+      )
+    FROM tags t;
+
+    CREATE TABLE note_tags_new (
+      note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+      tag_id TEXT NOT NULL,
+      PRIMARY KEY (note_id, tag_id)
+    );
+
+    INSERT OR IGNORE INTO note_tags_new (note_id, tag_id)
+    SELECT nt.note_id, m.canonical_id
+    FROM note_tags nt
+    INNER JOIN tags_canonical_map m ON m.old_id = nt.tag_id;
+
+    DROP TABLE note_tags;
+    ALTER TABLE note_tags_new RENAME TO note_tags;
+
+    CREATE TABLE tags_global (
+      id TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL UNIQUE,
+      color TEXT NOT NULL DEFAULT '#6366f1',
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+
+    INSERT INTO tags_global (id, name, color, created_at, updated_at)
+    SELECT m.canonical_id, t.name, t.color, t.created_at, t.updated_at
+    FROM tags_canonical_map m
+    INNER JOIN tags t ON t.id = m.canonical_id
+    GROUP BY m.canonical_id;
+
+    DROP TABLE tags_canonical_map;
+    DROP TABLE tags;
+    ALTER TABLE tags_global RENAME TO tags;
+  `)
+}
+
 export function runMigrations(db: MigrationDb): void {
   const versionRows = db.selectObjects("PRAGMA user_version")
   let version = Number(versionRows[0]?.user_version ?? 0)
@@ -158,6 +214,12 @@ export function runMigrations(db: MigrationDb): void {
   if (version < 2) {
     migrateToV2(db)
     db.exec(`PRAGMA user_version = 2`)
+    version = 2
+  }
+
+  if (version < 3) {
+    migrateToV3(db)
+    db.exec(`PRAGMA user_version = 3`)
   }
 }
 

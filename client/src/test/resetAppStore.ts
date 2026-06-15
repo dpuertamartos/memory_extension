@@ -20,5 +20,6 @@ export function resetAppStore(divisions?: { id: string; parentId: string | null;
     mobilePane: "list",
     mainView: "notes",
     showInactiveDivisions: false,
+    subBrainsEnabled: false,
   })
 }

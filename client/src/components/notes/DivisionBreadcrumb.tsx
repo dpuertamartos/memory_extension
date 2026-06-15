@@ -14,7 +14,7 @@ const DivisionBreadcrumb = () => {
   return (
     <nav
       aria-label={t("divisions.breadcrumb")}
-      className="mb-2 flex flex-wrap items-center gap-1 text-xs text-ink-subtle"
+      className="sticky top-0 z-10 mb-2 flex flex-wrap items-center gap-1 bg-paper/95 py-1 text-xs text-ink-subtle backdrop-blur-sm dark:bg-charcoal/95"
     >
       {ancestors.map((division, index) => (
         <span key={division.id} className="flex min-w-0 items-center gap-1">

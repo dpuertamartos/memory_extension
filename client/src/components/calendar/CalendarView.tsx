@@ -110,8 +110,8 @@ const CalendarView = () => {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 lg:flex-row">
-        <div className="min-w-0 flex-1">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row lg:gap-4 lg:p-4">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 lg:p-0">
           {isLoading && <p className="text-sm text-ink-subtle">{t("calendar.loading")}</p>}
           {!isLoading && scope === "month" && (
             <MonthGrid
@@ -140,14 +140,16 @@ const CalendarView = () => {
             />
           )}
           {!isLoading && scope === "day" && (
-            <DayList notes={selectedDayNotes} locale={i18n.language} onOpenNote={openNote} />
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <DayList notes={selectedDayNotes} locale={i18n.language} onOpenNote={openNote} />
+            </div>
           )}
         </div>
 
         {scope !== "day" && (
-          <aside className="flex w-full shrink-0 flex-col gap-4 min-h-0 lg:max-h-full lg:w-72">
+          <aside className="flex min-h-0 flex-1 flex-col overflow-hidden border-t border-border p-4 dark:border-charcoal-border lg:w-72 lg:shrink-0 lg:border-t-0 lg:p-0">
             {(scopeTopTags.length > 0 || scopeTopKeywords.length > 0) && (
-              <div className="shrink-0 space-y-4">
+              <div className="mb-4 shrink-0 space-y-4">
                 {scopeTopTags.length > 0 && (
                   <div>
                     <h3 className="section-label mb-2">
@@ -182,8 +184,8 @@ const CalendarView = () => {
               </div>
             )}
 
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              <h3 className="section-label mb-2">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              <h3 className="section-label mb-2 shrink-0">
                 {selectedDay
                   ? selectedDay.toLocaleDateString(i18n.language, {
                       weekday: "long",
@@ -192,7 +194,9 @@ const CalendarView = () => {
                     })
                   : t("calendar.selectedPeriod")}
               </h3>
-              <DayList notes={selectedDayNotes} locale={i18n.language} onOpenNote={openNote} />
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <DayList notes={selectedDayNotes} locale={i18n.language} onOpenNote={openNote} />
+              </div>
             </div>
           </aside>
         )}

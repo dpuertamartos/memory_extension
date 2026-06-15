@@ -44,7 +44,6 @@ function toSyncNote(note: Note): SyncNote {
 function toSyncTag(tag: Tag): SyncTag {
   return {
     id: tag.id,
-    divisionId: tag.divisionId,
     name: tag.name,
     color: tag.color,
     createdAt: tag.createdAt.getTime(),
@@ -81,7 +80,6 @@ function fromSyncNote(note: SyncNote) {
 function fromSyncTag(tag: SyncTag) {
   return {
     id: tag.id,
-    divisionId: tag.divisionId,
     name: tag.name,
     color: tag.color,
     createdAt: new Date(tag.createdAt),
@@ -139,14 +137,12 @@ export async function applySyncSnapshot(snapshot: SyncSnapshot): Promise<void> {
   }
 
   for (const tag of snapshot.tags) {
-    const divisionId = divisionIds.includes(tag.divisionId) ? tag.divisionId : ROOT_DIVISION_ID
     await db
       .insert(tagsTable)
-      .values(fromSyncTag({ ...tag, divisionId }))
+      .values(fromSyncTag(tag))
       .onConflictDoUpdate({
         target: tagsTable.id,
         set: {
-          divisionId,
           name: tag.name,
           color: tag.color,
           updatedAt: new Date(tag.updatedAt),

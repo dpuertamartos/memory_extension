@@ -5,7 +5,7 @@ import { ulid } from "ulid"
 import { noteTagsTable, notesTable, tagsTable, type Note, type Tag } from "../db/schema"
 import { db, initDb } from "../lib/db"
 import { inclusionFingerprint, useAppStore } from "../store/useAppStore"
-import { useIncludedDivisionIds } from "./useDivisions"
+import { useIncludedDivisionIds, useCreateDivisionId } from "./useDivisions"
 
 export type NoteWithTags = Note & { tags: Tag[] }
 
@@ -58,9 +58,7 @@ async function fetchNotesForChunk(
     })
     .from(noteTagsTable)
     .innerJoin(tagsTable, eq(noteTagsTable.tagId, tagsTable.id))
-    .where(
-      and(inArray(noteTagsTable.noteId, noteIds), inArray(tagsTable.divisionId, divisionIds)),
-    )
+    .where(inArray(noteTagsTable.noteId, noteIds))
 
   const tagsByNote = new Map<string, Tag[]>()
   for (const row of noteTags) {
@@ -118,7 +116,7 @@ async function fetchNote(id: string, includedDivisionIds: string[]): Promise<Not
     .select({ tag: tagsTable })
     .from(noteTagsTable)
     .innerJoin(tagsTable, eq(noteTagsTable.tagId, tagsTable.id))
-    .where(and(eq(noteTagsTable.noteId, id), inArray(tagsTable.divisionId, includedDivisionIds)))
+    .where(eq(noteTagsTable.noteId, id))
 
   return { ...note, tags: tags.map((row) => row.tag) }
 }
@@ -148,7 +146,7 @@ export function useNote(id: string | null) {
 
 export function useCreateNote() {
   const queryClient = useQueryClient()
-  const focusDivisionId = useAppStore((s) => s.focusDivisionId)
+  const createDivisionId = useCreateDivisionId()
   const includedDivisionIds = useIncludedDivisionIds()
   const inclusionKey = inclusionFingerprint(includedDivisionIds)
 
@@ -160,14 +158,14 @@ export function useCreateNote() {
 
       await db.insert(notesTable).values({
         id,
-        divisionId: focusDivisionId,
+        divisionId: createDivisionId,
         title: input?.title ?? "Untitled",
         content: input?.content ?? "",
         createdAt: now,
         updatedAt: now,
       })
 
-      const note = await fetchNote(id, [focusDivisionId])
+      const note = await fetchNote(id, [createDivisionId])
       if (!note) throw new Error("Failed to create note")
       return note
     },
@@ -263,6 +261,43 @@ export function useSetNoteTags() {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["notes", inclusionKey] })
+      queryClient.invalidateQueries({ queryKey: noteKey(variables.noteId) })
+    },
+  })
+}
+
+export function useMoveNoteDivision() {
+  const queryClient = useQueryClient()
+  const setIncludedDivisionIds = useAppStore((s) => s.setIncludedDivisionIds)
+  const rawIncludedIds = useAppStore((s) => s.includedDivisionIds)
+
+  return useMutation({
+    mutationFn: async ({
+      noteId,
+      targetDivisionId,
+      ensureIncluded,
+    }: {
+      noteId: string
+      targetDivisionId: string
+      ensureIncluded?: boolean
+    }) => {
+      await initDb()
+      const now = new Date()
+
+      await db
+        .update(notesTable)
+        .set({ divisionId: targetDivisionId, updatedAt: now })
+        .where(eq(notesTable.id, noteId))
+
+      if (ensureIncluded && !rawIncludedIds.includes(targetDivisionId)) {
+        const next = [...rawIncludedIds, targetDivisionId].sort()
+        setIncludedDivisionIds(next)
+      }
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] })
+      queryClient.invalidateQueries({ queryKey: ["tags"] })
+      queryClient.invalidateQueries({ queryKey: ["search"] })
       queryClient.invalidateQueries({ queryKey: noteKey(variables.noteId) })
     },
   })

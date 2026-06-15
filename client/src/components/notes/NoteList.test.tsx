@@ -19,13 +19,13 @@ vi.mock("../../hooks/useNotes", () => ({
     data: [
       {
         id: "note-1",
-        divisionId: "div-1",
+        divisionId: "div-2",
         title: "First note",
         content: "Hello",
         createdAt: new Date("2026-06-01"),
         updatedAt: new Date("2026-06-10"),
         isDeleted: false,
-        tags: [{ id: "tag-1", divisionId: "div-1", name: "ideas", color: "#6366f1" }],
+        tags: [{ id: "tag-1", name: "ideas", color: "#6366f1" }],
       },
     ],
     isLoading: false,
@@ -46,10 +46,20 @@ vi.mock("../../hooks/useTags", () => ({
   useTags: () => ({ data: [] }),
 }))
 
+vi.mock("../../hooks/useDivisions", () => ({
+  useAllDivisions: () => ({
+    data: [
+      { id: "div-1", parentId: null, name: "Main", isDeleted: false, isActive: true },
+      { id: "div-2", parentId: "div-1", name: "Work", isDeleted: false, isActive: true },
+    ],
+  }),
+}))
+
 vi.mock("../../store/useAppStore", () => ({
   useAppStore: () => ({
     focusDivisionId: "div-1",
     includedDivisionIds: ["div-1"],
+    subBrainsEnabled: true,
     selectedNoteId: null,
     newlyCreatedNoteId: null,
     searchFilters: {
@@ -64,6 +74,7 @@ vi.mock("../../store/useAppStore", () => ({
     setSelectedNoteId: mockSetSelectedNoteId,
     setNewlyCreatedNoteId: mockSetNewlyCreatedNoteId,
     setNoteSort: mockSetNoteSort,
+    setMobilePane: vi.fn(),
   }),
 }))
 
@@ -90,5 +101,10 @@ describe("NoteList", () => {
     renderWithI18n(<NoteList />)
     fireEvent.click(screen.getByRole("button", { name: /^new$/i }))
     expect(mockCreateNote).toHaveBeenCalled()
+  })
+
+  it("shows division chip when note owner differs from focus", () => {
+    renderWithI18n(<NoteList />)
+    expect(screen.getByText("Main › Work")).toBeInTheDocument()
   })
 })

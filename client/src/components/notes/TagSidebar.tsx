@@ -12,7 +12,7 @@ const TagSidebar = () => {
   const { t } = useTranslation()
   const { data: tags = [] } = useTags()
   const createTag = useCreateTag()
-  const { selectedTagId, setSelectedTagId } = useAppStore()
+  const { selectedTagId, setSelectedTagId, subBrainsEnabled } = useAppStore()
   const [isAdding, setIsAdding] = useState(false)
   const [name, setName] = useState("")
   const [filter, setFilter] = useState("")
@@ -33,8 +33,13 @@ const TagSidebar = () => {
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <DivisionTree />
+    <div className="flex h-full min-h-0 flex-col">
+      {subBrainsEnabled && (
+        <div className="flex max-h-[min(42%,13rem)] min-h-[7.5rem] shrink-0 flex-col overflow-hidden border-b border-border dark:border-charcoal-border">
+          <DivisionTree compact className="min-h-0 flex-1" />
+        </div>
+      )}
+      <div className="flex min-h-0 flex-1 flex-col">
       <div className="surface-header flex items-center justify-between px-4 py-3">
         <h2 className="section-label">{t("tags.title")}</h2>
         <button
@@ -88,7 +93,7 @@ const TagSidebar = () => {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="min-h-0 flex-1 overflow-y-auto p-2">
         <button
           type="button"
           onClick={() => setSelectedTagId(null)}
@@ -147,6 +152,7 @@ const TagSidebar = () => {
           }}
         />
       )}
+      </div>
     </div>
   )
 }

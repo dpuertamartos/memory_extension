@@ -89,7 +89,6 @@ async function getKeywordMatchIds(
   const ids = new Set(ftsResults.map((result) => result.note_id))
 
   const noteDiv = divisionInClause("n.division_id", visibleDivisionIds)
-  const tagDiv = divisionInClause("t.division_id", visibleDivisionIds)
 
   for (const keyword of keywords) {
     const tagMatches = await runRawQuery<{ note_id: string }>(
@@ -99,9 +98,8 @@ async function getKeywordMatchIds(
        INNER JOIN tags t ON t.id = nt.tag_id
        WHERE n.is_deleted = 0
          AND ${noteDiv.sql}
-         AND ${tagDiv.sql}
          AND lower(t.name) LIKE lower(?) || '%'`,
-      [...noteDiv.params, ...tagDiv.params, keyword],
+      [...noteDiv.params, keyword],
     )
     for (const match of tagMatches) {
       ids.add(match.note_id)

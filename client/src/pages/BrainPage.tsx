@@ -5,17 +5,18 @@ import NoteList from "../components/notes/NoteList"
 import Omnibox from "../components/notes/Omnibox"
 import TagSidebar from "../components/notes/TagSidebar"
 import DivisionBreadcrumb from "../components/notes/DivisionBreadcrumb"
+import DivisionTree from "../components/notes/DivisionTree"
 import { useAppStore } from "../store/useAppStore"
 
 const BrainPage = () => {
   const { t } = useTranslation()
-  const { mobilePane, mainView, setMainView } = useAppStore()
+  const { mobilePane, mainView, setMainView, subBrainsEnabled } = useAppStore()
   const showCalendar = mainView === "calendar" || mobilePane === "calendar"
 
   return (
     <div className="flex h-full flex-col">
       <div className="surface-header px-3 py-2.5 md:px-4 md:py-3">
-        <DivisionBreadcrumb />
+        {subBrainsEnabled && <DivisionBreadcrumb />}
         <div className="segmented-control mb-2.5 md:mb-3">
           <button
             type="button"
@@ -36,7 +37,9 @@ const BrainPage = () => {
       </div>
 
       {showCalendar ? (
-        <CalendarView />
+        <div className="min-h-0 flex-1">
+          <CalendarView />
+        </div>
       ) : (
         <div className="flex min-h-0 flex-1">
           <aside
@@ -46,6 +49,16 @@ const BrainPage = () => {
           >
             <TagSidebar />
           </aside>
+
+          {subBrainsEnabled && (
+            <aside
+              className={`surface-panel w-full shrink-0 border-r border-border transition-opacity duration-200 dark:border-charcoal-border md:hidden ${
+                mobilePane === "divisions" ? "block opacity-100" : "hidden opacity-0"
+              }`}
+            >
+              <DivisionTree />
+            </aside>
+          )}
 
           <section
             className={`surface-panel w-full shrink-0 border-r border-border transition-opacity duration-200 dark:border-charcoal-border md:block md:w-72 lg:w-80 ${

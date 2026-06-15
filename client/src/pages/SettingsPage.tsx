@@ -19,8 +19,28 @@ const downloadBlob = (blob: Blob, filename: string) => {
 const SettingsPage = () => {
   const { t } = useTranslation()
   const { locale, setLocale } = useLocaleStore()
-  const { showInactiveDivisions, setShowInactiveDivisions } = useAppStore()
+  const {
+    showInactiveDivisions,
+    setShowInactiveDivisions,
+    subBrainsEnabled,
+    setSubBrainsEnabled,
+  } = useAppStore()
   const { canInstall, isInstalled, showIosHint, promptInstall } = usePwaInstall()
+
+  const handleSubBrainsToggle = (enabled: boolean) => {
+    if (enabled) {
+      setSubBrainsEnabled(true)
+      return
+    }
+
+    const step1 = window.confirm(t("settings.disableSubBrainsConfirm1"))
+    if (!step1) return
+
+    const step2 = window.confirm(t("settings.disableSubBrainsConfirm2"))
+    if (!step2) return
+
+    setSubBrainsEnabled(false)
+  }
 
   const handleSqliteExport = async () => {
     const blob = await exportDatabaseFile()
@@ -82,13 +102,27 @@ const SettingsPage = () => {
           <label className="flex items-center gap-2 text-sm font-medium">
             <input
               type="checkbox"
-              checked={showInactiveDivisions}
-              onChange={(event) => setShowInactiveDivisions(event.target.checked)}
+              checked={subBrainsEnabled}
+              onChange={(event) => handleSubBrainsToggle(event.target.checked)}
             />
-            {t("divisions.showInactive")}
+            {t("settings.enableSubBrains")}
           </label>
-          <p className="mt-2 text-xs text-ink-subtle">{t("divisions.showInactiveHint")}</p>
+          <p className="mt-2 text-xs text-ink-subtle">{t("settings.enableSubBrainsDescription")}</p>
         </div>
+
+        {subBrainsEnabled && (
+          <div className="surface-inset p-4">
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={showInactiveDivisions}
+                onChange={(event) => setShowInactiveDivisions(event.target.checked)}
+              />
+              {t("divisions.showInactive")}
+            </label>
+            <p className="mt-2 text-xs text-ink-subtle">{t("divisions.showInactiveHint")}</p>
+          </div>
+        )}
 
         {isInstalled ? (
           <p className="rounded-lg border border-synapse/30 bg-synapse-soft px-4 py-3 text-sm text-synapse dark:border-synapse/40 dark:bg-synapse/10 dark:text-synapse-soft">

@@ -3,9 +3,12 @@ import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import FilterBanner from "./FilterBanner"
 import TagChip from "./TagChip"
+import DivisionChip from "./DivisionChip"
 import { useCreateNote, useNotes } from "../../hooks/useNotes"
+import { useAllDivisions } from "../../hooks/useDivisions"
 import { isSearchActive, useGlobalSearch } from "../../hooks/useSearch"
 import { formatRelativeTime } from "../../lib/formatRelativeTime"
+import { getDivisionAncestors } from "../../lib/divisionTree"
 import { stripMarkdown } from "../../lib/stripMarkdown"
 import { useAppStore } from "../../store/useAppStore"
 
@@ -17,12 +20,17 @@ const NoteList = () => {
     newlyCreatedNoteId,
     searchFilters,
     noteSort,
+    focusDivisionId,
+    includedDivisionIds,
+    subBrainsEnabled,
     setSelectedNoteId,
     setNewlyCreatedNoteId,
     setNoteSort,
+    setMobilePane,
   } = useAppStore()
   const { data: notes = [], isLoading } = useNotes(selectedTagId ?? undefined)
   const { data: searchResults = [] } = useGlobalSearch(searchFilters)
+  const { data: allDivisions = [] } = useAllDivisions()
   const createNote = useCreateNote()
   const createError = createNote.error instanceof Error ? createNote.error.message : null
   const untitled = t("common.untitled")
@@ -51,6 +59,20 @@ const NoteList = () => {
         )
     }
   }, [filteredNotes, noteSort, untitled, i18n.language])
+
+  const divisionPathById = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const division of allDivisions) {
+      if (division.isDeleted) continue
+      const path = getDivisionAncestors(allDivisions, division.id)
+        .map((d) => d.name)
+        .join(" › ")
+      map.set(division.id, path)
+    }
+    return map
+  }, [allDivisions])
+
+  const noInclusion = subBrainsEnabled && includedDivisionIds.length === 0
 
   const handleCreate = async () => {
     try {
@@ -112,10 +134,27 @@ const NoteList = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-ink dark:text-stone-200">
-                {isSearching ? t("notes.noMatchingNotes") : t("notes.noNotesYet")}
+                {noInclusion
+                  ? t("divisions.noInclusionTitle")
+                  : isSearching
+                    ? t("notes.noMatchingNotes")
+                    : t("notes.noNotesYet")}
               </p>
-              {!isSearching && (
-                <p className="mt-1 text-xs text-ink-subtle">{t("notes.noNotesYetHint")}</p>
+              <p className="mt-1 text-xs text-ink-subtle">
+                {noInclusion
+                  ? t("divisions.noInclusionHint")
+                  : !isSearching
+                    ? t("notes.noNotesYetHint")
+                    : null}
+              </p>
+              {noInclusion && (
+                <button
+                  type="button"
+                  onClick={() => setMobilePane("divisions")}
+                  className="btn-primary mt-3 !px-4 !py-2 md:hidden"
+                >
+                  {t("divisions.openSubBrains")}
+                </button>
               )}
             </div>
           </div>
@@ -154,12 +193,22 @@ const NoteList = () => {
                     )}
                   </p>
                 )}
-                <span
-                  className="shrink-0 text-xs text-ink-subtle"
-                  title={new Date(note.updatedAt).toLocaleString(i18n.language)}
-                >
-                  {formatRelativeTime(note.updatedAt, i18n.language)}
-                </span>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  {subBrainsEnabled &&
+                    note.divisionId !== focusDivisionId &&
+                    divisionPathById.has(note.divisionId) && (
+                      <DivisionChip
+                        label={divisionPathById.get(note.divisionId)!}
+                        size="xs"
+                      />
+                    )}
+                  <span
+                    className="text-xs text-ink-subtle"
+                    title={new Date(note.updatedAt).toLocaleString(i18n.language)}
+                  >
+                    {formatRelativeTime(note.updatedAt, i18n.language)}
+                  </span>
+                </div>
               </div>
 
               {searchHit ? (

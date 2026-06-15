@@ -1,10 +1,13 @@
 import { ArrowLeftIcon, NotePencilIcon, TrashIcon } from "@phosphor-icons/react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import MarkdownEditor, { type MarkdownEditorHandle } from "./MarkdownEditor"
 import TagChip from "./TagChip"
 import TagSelector from "./TagSelector"
-import { useDeleteNote, useNote, useSetNoteTags, useUpdateNote } from "../../hooks/useNotes"
+import DivisionPicker from "./DivisionPicker"
+import { useDeleteNote, useMoveNoteDivision, useNote, useSetNoteTags, useUpdateNote } from "../../hooks/useNotes"
+import { useAllDivisions, useDivisionAncestors } from "../../hooks/useDivisions"
+import { getDivisionAncestors } from "../../lib/divisionTree"
 import { useAppStore } from "../../store/useAppStore"
 
 const NoteEditor = () => {
@@ -15,11 +18,20 @@ const NoteEditor = () => {
     newlyCreatedNoteId,
     setNewlyCreatedNoteId,
     setMobilePane,
+    subBrainsEnabled,
+    includedDivisionIds,
   } = useAppStore()
   const { data: note } = useNote(selectedNoteId)
+  const { data: allDivisions = [] } = useAllDivisions()
   const { updateNote, saveStatus } = useUpdateNote()
   const deleteNote = useDeleteNote()
   const setNoteTags = useSetNoteTags()
+  const moveNoteDivision = useMoveNoteDivision()
+  const noteAncestors = useDivisionAncestors(note?.divisionId ?? null)
+  const ownershipPath = useMemo(
+    () => noteAncestors.map((d) => d.name).join(" › "),
+    [noteAncestors],
+  )
 
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
@@ -117,6 +129,33 @@ const NoteEditor = () => {
     setMobilePane("list")
   }
 
+  const handleMoveDivision = async (targetDivisionId: string) => {
+    if (!note || targetDivisionId === note.divisionId) return
+
+    const target = allDivisions.find((d) => d.id === targetDivisionId)
+    const targetPath = getDivisionAncestors(allDivisions, targetDivisionId)
+      .map((d) => d.name)
+      .join(" › ")
+    const isInactive = target && !target.isActive
+    const isExcluded = !includedDivisionIds.includes(targetDivisionId)
+
+    if (isInactive || isExcluded) {
+      const parts: string[] = []
+      if (isInactive) parts.push(t("divisions.moveWarningInactive"))
+      if (isExcluded) parts.push(t("divisions.moveWarningExcluded"))
+      const confirmed = window.confirm(
+        t("divisions.moveWarningBody", { path: targetPath, warnings: parts.join(" ") }),
+      )
+      if (!confirmed) return
+    }
+
+    await moveNoteDivision.mutateAsync({
+      noteId: note.id,
+      targetDivisionId,
+      ensureIncluded: isExcluded,
+    })
+  }
+
   return (
     <div className="relative flex h-full flex-col">
       {isNewNote && (
@@ -179,6 +218,20 @@ const NoteEditor = () => {
           </button>
         </div>
       </div>
+
+      {subBrainsEnabled && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2 dark:border-charcoal-border">
+          <span className="text-xs text-ink-subtle">{t("divisions.ownedBy")}</span>
+          <span className="text-xs font-medium text-ink-muted">{ownershipPath}</span>
+          <div className="w-full sm:max-w-xs">
+            <DivisionPicker
+              value={note.divisionId}
+              onChange={(id) => void handleMoveDivision(id)}
+              disabled={moveNoteDivision.isPending}
+            />
+          </div>
+        </div>
+      )}
 
       {note.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 border-b border-border px-4 py-2 dark:border-charcoal-border">

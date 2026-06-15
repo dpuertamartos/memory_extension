@@ -2,7 +2,7 @@
 
 ## Current Status (June 2026)
 
-**Phases 1–14 core are complete (except Playwright Chromium E2E in 12.5 and Phase 15 sub-brain polish).** The app is a client-only PWA with in-browser SQLite (OPFS), Drizzle ORM, full-text search, a responsive 3-pane UI, export/import, advanced markdown editing, cloud-sync preparation, advanced discovery filters, a calendar memory view, and hierarchical sub-brains with explicit inclusion.
+**Phases 1–15 are complete (except Playwright Chromium E2E in 12.5).** The app is a client-only PWA with in-browser SQLite (OPFS), Drizzle ORM, full-text search, a responsive 3-pane UI, export/import, advanced markdown editing, cloud-sync preparation, advanced discovery filters, a calendar memory view, hierarchical sub-brains with explicit inclusion, and optional sub-brain UX (ownership, mobile nav, feature toggle). **Tags are global** (schema v3); only **notes** are division-scoped.
 
 | Phase | Status |
 | ----- | ------ |
@@ -19,16 +19,17 @@
 | 11. Internationalization (i18n) | Partial (en + es) |
 | 12. UX Polish, App Install & Tech Debt | Partial (E2E pending) |
 | 13. Tag & Calendar UX Enhancements | Done |
-| 14. Sub Brains (Hierarchical Divisions) | Done (core explicit inclusion); follow-ups in Phase 15 |
-| 15. Sub Brain UX, Ownership & Optional Feature | Planned |
+| 14. Sub Brains (Hierarchical Divisions) | Done |
+| 15. Sub Brain UX, Ownership & Optional Feature | Done |
 
 ### What shipped
 
 - **Monorepo pruned** — `server` package removed; no Fastify, tRPC, Postgres, or Better Auth.
 - **OPFS SQLite** — `@sqlite.org/sqlite-wasm` runs in a dedicated Web Worker (`client/src/db/sqlite.worker.ts`) with Drizzle via `sqlite-proxy` (`client/src/lib/db.ts`).
 - **PWA** — `vite-plugin-pwa` with manifest, service worker, and offline asset caching. COOP/COEP headers configured for OPFS.
-- **Schema** — `notes`, `tags`, `note_tags` with ULID primary keys, timestamps, and soft deletes (`is_deleted`).
+- **Schema** — `notes`, `tags`, `note_tags`, `divisions` with ULID primary keys, timestamps, and soft deletes (`is_deleted` on notes/divisions). Notes have `division_id`; tags are **global** (unique by name, schema v3). FTS5 on notes.
 - **FTS5** — `notes_fts` virtual table with insert/update/delete triggers (`client/src/db/migrate.ts`).
+- **Sub-brains** — Nestable `divisions` tree; explicit inclusion checkboxes; optional feature toggle in Settings; editor ownership + move picker; mobile Sub-brains nav item; division chips in note list when owner ≠ focus.
 - **Data layer** — `useNotes`, `useTags`, `useGlobalSearch` backed by TanStack Query.
 - **UI** — 3-pane desktop layout (tags / list / editor), single-pane mobile with bottom nav, omnibox search, Markdown WYSIWYG editor via Tiptap.
 - **Settings** — SQLite export, Markdown zip export (YAML frontmatter), SQLite import with page reload.
@@ -264,52 +265,63 @@ Build a local-first note-taking app that users access via a URL, but where all d
 
 ## Phase 14: Sub Brains (Hierarchical Divisions)
 
-*Objective: Partition the brain into a nestable tree of sub-brains; users choose which subdivisions contribute notes/tags to the current view via checkboxes (explicit inclusion), without duplicating data.*
+*Objective: Partition the brain into a nestable tree of sub-brains; users choose which subdivisions contribute **notes** to the current view via checkboxes (explicit inclusion), without duplicating data. Tags are global (see Phase 15.4 / schema v3).*
 
-**Model:** `focusDivisionId` = navigation, breadcrumb, and create target for new notes/tags. `includedDivisionIds` (persisted in `localStorage`) = read filter. Checking a node includes it and all descendants; parents are never auto-included. Inactive divisions hide from the tree unless Settings → "Show inactive sub-brains" is on.
+**Model:** `focusDivisionId` = navigation, breadcrumb, and create target for new notes. `includedDivisionIds` (persisted in `localStorage`) = read filter for notes. Checking a node includes it and all descendants; parents are never auto-included. Inactive divisions hide from the tree unless Settings → "Show inactive sub-brains" is on.
 
-- [x] **14.1 Schema & migration** — `divisions` table (adjacency list, ULIDs, soft deletes); `division_id` on `notes`/`tags` with indexes; root row + legacy backfill in `migrate.ts`.
-- [x] **14.2 State & data access** — `useAppStore` (`focusDivisionId`, `includedDivisionIds`, cascade toggle); `divisionTree.ts` helpers (children map, descendants, tri-state checkbox); `useDivisions` CRUD (delete blocked when children/notes/tags exist); `useNotes`, `useTags`, `useGlobalSearch`, and calendar (via `useNotes`) filter `division_id IN (includedIds)` and create on `focusDivisionId`.
-- [x] **14.3 Sync & export** — `SyncSnapshot` v2 with `divisions[]`, LWW merge, and `divisionId` on notes/tags; markdown zip export includes `division_id` + breadcrumb path (`exportMarkdown.ts`). Inclusion prefs stay device-local (not in snapshot). No markdown import yet — N/A until import exists.
-- [x] **14.4 UI** — Checkbox inclusion tree above tags (`DivisionTree` in `TagSidebar`); breadcrumb (`DivisionBreadcrumb` on `BrainPage`); create/edit/activate/delete dialog; note list, editor, omnibox, and calendar respect inclusion. Division chip in note list deferred to Phase 15.
+- [x] **14.1 Schema & migration** — `divisions` table (adjacency list, ULIDs, soft deletes); `division_id` on `notes` with indexes; root row + legacy backfill in `migrate.ts`. (Phase 14 briefly added `division_id` on tags; removed in schema v3.)
+- [x] **14.2 State & data access** — `useAppStore` (`focusDivisionId`, `includedDivisionIds`, cascade toggle); `divisionTree.ts` helpers; `useDivisions` CRUD (delete blocked when children/notes exist); `useNotes`, `useGlobalSearch`, and calendar filter notes by `division_id IN (includedIds)`; new notes created on `focusDivisionId`.
+- [x] **14.3 Sync & export** — `SyncSnapshot` v2 with `divisions[]`, LWW merge, and `divisionId` on notes; markdown zip export includes `division_id` + breadcrumb path (`exportMarkdown.ts`). Inclusion prefs stay device-local (not in snapshot).
+- [x] **14.4 UI** — Checkbox inclusion tree in sidebar; breadcrumb on `BrainPage`; create/edit/activate/delete dialog; note list, editor, omnibox, and calendar respect note inclusion.
 - [x] **14.5 i18n** — `divisions.*` keys in `en` and `es`.
-- [x] **14.6 Tests** — `divisionTree.test.ts` (inclusion semantics), `migrate.test.ts`, integration scoping test in `userFlows.test.tsx`. Tree virtualization at 1 000+ nodes not profiled — add if needed.
+- [x] **14.6 Tests** — `divisionTree.test.ts`, `migrate.test.ts`, integration scoping test in `userFlows.test.tsx`.
 
 ---
 
-## Phase 15: Sub Brain UX, Ownership & Optional Feature (Planned)
+## Phase 15: Sub Brain UX, Ownership & Optional Feature
 
 *Objective: Make sub-brains easier to understand and control — especially on mobile — and let users who do not want the feature turn it off entirely without losing data unexpectedly.*
 
 ### 15.1 Note ownership in the editor
 
-- [ ] **15.1.1 Show owning sub-brain** — In `NoteEditor`, display a clear, always-visible indicator of which sub-brain owns the note (name + breadcrumb path, e.g. `Main Brain › Football › Barcelona`). Use the same typography, spacing, and accent tokens as tags and the save-status row.
-- [ ] **15.1.2 Optional list chip** — When a note’s owning division differs from `focusDivisionId`, show a small division chip in `NoteList` so users can spot cross-division notes at a glance (called out in 14.3.4; promote to required here).
-- [ ] **15.1.3 Move note between sub-brains** — Add a division picker in the editor (searchable tree or flat path selector). Updating `notes.division_id` must bump `updated_at` and invalidate note/tag queries. Warn if the target division is inactive or not currently included in the view.
-- [ ] **15.1.4 Tag scope guard** — When moving a note, strip or block tag assignments that belong to a different `division_id` (tags are division-scoped).
+- [x] **15.1.1 Show owning sub-brain** — `NoteEditor` shows breadcrumb ownership row + `DivisionPicker` (searchable paths).
+- [x] **15.1.2 List division chip** — `NoteList` shows `DivisionChip` when note owner ≠ `focusDivisionId` (hidden when sub-brains disabled).
+- [x] **15.1.3 Move note between sub-brains** — `useMoveNoteDivision` updates `notes.division_id`, bumps `updated_at`, warns on inactive/excluded targets, adds target to inclusion after confirmed move.
+- [x] **15.1.4 Tags on move** — Tags are **global** (schema v3); moving a note keeps tag assignments. Supersedes original “strip division-scoped tags” plan.
 
 ### 15.2 Optional sub-brain feature (per database)
 
-- [ ] **15.2.1 Settings toggle** — Add **Enable sub-brains** in Settings (persisted in `localStorage`, device-local — same pattern as inclusion prefs). Default **on** for existing DBs that already have child divisions; default **off** for fresh installs is a product call (document in UI).
-- [ ] **15.2.2 Double confirmation on disable** — Turning the feature off requires **two explicit confirmations**, each stating that sub-brain navigation, checkboxes, and breadcrumbs will be hidden and all notes will appear as a single flat brain. Copy must **not** imply data deletion — divisions and `division_id` values stay in SQLite.
-- [ ] **15.2.3 Hidden UI when off** — When disabled: hide `DivisionTree`, breadcrumb, division chips, and division fields in the editor; collapse layout to the pre–Phase 14 sidebar (tags only). Reads use root-only or all-division semantics (TBD: show all notes regardless of `division_id`, or only root-owned notes — prefer **all notes, flat list**).
-- [ ] **15.2.4 Re-enable** — Turning back on restores the tree and last persisted `focusDivisionId` / `includedDivisionIds` without migration.
+- [x] **15.2.1 Settings toggle** — **Enable sub-brains** in Settings (`localStorage`). Default **on** if child divisions exist; **off** for fresh root-only installs.
+- [x] **15.2.2 Double confirmation on disable** — Two-step confirm; copy states UI hides, notes appear flat, no data deleted.
+- [x] **15.2.3 Hidden UI when off** — Hides tree, breadcrumb, chips, editor ownership; flat all-notes/tags via `useEffectiveDivisionIds()`.
+- [x] **15.2.4 Re-enable** — Restores last `focusDivisionId` / `includedDivisionIds` from `localStorage`.
 
 ### 15.3 UI & mobile exploration polish
 
-- [ ] **15.3.1 Visual design pass** — Restyle the sub-brain tree to match the rest of the app: `surface-*` panels, `section-label`, accent/indeterminate checkbox states, consistent row hover/active (`row-active`), and dark-mode contrast. Avoid one-off colors; reuse `BrainIcon`, tag chip patterns, and segmented-control styling where appropriate.
-- [ ] **15.3.2 Mobile-first navigation** — Sub-brains buried under the Tags pane is hard to discover on mobile. Options (pick one or combine): dedicated **Sub-brains** item in `MobileNav`, a top-level segmented control (Notes | Sub-brains | Tags), or a collapsible “Where am I?” sheet opened from the breadcrumb. Success: user can switch focus and inclusion in ≤2 taps without opening tag search.
-- [ ] **15.3.3 Tree ergonomics** — Larger tap targets for checkbox vs label, sticky breadcrumb on scroll, clearer expand/collapse affordances, and optional “Include all visible” / “Clear inclusion” bulk actions for power users.
-- [ ] **15.3.4 Empty & partial states** — When no divisions are included, show actionable empty state (“Select sub-brains above”) instead of a blank list. When focus has no notes, distinguish “no notes here” vs “filtered out by inclusion”.
-- [ ] **15.3.5 i18n** — New strings for editor ownership, move-division picker, feature toggle warnings, and mobile nav labels (`en` + `es`).
+- [x] **15.3.1 Visual design pass** — `DivisionTree` restyled (`surface-*`, `row-active`, larger tap targets, bulk include/clear).
+- [x] **15.3.2 Mobile-first navigation** — Dedicated **Sub-brains** item in `MobileNav` + full-height mobile pane.
+- [x] **15.3.3 Tree ergonomics** — Sticky breadcrumb; include-all / clear-inclusion actions; improved expand/collapse targets.
+- [x] **15.3.4 Empty & partial states** — Actionable empty state when no divisions included; distinct no-notes copy.
+- [x] **15.3.5 i18n** — Ownership, picker, toggle warnings, mobile nav (`en` + `es`).
 
-### 15.4 Verification
+### 15.4 Global tags (schema v3)
 
-- [ ] Editor shows correct owning division; move updates `division_id` and list/search reflect the change.
-- [ ] Disable sub-brains: two-step confirm, UI hidden, notes still editable and exportable with `division_id` intact.
-- [ ] Re-enable restores tree and inclusion without data loss.
-- [ ] Mobile: switch sub-brain focus from bottom nav (or chosen pattern) without using the tag sidebar.
-- [ ] Visual review: sub-brain UI matches tag sidebar and note list in light and dark mode.
+- [x] **15.4.1 Migration** — `migrateToV3` removes `division_id` from tags; merges duplicate names; remaps `note_tags`. `PRAGMA user_version = 3`.
+- [x] **15.4.2 Data layer** — `useTags()` returns all tags; note queries no longer filter tags by division; delete division no longer blocked by tags.
+- [x] **15.4.3 Sync** — `SyncTag.divisionId` optional (v2 import compat); export omits division on tags.
+
+### 15.5 Post-ship polish
+
+- [x] **15.5.1 Desktop sidebar balance** — Sub-brain tree capped (~42% height) in `TagSidebar`; tags get remaining scroll space.
+- [x] **15.5.2 Calendar scroll** — Day note list scrolls independently on mobile and desktop (`CalendarView` height chain fix).
+
+### 15.6 Verification
+
+- [x] Editor shows owning division; move updates `division_id` and list/search reflect the change.
+- [x] Disable sub-brains: two-step confirm, UI hidden, notes editable/exportable with `division_id` intact.
+- [x] Re-enable restores tree and inclusion without data loss.
+- [x] Mobile: switch sub-brain focus from bottom nav.
+- [x] Vitest: 76 tests pass; `pnpm run build` green. Playwright E2E still deferred (12.5).
 
 ---
 

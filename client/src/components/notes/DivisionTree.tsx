@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import type { Division } from "../../db/schema"
 import {
   useBootstrapDivisionState,
+  useBootstrapSubBrainsEnabled,
   useCreateDivision,
   useDivisionTree,
   useFocusDivision,
@@ -54,7 +55,7 @@ const TreeRow = ({
         <button
           type="button"
           onClick={() => (hasChildren ? onToggleExpand(node.id) : undefined)}
-          className="flex w-6 shrink-0 items-center justify-center p-1 text-ink-subtle"
+          className="flex h-9 w-8 shrink-0 items-center justify-center rounded-md text-ink-subtle hover:bg-paper dark:hover:bg-charcoal-elevated"
           aria-label={hasChildren ? (isExpanded ? "Collapse" : "Expand") : undefined}
           tabIndex={hasChildren ? 0 : -1}
         >
@@ -79,7 +80,7 @@ const TreeRow = ({
             onToggleIncluded(node.id, event.target.checked)
           }}
           onClick={(event) => event.stopPropagation()}
-          className="mr-1.5 shrink-0"
+          className="mr-2 h-4 w-4 shrink-0 accent-accent"
           aria-label={
             checkboxState === "indeterminate"
               ? t("divisions.includeIndeterminate", { name: node.name })
@@ -90,7 +91,7 @@ const TreeRow = ({
         <button
           type="button"
           onClick={() => onFocus(node.id)}
-          className={`flex min-w-0 flex-1 items-center gap-1.5 py-2 pr-1 text-left text-sm ${
+          className={`flex min-w-0 flex-1 items-center gap-1.5 py-2.5 pr-1 text-left text-sm md:py-2 ${
             isFocused ? "font-medium text-accent dark:text-accent-muted" : "text-ink-muted"
           }`}
           style={{ paddingLeft: `${node.depth * 8}px` }}
@@ -131,13 +132,14 @@ const TreeRow = ({
   )
 }
 
-const DivisionTree = () => {
+const DivisionTree = ({ className = "", compact = false }: { className?: string; compact?: boolean }) => {
   const { t } = useTranslation()
   useBootstrapDivisionState()
+  useBootstrapSubBrainsEnabled()
   const { tree, divisions, childrenMap } = useDivisionTree()
   const createDivision = useCreateDivision()
   const { focusDivisionId, focusDivision } = useFocusDivision()
-  const { includedDivisionIds, toggleDivisionIncluded } = useAppStore()
+  const { includedDivisionIds, toggleDivisionIncluded, setIncludedDivisionIds } = useAppStore()
 
   const includedSet = useMemo(() => new Set(includedDivisionIds), [includedDivisionIds])
 
@@ -181,8 +183,23 @@ const DivisionTree = () => {
     setIsAdding(false)
   }
 
+  const visibleDivisionIds = useMemo(
+    () => divisions.map((d) => d.id),
+    [divisions],
+  )
+
+  const handleIncludeAllVisible = () => {
+    const next = new Set(includedDivisionIds)
+    for (const id of visibleDivisionIds) next.add(id)
+    setIncludedDivisionIds([...next].sort())
+  }
+
+  const handleClearInclusion = () => {
+    setIncludedDivisionIds([])
+  }
+
   return (
-    <div className="border-b border-border dark:border-charcoal-border">
+    <div className={`flex flex-col ${compact ? "min-h-0" : "h-full"} ${className}`}>
       <div className="surface-header flex items-center justify-between px-4 py-2.5">
         <h2 className="section-label">{t("divisions.title")}</h2>
         <button
@@ -196,6 +213,15 @@ const DivisionTree = () => {
       </div>
 
       <p className="px-4 pb-2 text-[11px] leading-snug text-ink-subtle">{t("divisions.inclusionHelp")}</p>
+
+      <div className="flex gap-2 px-4 pb-2">
+        <button type="button" onClick={handleIncludeAllVisible} className="btn-secondary !px-2 !py-1 text-xs">
+          {t("divisions.includeAllVisible")}
+        </button>
+        <button type="button" onClick={handleClearInclusion} className="btn-muted !px-2 !py-1 text-xs">
+          {t("divisions.clearInclusion")}
+        </button>
+      </div>
 
       {isAdding && (
         <div className="border-b border-border px-3 py-2 dark:border-charcoal-border">
@@ -214,7 +240,9 @@ const DivisionTree = () => {
         </div>
       )}
 
-      <div className="max-h-40 overflow-y-auto px-2 py-1.5">
+      <div
+        className={`overflow-y-auto px-2 py-1.5 ${compact ? "min-h-0 flex-1" : "min-h-0 flex-1"}`}
+      >
         {tree.map((node) => (
           <TreeRow
             key={node.id}

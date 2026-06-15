@@ -124,16 +124,16 @@ function createInMemoryMigrationDb(): MigrationDb & { version: number } {
 }
 
 describe("runMigrations", () => {
-  it("advances schema version to 2", () => {
+  it("advances schema version to 3", () => {
     const db = createInMemoryMigrationDb()
     runMigrations(db)
-    expect(db.selectObjects("PRAGMA user_version")[0]?.user_version).toBe(2)
+    expect(db.selectObjects("PRAGMA user_version")[0]?.user_version).toBe(3)
   })
 
-  it("is idempotent when already at version 2", () => {
+  it("is idempotent when already at version 3", () => {
     const db = createInMemoryMigrationDb()
     runMigrations(db)
     runMigrations(db)
-    expect(db.selectObjects("PRAGMA user_version")[0]?.user_version).toBe(2)
+    expect(db.selectObjects("PRAGMA user_version")[0]?.user_version).toBe(3)
   })
 })

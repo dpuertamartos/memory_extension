@@ -1,13 +1,16 @@
-import { CalendarBlankIcon, GearIcon, ListIcon, NotePencilIcon, TagIcon } from "@phosphor-icons/react"
+import { CalendarBlankIcon, GearIcon, BrainIcon, ListIcon, NotePencilIcon, TagIcon } from "@phosphor-icons/react"
 import { useTranslation } from "react-i18next"
 import type { MobilePane } from "../../store/useAppStore"
 import { useAppStore } from "../../store/useAppStore"
 
 const MobileNav = () => {
   const { t } = useTranslation()
-  const { mobilePane, selectedTagId, selectedNoteId, setMobilePane } = useAppStore()
+  const { mobilePane, selectedTagId, selectedNoteId, subBrainsEnabled, setMobilePane } = useAppStore()
 
   const items: { pane: MobilePane; label: string; icon: typeof ListIcon }[] = [
+    ...(subBrainsEnabled
+      ? [{ pane: "divisions" as MobilePane, label: t("nav.subBrains"), icon: BrainIcon }]
+      : []),
     { pane: "tags", label: t("nav.tags"), icon: TagIcon },
     { pane: "list", label: t("nav.notes"), icon: ListIcon },
     { pane: "calendar", label: t("nav.calendar"), icon: CalendarBlankIcon },

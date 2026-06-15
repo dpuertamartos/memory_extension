@@ -14,6 +14,7 @@ import type { SearchFilters } from "../lib/searchQuery"
 import { ROOT_DIVISION_ID } from "../lib/divisions"
 import { getDescendantIds, getDefaultIncludedDivisionIds } from "../lib/divisionTree"
 import BrainPage from "../pages/BrainPage"
+import MobileNav from "../components/notes/MobileNav"
 import { renderApp } from "../test/renderApp"
 import { resetAppStore } from "../test/resetAppStore"
 import { useAppStore } from "../store/useAppStore"
@@ -83,7 +84,11 @@ vi.mock("../hooks/useCalendarNotes", () => ({
 }))
 
 function getIncludedIds(): string[] {
-  return useAppStore.getState().includedDivisionIds
+  const state = useAppStore.getState()
+  if (!state.subBrainsEnabled) {
+    return testState.divisions.filter((d) => !d.isDeleted).map((d) => d.id)
+  }
+  return state.includedDivisionIds
 }
 
 function focusDivisionInTest(id: string) {
@@ -113,6 +118,7 @@ vi.mock("../hooks/useDivisions", async () => {
       focusDivision: focusDivisionInTest,
     }),
     useBootstrapDivisionState: () => undefined,
+    useBootstrapSubBrainsEnabled: () => undefined,
     useCreateDivision: () => ({
       mutateAsync: vi.fn(async ({ parentId, name }: { parentId: string | null; name: string }) => {
         const division: Division = {
@@ -178,15 +184,11 @@ vi.mock("../hooks/useSearch", async (importOriginal) => {
 })
 
 vi.mock("../hooks/useTags", () => ({
-  useTags: () => {
-    const included = getIncludedIds()
-    return { data: testState.tags.filter((tag) => included.includes(tag.divisionId)) }
-  },
+  useTags: () => ({ data: testState.tags }),
   useCreateTag: () => ({
     mutateAsync: vi.fn(async ({ name, color }: { name: string; color?: string }) => {
       const tag: Tag = {
         id: `tag-${testState.nextTagId++}`,
-        divisionId: useAppStore.getState().focusDivisionId,
         name,
         color: color ?? "#6366f1",
         createdAt: new Date(),
@@ -258,6 +260,28 @@ vi.mock("../hooks/useNotes", () => ({
     }),
     isPending: false,
   }),
+  useMoveNoteDivision: () => ({
+    mutateAsync: vi.fn(async ({
+      noteId,
+      targetDivisionId,
+      ensureIncluded,
+    }: {
+      noteId: string
+      targetDivisionId: string
+      ensureIncluded?: boolean
+    }) => {
+      const note = testState.notes.find((item) => item.id === noteId)
+      if (!note) return
+      note.divisionId = targetDivisionId
+      note.updatedAt = new Date()
+      if (ensureIncluded && !useAppStore.getState().includedDivisionIds.includes(targetDivisionId)) {
+        useAppStore.getState().setIncludedDivisionIds(
+          [...useAppStore.getState().includedDivisionIds, targetDivisionId].sort(),
+        )
+      }
+    }),
+    isPending: false,
+  }),
 }))
 
 describe("user flows (integration)", () => {
@@ -273,6 +297,7 @@ describe("user flows (integration)", () => {
       ROOT_DIVISION_ID,
       getDefaultIncludedDivisionIds(testState.divisions, ROOT_DIVISION_ID),
     )
+    useAppStore.getState().setSubBrainsEnabled(true)
   })
 
   afterEach(() => {
@@ -351,7 +376,6 @@ describe("user flows (integration)", () => {
     testState.tags = [
       {
         id: "tag-1",
-        divisionId: ROOT_DIVISION_ID,
         name: "ideas",
         color: "#6366f1",
         createdAt: new Date(),
@@ -475,5 +499,101 @@ describe("user flows (integration)", () => {
     expect(screen.getByText("Work note")).toBeInTheDocument()
     expect(screen.getByText("Project note")).toBeInTheDocument()
     expect(screen.queryByText("Personal note")).not.toBeInTheDocument()
+  })
+
+  it("shows all notes flat when sub-brains are disabled", async () => {
+    const workDivision: Division = {
+      id: "div-work",
+      parentId: ROOT_DIVISION_ID,
+      name: "Work",
+      description: "",
+      isActive: true,
+      sortOrder: 1,
+      isDeleted: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+    testState.divisions.push(workDivision)
+    testState.notes = [
+      {
+        id: "note-root",
+        divisionId: ROOT_DIVISION_ID,
+        title: "Personal note",
+        content: "",
+        isDeleted: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        tags: [],
+      },
+      {
+        id: "note-work",
+        divisionId: "div-work",
+        title: "Work note",
+        content: "",
+        isDeleted: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        tags: [],
+      },
+    ]
+
+    focusDivisionInTest("div-work")
+    useAppStore.getState().setSubBrainsEnabled(false)
+    const { rerender } = renderApp(<BrainPage />)
+    rerender(<BrainPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Personal note")).toBeInTheDocument()
+      expect(screen.getByText("Work note")).toBeInTheDocument()
+    })
+  })
+
+  it("shows sub-brains nav item when feature is enabled", () => {
+    useAppStore.getState().setSubBrainsEnabled(true)
+    renderApp(
+      <>
+        <BrainPage />
+        <MobileNav />
+      </>,
+    )
+    expect(screen.getByRole("button", { name: "Sub-brains" })).toBeInTheDocument()
+  })
+
+  it("shows note ownership in editor when sub-brains enabled", async () => {
+    const workDivision: Division = {
+      id: "div-work",
+      parentId: ROOT_DIVISION_ID,
+      name: "Work",
+      description: "",
+      isActive: true,
+      sortOrder: 1,
+      isDeleted: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+    testState.divisions.push(workDivision)
+    testState.notes = [
+      {
+        id: "note-work",
+        divisionId: "div-work",
+        title: "Work note",
+        content: "body",
+        isDeleted: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        tags: [],
+      },
+    ]
+
+    focusDivisionInTest("div-work")
+    useAppStore.getState().setSubBrainsEnabled(true)
+    useAppStore.getState().setSelectedNoteId("note-work")
+    renderApp(<BrainPage />)
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Work note")).toBeInTheDocument()
+    })
+    expect(screen.getByText("Sub-brain")).toBeInTheDocument()
+    expect(screen.getAllByText("Main Brain › Work").length).toBeGreaterThan(0)
   })
 })

@@ -132,7 +132,6 @@ export function mergeSyncSnapshots(local: SyncSnapshot, remote: SyncSnapshot): S
   }
 
   const activeNotes = noteMerge.merged.filter((note) => mergedDivisionIds.has(note.divisionId))
-  const activeTags = tagMerge.merged.filter((tag) => mergedDivisionIds.has(tag.divisionId))
 
   return {
     merged: {
@@ -140,7 +139,7 @@ export function mergeSyncSnapshots(local: SyncSnapshot, remote: SyncSnapshot): S
       exportedAt,
       divisions: divisionMerge.merged.filter((d) => !d.isDeleted),
       notes: activeNotes,
-      tags: activeTags,
+      tags: tagMerge.merged,
       noteTags: mergedNoteTags,
     },
     noteWinners: noteMerge.winners,

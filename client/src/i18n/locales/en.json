@@ -25,6 +25,7 @@
     "calendar": "Calendar",
     "editor": "Editor",
     "settings": "Settings",
+    "subBrains": "Sub-brains",
     "toggleTheme": "Toggle theme",
     "localOnly": "On this device",
     "localTrustHint": "Your notes are stored only in this browser — never sent to a server"
@@ -137,7 +138,11 @@
     "exportSqlite": "Export SQLite database",
     "exportMarkdown": "Download all notes as Markdown (.zip)",
     "importSqlite": "Import SQLite backup",
-    "importConfirm": "Importing will overwrite your current local database. Continue?"
+    "importConfirm": "Importing will overwrite your current local database. Continue?",
+    "enableSubBrains": "Enable sub-brains",
+    "enableSubBrainsDescription": "Organize notes into hierarchical sub-brains. When off, all notes appear in one flat list. Your division data is never deleted.",
+    "disableSubBrainsConfirm1": "Turn off sub-brains? Navigation, checkboxes, and breadcrumbs will be hidden. All notes will appear as a single flat brain. Your division data stays in the database — nothing is deleted.",
+    "disableSubBrainsConfirm2": "Confirm again: sub-brain UI will be hidden and notes will show in one list. Division data is preserved and will return if you re-enable this feature."
   },
   "db": {
     "error": "Database error",
@@ -165,6 +170,18 @@
     "includeCheckbox": "Include notes from this sub-brain",
     "includeDivision": "Include {{name}}",
     "includeIndeterminate": "{{name}} is partially included",
-    "inclusionHelp": "Check sub-brains to include their notes. Focus sets where new notes are created."
+    "inclusionHelp": "Check sub-brains to include their notes. Focus sets where new notes are created.",
+    "ownedBy": "Sub-brain",
+    "searchPlaceholder": "Search sub-brains…",
+    "noMatch": "No sub-brains match",
+    "includeAllVisible": "Include all visible",
+    "clearInclusion": "Clear inclusion",
+    "noInclusionTitle": "No sub-brains selected",
+    "noInclusionHint": "Select sub-brains above to include their notes in this view.",
+    "openSubBrains": "Open sub-brains",
+    "moveWarningInactive": "The target sub-brain is inactive.",
+    "moveWarningExcluded": "The target sub-brain is not currently included in your view.",
+    "moveWarningBody": "Move this note to \"{{path}}\"? {{warnings}}",
+    "moveMigrateTagsHint": "Tags are kept — matching names are linked or recreated in the target sub-brain."
   }
 }

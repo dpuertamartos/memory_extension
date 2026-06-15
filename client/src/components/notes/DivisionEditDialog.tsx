@@ -58,8 +58,6 @@ const DivisionEditDialog = ({ division, onClose }: DivisionEditDialogProps) => {
         setError(t("divisions.deleteBlockedChildren"))
       } else if (code === "DIVISION_HAS_NOTES") {
         setError(t("divisions.deleteBlockedNotes"))
-      } else if (code === "DIVISION_HAS_TAGS") {
-        setError(t("divisions.deleteBlockedTags"))
       } else {
         setError(t("divisions.deleteFailed"))
       }

@@ -25,6 +25,7 @@
     "calendar": "Calendario",
     "editor": "Editor",
     "settings": "Ajustes",
+    "subBrains": "Sub-cerebros",
     "toggleTheme": "Cambiar tema",
     "localOnly": "En este dispositivo",
     "localTrustHint": "Tus notas se guardan solo en este navegador — nunca se envían a un servidor"
@@ -137,7 +138,11 @@
     "exportSqlite": "Exportar base de datos SQLite",
     "exportMarkdown": "Descargar todas las notas como Markdown (.zip)",
     "importSqlite": "Importar copia de seguridad SQLite",
-    "importConfirm": "La importación sobrescribirá tu base de datos local actual. ¿Continuar?"
+    "importConfirm": "La importación sobrescribirá tu base de datos local actual. ¿Continuar?",
+    "enableSubBrains": "Activar sub-cerebros",
+    "enableSubBrainsDescription": "Organiza notas en sub-cerebros jerárquicos. Desactivado, todas las notas aparecen en una lista plana. Tus datos de división nunca se eliminan.",
+    "disableSubBrainsConfirm1": "¿Desactivar sub-cerebros? Se ocultarán la navegación, las casillas y las migas de pan. Todas las notas aparecerán en un solo cerebro plano. Tus datos de división permanecen en la base de datos — nada se elimina.",
+    "disableSubBrainsConfirm2": "Confirma de nuevo: la interfaz de sub-cerebros se ocultará y las notas se mostrarán en una lista. Los datos de división se conservan y volverán si reactivas esta función."
   },
   "db": {
     "error": "Error de base de datos",
@@ -165,6 +170,18 @@
     "includeCheckbox": "Incluir notas de este sub-cerebro",
     "includeDivision": "Incluir {{name}}",
     "includeIndeterminate": "{{name}} está parcialmente incluido",
-    "inclusionHelp": "Marca sub-cerebros para incluir sus notas. El foco define dónde se crean notas nuevas."
+    "inclusionHelp": "Marca sub-cerebros para incluir sus notas. El foco define dónde se crean notas nuevas.",
+    "ownedBy": "Sub-cerebro",
+    "searchPlaceholder": "Buscar sub-cerebros…",
+    "noMatch": "Ningún sub-cerebro coincide",
+    "includeAllVisible": "Incluir todos visibles",
+    "clearInclusion": "Limpiar inclusión",
+    "noInclusionTitle": "Ningún sub-cerebro seleccionado",
+    "noInclusionHint": "Selecciona sub-cerebros arriba para incluir sus notas en esta vista.",
+    "openSubBrains": "Abrir sub-cerebros",
+    "moveWarningInactive": "El sub-cerebro destino está inactivo.",
+    "moveWarningExcluded": "El sub-cerebro destino no está incluido actualmente en tu vista.",
+    "moveWarningBody": "¿Mover esta nota a \"{{path}}\"? {{warnings}}",
+    "moveMigrateTagsHint": "Las etiquetas se conservan: los nombres coincidentes se vinculan o recrean en el sub-cerebro destino."
   }
 }
