@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { ROOT_DIVISION_ID, ROOT_DIVISION_NAME } from "../lib/divisions"
+import { LEGACY_ROOT_DIVISION_NAME, ROOT_DIVISION_ID, ROOT_DIVISION_NAME } from "../lib/divisions"
 import { runMigrations, type MigrationDb } from "./migrate"
 
 function createInMemoryMigrationDb(): MigrationDb & { version: number } {
@@ -35,6 +35,16 @@ function createInMemoryMigrationDb(): MigrationDb & { version: number } {
     if (trimmed.startsWith("ALTER TABLE") && trimmed.includes("ADD COLUMN")) {
       const match = trimmed.match(/ALTER TABLE (\w+) ADD COLUMN (\w+)/i)
       if (match?.[1] && match?.[2]) ensureTable(match[1])
+      return
+    }
+
+    if (trimmed.startsWith("UPDATE divisions SET name")) {
+      ensureTable("divisions")
+      const divisions = tables.get("divisions")!
+      const root = divisions.get(ROOT_DIVISION_ID)
+      if (root && root.name === LEGACY_ROOT_DIVISION_NAME) {
+        divisions.set(ROOT_DIVISION_ID, { ...root, name: ROOT_DIVISION_NAME })
+      }
       return
     }
 
@@ -74,6 +84,15 @@ function createInMemoryMigrationDb(): MigrationDb & { version: number } {
       return version
     },
     exec,
+    setDivisionNameForTest(id: string, name: string) {
+      ensureTable("divisions")
+      const divisions = tables.get("divisions")!
+      const row = divisions.get(id)
+      if (row) divisions.set(id, { ...row, name })
+    },
+    getDivisionName(id: string) {
+      return tables.get("divisions")?.get(id)?.name as string | undefined
+    },
     prepare: (sql: string) => ({
       bind: (params: unknown[]) => {
         if (sql.includes("INSERT OR IGNORE INTO divisions")) {
@@ -114,9 +133,7 @@ function createInMemoryMigrationDb(): MigrationDb & { version: number } {
         return []
       }
       if (sql.includes("sqlite_master")) {
-        const table = (sql.match(/name = \?/) ? "tags" : null) as string | null
-        void table
-        return tables.has("tags") ? [{ name: "tags" }] : []
+        return [...tables.keys()].map((name) => ({ name }))
       }
       return []
     },
@@ -135,5 +152,16 @@ describe("runMigrations", () => {
     runMigrations(db)
     runMigrations(db)
     expect(db.selectObjects("PRAGMA user_version")[0]?.user_version).toBe(3)
+  })
+
+  it("renames legacy Main Brain root division to Main", () => {
+    const db = createInMemoryMigrationDb()
+    runMigrations(db)
+    db.setDivisionNameForTest(ROOT_DIVISION_ID, LEGACY_ROOT_DIVISION_NAME)
+    expect(db.getDivisionName(ROOT_DIVISION_ID)).toBe(LEGACY_ROOT_DIVISION_NAME)
+
+    runMigrations(db)
+
+    expect(db.getDivisionName(ROOT_DIVISION_ID)).toBe(ROOT_DIVISION_NAME)
   })
 })

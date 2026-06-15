@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query"
 import { searchNotes, type SearchResult } from "../lib/searchEngine"
-import { inclusionFingerprint, useAppStore } from "../store/useAppStore"
+import { inclusionFingerprint } from "../lib/divisions"
 import { isSearchActive, type SearchFilters } from "../lib/searchQuery"
+import { useAppStore } from "../store/useAppStore"
 import { useIncludedDivisionIds } from "./useDivisions"
 
 export type { SearchFilters, SearchResult }

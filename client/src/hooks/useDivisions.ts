@@ -8,11 +8,12 @@ import {
   buildChildrenMap,
   buildDivisionTree,
   getDefaultIncludedDivisionIds,
+  getDescendantIds,
   getDivisionAncestors,
   type DivisionTreeNode,
 } from "../lib/divisionTree"
-import { getStoredIncludedDivisionIds, getStoredSubBrainsEnabled, ROOT_DIVISION_ID, setStoredSubBrainsEnabled } from "../lib/divisions"
-import { inclusionFingerprint, useAppStore } from "../store/useAppStore"
+import { getStoredSubBrainsEnabled, ROOT_DIVISION_ID, setStoredSubBrainsEnabled } from "../lib/divisions"
+import { useAppStore } from "../store/useAppStore"
 
 export type { DivisionTreeNode }
 export {
@@ -73,44 +74,20 @@ export function useDivisionAncestors(divisionId: string | null) {
   }, [divisions, divisionId])
 }
 
-/** Sync persisted inclusion/focus with loaded divisions (runs once per divisions fetch). */
+/** Ensure persisted active sub-brain still exists after divisions load. */
 export function useBootstrapDivisionState() {
   const focusDivisionId = useAppStore((s) => s.focusDivisionId)
-  const includedDivisionIds = useAppStore((s) => s.includedDivisionIds)
   const setFocusDivision = useAppStore((s) => s.setFocusDivision)
-  const setIncludedDivisionIds = useAppStore((s) => s.setIncludedDivisionIds)
   const { data: divisions = [] } = useAllDivisions()
 
   useEffect(() => {
     if (divisions.length === 0) return
 
     const validIds = new Set(divisions.map((d) => d.id))
-    const childrenMap = buildChildrenMap(divisions)
-    const focusId = validIds.has(focusDivisionId) ? focusDivisionId : ROOT_DIVISION_ID
-
-    const stored = getStoredIncludedDivisionIds()
-    if (stored === null) {
-      setFocusDivision(focusId, getDefaultIncludedDivisionIds(divisions, focusId, childrenMap))
-      return
+    if (!validIds.has(focusDivisionId)) {
+      setFocusDivision(ROOT_DIVISION_ID)
     }
-
-    const filtered = stored.filter((id) => validIds.has(id))
-    if (focusId !== focusDivisionId) {
-      setFocusDivision(focusId, getDefaultIncludedDivisionIds(divisions, focusId, childrenMap))
-      return
-    }
-
-    if (filtered.length === 0) {
-      setFocusDivision(focusId, getDefaultIncludedDivisionIds(divisions, focusId, childrenMap))
-      return
-    }
-
-    const fingerprint = inclusionFingerprint(filtered)
-    const currentFingerprint = inclusionFingerprint(includedDivisionIds)
-    if (fingerprint !== currentFingerprint) {
-      setIncludedDivisionIds(filtered)
-    }
-  }, [divisions, focusDivisionId, includedDivisionIds, setFocusDivision, setIncludedDivisionIds])
+  }, [divisions, focusDivisionId, setFocusDivision])
 }
 
 /** Bootstrap sub-brains enabled: stored value wins; else on if any child division exists. */
@@ -134,34 +111,26 @@ export function useBootstrapSubBrainsEnabled() {
 export function useFocusDivision() {
   const focusDivisionId = useAppStore((s) => s.focusDivisionId)
   const setFocusDivision = useAppStore((s) => s.setFocusDivision)
-  const { data: divisions = [] } = useAllDivisions()
 
-  const focusDivision = useCallback(
-    (id: string) => {
-      const childrenMap = buildChildrenMap(divisions)
-      setFocusDivision(id, getDefaultIncludedDivisionIds(divisions, id, childrenMap))
-    },
-    [divisions, setFocusDivision],
-  )
+  const focusDivision = useCallback((id: string) => setFocusDivision(id), [setFocusDivision])
 
   return { focusDivisionId, focusDivision }
 }
 
-/** Raw persisted inclusion ids (ignores sub-brains feature toggle). */
-export function useRawIncludedDivisionIds(): string[] {
-  return useAppStore((s) => s.includedDivisionIds)
-}
-
-/** Effective ids for note/tag/search queries: inclusion when enabled, all divisions when disabled. */
+/** Effective ids for note/search queries: active sub-brain + descendants when enabled, all when disabled. */
 export function useEffectiveDivisionIds(): string[] {
   const subBrainsEnabled = useAppStore((s) => s.subBrainsEnabled)
-  const includedDivisionIds = useAppStore((s) => s.includedDivisionIds)
+  const focusDivisionId = useAppStore((s) => s.focusDivisionId)
   const { data: divisions = [] } = useAllDivisions()
 
   return useMemo(() => {
-    if (subBrainsEnabled) return includedDivisionIds
-    return divisions.filter((d) => !d.isDeleted).map((d) => d.id)
-  }, [subBrainsEnabled, includedDivisionIds, divisions])
+    if (!subBrainsEnabled) {
+      return divisions.filter((d) => !d.isDeleted).map((d) => d.id)
+    }
+    if (divisions.length === 0) return [focusDivisionId]
+    const childrenMap = buildChildrenMap(divisions)
+    return getDescendantIds(divisions, focusDivisionId, childrenMap)
+  }, [subBrainsEnabled, focusDivisionId, divisions])
 }
 
 /** Division id used when creating new notes/tags. */

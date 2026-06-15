@@ -21,12 +21,10 @@ const NoteList = () => {
     searchFilters,
     noteSort,
     focusDivisionId,
-    includedDivisionIds,
     subBrainsEnabled,
     setSelectedNoteId,
     setNewlyCreatedNoteId,
     setNoteSort,
-    setActivePane,
   } = useAppStore()
   const { data: notes = [], isLoading } = useNotes(selectedTagId ?? undefined)
   const { data: searchResults = [] } = useGlobalSearch(searchFilters)
@@ -72,7 +70,6 @@ const NoteList = () => {
     return map
   }, [allDivisions])
 
-  const noInclusion = subBrainsEnabled && includedDivisionIds.length === 0
 
   const handleCreate = async () => {
     try {
@@ -134,28 +131,11 @@ const NoteList = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-ink dark:text-stone-200">
-                {noInclusion
-                  ? t("divisions.noInclusionTitle")
-                  : isSearching
-                    ? t("notes.noMatchingNotes")
-                    : t("notes.noNotesYet")}
+                {isSearching ? t("notes.noMatchingNotes") : t("notes.noNotesYet")}
               </p>
               <p className="mt-1 text-xs text-ink-subtle">
-                {noInclusion
-                  ? t("divisions.noInclusionHint")
-                  : !isSearching
-                    ? t("notes.noNotesYetHint")
-                    : null}
+                {!isSearching ? t("notes.noNotesYetHint") : null}
               </p>
-              {noInclusion && (
-                <button
-                  type="button"
-                  onClick={() => setActivePane("divisions")}
-                  className="btn-primary mt-3 !px-4 !py-2 md:hidden"
-                >
-                  {t("divisions.openSubBrains")}
-                </button>
-              )}
             </div>
           </div>
         )}

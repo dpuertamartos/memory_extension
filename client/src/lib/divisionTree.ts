@@ -56,6 +56,14 @@ export function getDivisionAncestors(
   return chain
 }
 
+export function getExpandableDivisionIds(
+  divisions: Division[],
+  childrenMap?: Map<string | null, Division[]>,
+): string[] {
+  const byParent = childrenMap ?? buildChildrenMap(divisions)
+  return divisions.filter((d) => (byParent.get(d.id)?.length ?? 0) > 0).map((d) => d.id)
+}
+
 export function getDescendantIds(
   divisions: Division[],
   divisionId: string,

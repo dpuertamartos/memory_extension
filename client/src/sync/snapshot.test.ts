@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
-import { ROOT_DIVISION_ID } from "../lib/divisions"
+import { ROOT_DIVISION_ID, ROOT_DIVISION_NAME } from "../lib/divisions"
 
 vi.mock("../lib/db", () => ({
   db: {},
@@ -16,7 +16,7 @@ const sampleSnapshot: SyncSnapshot = {
     {
       id: ROOT_DIVISION_ID,
       parentId: null,
-      name: "Main Brain",
+      name: ROOT_DIVISION_NAME,
       description: "",
       isActive: true,
       sortOrder: 0,

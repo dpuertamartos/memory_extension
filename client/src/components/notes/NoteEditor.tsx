@@ -18,7 +18,6 @@ const NoteEditor = () => {
     newlyCreatedNoteId,
     setNewlyCreatedNoteId,
     subBrainsEnabled,
-    includedDivisionIds,
   } = useAppStore()
   const { data: note } = useNote(selectedNoteId)
   const { data: allDivisions = [] } = useAllDivisions()
@@ -130,14 +129,13 @@ const NoteEditor = () => {
       .map((d) => d.name)
       .join(" › ")
     const isInactive = target && !target.isActive
-    const isExcluded = !includedDivisionIds.includes(targetDivisionId)
 
-    if (isInactive || isExcluded) {
-      const parts: string[] = []
-      if (isInactive) parts.push(t("divisions.moveWarningInactive"))
-      if (isExcluded) parts.push(t("divisions.moveWarningExcluded"))
+    if (isInactive) {
       const confirmed = window.confirm(
-        t("divisions.moveWarningBody", { path: targetPath, warnings: parts.join(" ") }),
+        t("divisions.moveWarningBody", {
+          path: targetPath,
+          warnings: t("divisions.moveWarningInactive"),
+        }),
       )
       if (!confirmed) return
     }
@@ -145,7 +143,6 @@ const NoteEditor = () => {
     await moveNoteDivision.mutateAsync({
       noteId: note.id,
       targetDivisionId,
-      ensureIncluded: isExcluded,
     })
   }
 

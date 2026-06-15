@@ -1,7 +1,10 @@
 /** Fixed id for the root division — stable across migrations and imports. */
 export const ROOT_DIVISION_ID = "01MAINBRAIN00000000000000"
 
-export const ROOT_DIVISION_NAME = "Main Brain"
+export const ROOT_DIVISION_NAME = "Main"
+
+/** Previous default root name — normalized to {@link ROOT_DIVISION_NAME} on migrate. */
+export const LEGACY_ROOT_DIVISION_NAME = "Main Brain"
 
 /** @deprecated Use FOCUS_DIVISION_STORAGE_KEY — kept for migration. */
 export const ACTIVE_DIVISION_STORAGE_KEY = "local-brain-active-division-id"

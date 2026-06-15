@@ -1,12 +1,9 @@
 import { create } from "zustand"
 import {
   getStoredFocusDivisionId,
-  getStoredIncludedDivisionIds,
   getStoredSubBrainsEnabled,
-  inclusionFingerprint,
   ROOT_DIVISION_ID,
   setStoredFocusDivisionId,
-  setStoredIncludedDivisionIds,
   setStoredSubBrainsEnabled,
 } from "../lib/divisions"
 import { emptySearchFilters, type SearchFilters } from "../lib/searchQuery"
@@ -17,7 +14,6 @@ export type NoteSort = "updated" | "created" | "alpha"
 
 type AppState = {
   focusDivisionId: string
-  includedDivisionIds: string[]
   selectedTagId: string | null
   selectedNoteId: string | null
   newlyCreatedNoteId: string | null
@@ -26,9 +22,7 @@ type AppState = {
   activePane: NavPane
   showInactiveDivisions: boolean
   subBrainsEnabled: boolean
-  setFocusDivision: (id: string, defaultIncludedIds: string[]) => void
-  toggleDivisionIncluded: (id: string, checked: boolean, cascadeIds: string[]) => void
-  setIncludedDivisionIds: (ids: string[]) => void
+  setFocusDivision: (id: string) => void
   setSelectedTagId: (id: string | null) => void
   setSelectedNoteId: (id: string | null) => void
   setNewlyCreatedNoteId: (id: string | null) => void
@@ -47,17 +41,11 @@ function resetDivisionSelection() {
     selectedNoteId: null,
     newlyCreatedNoteId: null,
     searchFilters: emptySearchFilters(),
-    activePane: "list" as NavPane,
   }
-}
-
-function sortIds(ids: string[]): string[] {
-  return [...ids].sort()
 }
 
 export const useAppStore = create<AppState>((set) => ({
   focusDivisionId: getStoredFocusDivisionId(),
-  includedDivisionIds: getStoredIncludedDivisionIds() ?? [getStoredFocusDivisionId()],
   selectedTagId: null,
   selectedNoteId: null,
   newlyCreatedNoteId: null,
@@ -66,29 +54,9 @@ export const useAppStore = create<AppState>((set) => ({
   activePane: "list",
   showInactiveDivisions: false,
   subBrainsEnabled: getStoredSubBrainsEnabled() ?? false,
-  setFocusDivision: (id, defaultIncludedIds) => {
-    const sorted = sortIds(defaultIncludedIds)
+  setFocusDivision: (id) => {
     setStoredFocusDivisionId(id)
-    setStoredIncludedDivisionIds(sorted)
-    set({ focusDivisionId: id, includedDivisionIds: sorted, ...resetDivisionSelection() })
-  },
-  toggleDivisionIncluded: (id, checked, cascadeIds) => {
-    set((state) => {
-      const next = new Set(state.includedDivisionIds)
-      if (checked) {
-        for (const cascadeId of cascadeIds) next.add(cascadeId)
-      } else {
-        next.delete(id)
-      }
-      const sorted = sortIds([...next])
-      setStoredIncludedDivisionIds(sorted)
-      return { includedDivisionIds: sorted }
-    })
-  },
-  setIncludedDivisionIds: (ids) => {
-    const sorted = sortIds(ids)
-    setStoredIncludedDivisionIds(sorted)
-    set({ includedDivisionIds: sorted })
+    set({ focusDivisionId: id, ...resetDivisionSelection() })
   },
   setSelectedTagId: (id) => set({ selectedTagId: id, activePane: "list" }),
   setSelectedNoteId: (id) => set({ selectedNoteId: id }),
@@ -109,4 +77,4 @@ export const useAppStore = create<AppState>((set) => ({
   },
 }))
 
-export { inclusionFingerprint, ROOT_DIVISION_ID }
+export { ROOT_DIVISION_ID }

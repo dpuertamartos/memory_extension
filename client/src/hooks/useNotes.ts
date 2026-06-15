@@ -4,7 +4,8 @@ import { useCallback, useRef, useState } from "react"
 import { ulid } from "ulid"
 import { noteTagsTable, notesTable, tagsTable, type Note, type Tag } from "../db/schema"
 import { db, initDb } from "../lib/db"
-import { inclusionFingerprint, useAppStore } from "../store/useAppStore"
+import { inclusionFingerprint } from "../lib/divisions"
+import { useAppStore } from "../store/useAppStore"
 import { useIncludedDivisionIds, useCreateDivisionId } from "./useDivisions"
 
 export type NoteWithTags = Note & { tags: Tag[] }
@@ -268,18 +269,14 @@ export function useSetNoteTags() {
 
 export function useMoveNoteDivision() {
   const queryClient = useQueryClient()
-  const setIncludedDivisionIds = useAppStore((s) => s.setIncludedDivisionIds)
-  const rawIncludedIds = useAppStore((s) => s.includedDivisionIds)
 
   return useMutation({
     mutationFn: async ({
       noteId,
       targetDivisionId,
-      ensureIncluded,
     }: {
       noteId: string
       targetDivisionId: string
-      ensureIncluded?: boolean
     }) => {
       await initDb()
       const now = new Date()
@@ -288,11 +285,6 @@ export function useMoveNoteDivision() {
         .update(notesTable)
         .set({ divisionId: targetDivisionId, updatedAt: now })
         .where(eq(notesTable.id, noteId))
-
-      if (ensureIncluded && !rawIncludedIds.includes(targetDivisionId)) {
-        const next = [...rawIncludedIds, targetDivisionId].sort()
-        setIncludedDivisionIds(next)
-      }
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["notes"] })

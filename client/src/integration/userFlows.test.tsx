@@ -11,8 +11,8 @@ import type { Division, Tag } from "../db/schema"
 import type { NoteWithTags } from "../hooks/useNotes"
 import type { SearchResult } from "../lib/searchEngine"
 import type { SearchFilters } from "../lib/searchQuery"
-import { ROOT_DIVISION_ID } from "../lib/divisions"
-import { getDescendantIds, getDefaultIncludedDivisionIds } from "../lib/divisionTree"
+import { ROOT_DIVISION_ID, ROOT_DIVISION_NAME } from "../lib/divisions"
+import { getDescendantIds } from "../lib/divisionTree"
 import BrainPage from "../pages/BrainPage"
 import AppNav from "../components/notes/AppNav"
 import { renderApp } from "../test/renderApp"
@@ -31,7 +31,7 @@ const testState = vi.hoisted(() => ({
 const rootDivision = vi.hoisted(() => ({
   id: "01MAINBRAIN00000000000000",
   parentId: null,
-  name: "Main Brain",
+  name: "Main",
   description: "",
   isActive: true,
   sortOrder: 0,
@@ -83,17 +83,16 @@ vi.mock("../hooks/useCalendarNotes", () => ({
   }),
 }))
 
-function getIncludedIds(): string[] {
+function getVisibleDivisionIds(): string[] {
   const state = useAppStore.getState()
   if (!state.subBrainsEnabled) {
     return testState.divisions.filter((d) => !d.isDeleted).map((d) => d.id)
   }
-  return state.includedDivisionIds
+  return getDescendantIds(testState.divisions, state.focusDivisionId)
 }
 
 function focusDivisionInTest(id: string) {
-  const cascade = getDescendantIds(testState.divisions, id)
-  useAppStore.getState().setFocusDivision(id, cascade)
+  useAppStore.getState().setFocusDivision(id)
 }
 
 vi.mock("../hooks/useDivisions", async () => {
@@ -112,7 +111,7 @@ vi.mock("../hooks/useDivisions", async () => {
     },
     useDivisionAncestors: (divisionId: string | null) =>
       divisionId ? tree.getDivisionAncestors(testState.divisions, divisionId) : [],
-    useIncludedDivisionIds: () => getIncludedIds(),
+    useIncludedDivisionIds: () => getVisibleDivisionIds(),
     useFocusDivision: () => ({
       focusDivisionId: useAppStore.getState().focusDivisionId,
       focusDivision: focusDivisionInTest,
@@ -156,10 +155,10 @@ vi.mock("../hooks/useSearch", async (importOriginal) => {
 
       if (!active) return { data: [] as SearchResult[] }
 
-      const includedDivisionIds = getIncludedIds()
+      const visibleDivisionIds = getVisibleDivisionIds()
       const keyword = filters.keywords[0]?.toLowerCase()
       const matches = testState.notes.filter((note) => {
-        if (!includedDivisionIds.includes(note.divisionId)) return false
+        if (!visibleDivisionIds.includes(note.divisionId)) return false
         const keywordMatch =
           !keyword ||
           note.title.toLowerCase().includes(keyword) ||
@@ -205,17 +204,17 @@ vi.mock("../hooks/useTags", () => ({
 
 vi.mock("../hooks/useNotes", () => ({
   useNotes: (tagId?: string) => {
-    const included = getIncludedIds()
-    const scoped = testState.notes.filter((note) => included.includes(note.divisionId))
+    const visible = getVisibleDivisionIds()
+    const scoped = testState.notes.filter((note) => visible.includes(note.divisionId))
     const notes = tagId
       ? scoped.filter((note) => note.tags.some((tag) => tag.id === tagId))
       : scoped
     return { data: notes, isLoading: false }
   },
   useNote: (id: string | null) => {
-    const included = getIncludedIds()
+    const visible = getVisibleDivisionIds()
     const note = id
-      ? testState.notes.find((item) => item.id === id && included.includes(item.divisionId))
+      ? testState.notes.find((item) => item.id === id && visible.includes(item.divisionId))
       : null
     return { data: note ?? null }
   },
@@ -264,21 +263,14 @@ vi.mock("../hooks/useNotes", () => ({
     mutateAsync: vi.fn(async ({
       noteId,
       targetDivisionId,
-      ensureIncluded,
     }: {
       noteId: string
       targetDivisionId: string
-      ensureIncluded?: boolean
     }) => {
       const note = testState.notes.find((item) => item.id === noteId)
       if (!note) return
       note.divisionId = targetDivisionId
       note.updatedAt = new Date()
-      if (ensureIncluded && !useAppStore.getState().includedDivisionIds.includes(targetDivisionId)) {
-        useAppStore.getState().setIncludedDivisionIds(
-          [...useAppStore.getState().includedDivisionIds, targetDivisionId].sort(),
-        )
-      }
     }),
     isPending: false,
   }),
@@ -306,11 +298,8 @@ describe("user flows (integration)", () => {
     testState.nextNoteId = 1
     testState.nextTagId = 1
     testState.nextDivisionId = 1
-    resetAppStore(testState.divisions)
-    useAppStore.getState().setFocusDivision(
-      ROOT_DIVISION_ID,
-      getDefaultIncludedDivisionIds(testState.divisions, ROOT_DIVISION_ID),
-    )
+    resetAppStore()
+    useAppStore.getState().setFocusDivision(ROOT_DIVISION_ID)
     useAppStore.getState().setSubBrainsEnabled(true)
   })
 
@@ -578,7 +567,8 @@ describe("user flows (integration)", () => {
       </>,
     )
     fireEvent.click(screen.getByRole("button", { name: "Sub-brains" }))
-    expect(screen.getByRole("button", { name: "Main Brain" })).toBeInTheDocument()
+    expect(screen.getByText(ROOT_DIVISION_NAME)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: ROOT_DIVISION_NAME })).toBeInTheDocument()
   })
 
   it("uses unified bottom nav tabs", () => {
@@ -673,6 +663,6 @@ describe("user flows (integration)", () => {
     await waitFor(() => {
       expect(screen.getByDisplayValue("Work note")).toBeInTheDocument()
     })
-    expect(screen.getByRole("button", { name: /Main Brain › Work/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Main › Work/i })).toBeInTheDocument()
   })
 })

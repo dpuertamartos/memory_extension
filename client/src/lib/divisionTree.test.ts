@@ -6,8 +6,9 @@ import {
   getDefaultIncludedDivisionIds,
   getDescendantIds,
   getDivisionAncestors,
+  getExpandableDivisionIds,
 } from "../lib/divisionTree"
-import { ROOT_DIVISION_ID } from "../lib/divisions"
+import { ROOT_DIVISION_ID, ROOT_DIVISION_NAME } from "../lib/divisions"
 import type { Division } from "../db/schema"
 
 const now = new Date()
@@ -28,7 +29,7 @@ function division(
 
 describe("buildDivisionTree", () => {
   it("nests children under parents", () => {
-    const root = division({ id: ROOT_DIVISION_ID, name: "Main Brain", parentId: null })
+    const root = division({ id: ROOT_DIVISION_ID, name: ROOT_DIVISION_NAME, parentId: null })
     const child = division({ id: "child-1", name: "Work", parentId: ROOT_DIVISION_ID })
 
     const tree = buildDivisionTree([root, child])
@@ -42,12 +43,12 @@ describe("buildDivisionTree", () => {
 
 describe("getDivisionAncestors", () => {
   it("returns the breadcrumb chain from root to target", () => {
-    const root = division({ id: ROOT_DIVISION_ID, name: "Main Brain", parentId: null })
+    const root = division({ id: ROOT_DIVISION_ID, name: ROOT_DIVISION_NAME, parentId: null })
     const mid = division({ id: "mid", name: "Red", parentId: ROOT_DIVISION_ID })
     const leaf = division({ id: "leaf", name: "Football", parentId: "mid" })
 
     expect(getDivisionAncestors([root, mid, leaf], "leaf").map((d) => d.name)).toEqual([
-      "Main Brain",
+      ROOT_DIVISION_NAME,
       "Red",
       "Football",
     ])
@@ -55,7 +56,7 @@ describe("getDivisionAncestors", () => {
 })
 
 describe("explicit inclusion helpers", () => {
-  const root = division({ id: ROOT_DIVISION_ID, name: "Main Brain", parentId: null })
+  const root = division({ id: ROOT_DIVISION_ID, name: ROOT_DIVISION_NAME, parentId: null })
   const football = division({ id: "football", name: "Football", parentId: ROOT_DIVISION_ID })
   const basketball = division({ id: "basketball", name: "Basketball", parentId: ROOT_DIVISION_ID })
   const realMadrid = division({ id: "madrid", name: "Real Madrid", parentId: "football" })
@@ -63,7 +64,7 @@ describe("explicit inclusion helpers", () => {
   const divisions = [root, football, basketball, realMadrid, barcelona]
   const childrenMap = buildChildrenMap(divisions)
 
-  it("default focus on Football excludes Main Brain", () => {
+  it("default focus on Football excludes Main", () => {
     expect(getDefaultIncludedDivisionIds(divisions, "football", childrenMap).sort()).toEqual(
       ["football", "madrid", "barcelona"].sort(),
     )
@@ -94,5 +95,19 @@ describe("explicit inclusion helpers", () => {
     expect(computeCheckboxState("football", included, childrenMap)).toBe("indeterminate")
     expect(computeCheckboxState("barcelona", included, childrenMap)).toBe("checked")
     expect(computeCheckboxState(ROOT_DIVISION_ID, included, childrenMap)).toBe("indeterminate")
+  })
+})
+
+describe("getExpandableDivisionIds", () => {
+  it("returns only divisions that have children", () => {
+    const root = division({ id: ROOT_DIVISION_ID, name: ROOT_DIVISION_NAME, parentId: null })
+    const football = division({ id: "football", name: "Football", parentId: ROOT_DIVISION_ID })
+    const madrid = division({ id: "madrid", name: "Real Madrid", parentId: "football" })
+    const divisions = [root, football, madrid]
+    const childrenMap = buildChildrenMap(divisions)
+
+    expect(getExpandableDivisionIds(divisions, childrenMap).sort()).toEqual(
+      [ROOT_DIVISION_ID, "football"].sort(),
+    )
   })
 })

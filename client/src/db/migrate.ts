@@ -1,4 +1,4 @@
-import { ROOT_DIVISION_ID, ROOT_DIVISION_NAME } from "../lib/divisions"
+import { LEGACY_ROOT_DIVISION_NAME, ROOT_DIVISION_ID, ROOT_DIVISION_NAME } from "../lib/divisions"
 
 export const SCHEMA_VERSION = 3
 
@@ -201,6 +201,15 @@ function migrateToV3(db: MigrationDb) {
   `)
 }
 
+function normalizeRootDivisionName(db: MigrationDb) {
+  if (!tableExists(db, "divisions")) return
+
+  const now = Date.now()
+  db.exec(
+    `UPDATE divisions SET name = '${ROOT_DIVISION_NAME}', updated_at = ${now} WHERE id = '${ROOT_DIVISION_ID}' AND name = '${LEGACY_ROOT_DIVISION_NAME}'`,
+  )
+}
+
 export function runMigrations(db: MigrationDb): void {
   const versionRows = db.selectObjects("PRAGMA user_version")
   let version = Number(versionRows[0]?.user_version ?? 0)
@@ -221,6 +230,8 @@ export function runMigrations(db: MigrationDb): void {
     migrateToV3(db)
     db.exec(`PRAGMA user_version = 3`)
   }
+
+  normalizeRootDivisionName(db)
 }
 
 /** @deprecated Use runMigrations — kept for tests that import the bootstrap SQL. */

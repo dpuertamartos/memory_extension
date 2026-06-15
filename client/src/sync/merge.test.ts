@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { ROOT_DIVISION_ID } from "../lib/divisions"
+import { ROOT_DIVISION_ID, ROOT_DIVISION_NAME } from "../lib/divisions"
 import { mergeSyncSnapshots, pickSyncWinner } from "./merge"
 import type { SyncSnapshot } from "./types"
 import { SYNC_SNAPSHOT_VERSION } from "./types"
@@ -7,7 +7,7 @@ import { SYNC_SNAPSHOT_VERSION } from "./types"
 const rootDivision = {
   id: ROOT_DIVISION_ID,
   parentId: null,
-  name: "Main Brain",
+  name: ROOT_DIVISION_NAME,
   description: "",
   isActive: true,
   sortOrder: 0,

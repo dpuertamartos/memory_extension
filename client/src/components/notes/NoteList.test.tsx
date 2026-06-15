@@ -7,6 +7,7 @@ vi.mock("../../lib/db", () => ({
   initDb: vi.fn(),
 }))
 import { renderWithI18n } from "../../test/renderWithI18n"
+import { ROOT_DIVISION_NAME } from "../../lib/divisions"
 import NoteList from "./NoteList"
 
 const mockSetSelectedNoteId = vi.fn()
@@ -49,7 +50,7 @@ vi.mock("../../hooks/useTags", () => ({
 vi.mock("../../hooks/useDivisions", () => ({
   useAllDivisions: () => ({
     data: [
-      { id: "div-1", parentId: null, name: "Main", isDeleted: false, isActive: true },
+      { id: "div-1", parentId: null, name: ROOT_DIVISION_NAME, isDeleted: false, isActive: true },
       { id: "div-2", parentId: "div-1", name: "Work", isDeleted: false, isActive: true },
     ],
   }),
@@ -58,7 +59,6 @@ vi.mock("../../hooks/useDivisions", () => ({
 vi.mock("../../store/useAppStore", () => ({
   useAppStore: () => ({
     focusDivisionId: "div-1",
-    includedDivisionIds: ["div-1"],
     subBrainsEnabled: true,
     selectedNoteId: null,
     newlyCreatedNoteId: null,
@@ -74,7 +74,6 @@ vi.mock("../../store/useAppStore", () => ({
     setSelectedNoteId: mockSetSelectedNoteId,
     setNewlyCreatedNoteId: mockSetNewlyCreatedNoteId,
     setNoteSort: mockSetNoteSort,
-    setActivePane: vi.fn(),
   }),
 }))
 
@@ -105,6 +104,6 @@ describe("NoteList", () => {
 
   it("shows division chip when note owner differs from focus", () => {
     renderWithI18n(<NoteList />)
-    expect(screen.getByText("Main › Work")).toBeInTheDocument()
+    expect(screen.getByText(`${ROOT_DIVISION_NAME} › Work`)).toBeInTheDocument()
   })
 })
